@@ -10,17 +10,26 @@ import {
   setAnalysisResults,
 } from "@/store/slices/practiceSlice";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { FaMicrophone, FaStop, FaPlay, FaArrowLeft } from "react-icons/fa";
+import {
+  FaMicrophone,
+  FaStop,
+  FaPlay,
+  FaArrowLeft,
+  FaSpinner,
+} from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { FaPause, FaVolumeUp } from "react-icons/fa";
 
 const PracticePage = () => {
   const dispatch = useAppDispatch();
-const router = useRouter();
- const searchParams = useSearchParams();
-  const audioRef = useRef(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null); // Add type annotation
 
-  const paragraph = searchParams.get("paragraph") 
+  const paragraph = searchParams.get("paragraph")
     ? decodeURIComponent(searchParams.get("paragraph")!)
     : "";
 
@@ -66,13 +75,28 @@ const router = useRouter();
       return "";
     }
   };
+
+  const toggleAudioPlayback = () => {
+    if (!audioRef.current) return;
+
+    if (isAudioPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch((error) => {
+        console.error("Audio playback failed:", error);
+        toast.error("Failed to play audio");
+      });
+    }
+    setIsAudioPlaying(!isAudioPlaying);
+  };
+
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const testWebSocketConnection = async () => {
     const token = getAuthToken();
     console.log("Testing WebSocket connection with token:", token);
     const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const protocol = window.location.protocol === "http:" ? "ws:" : "ws:";
 
     const testSocket = new WebSocket(
       `${protocol}//${cleanBaseUrl}/ws/audio?username=test&token=${encodeURIComponent(
@@ -236,7 +260,7 @@ const router = useRouter();
       console.log("Using username:", username);
       // mediaRecorderRef.current = mediaRecorder;
       const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const protocol = window.location.protocol === "http:" ? "ws:" : "ws:";
       const params = new URLSearchParams({
         username: encodeURIComponent(username),
         token: encodeURIComponent(token),
@@ -279,7 +303,7 @@ const router = useRouter();
 
           // Send raw PCM data directly
           socket.send(combined.buffer);
-        }, 500);
+        }, 10000);
       };
 
       socket.onmessage = (event) => {
@@ -466,12 +490,18 @@ const router = useRouter();
 
   // Navigate back to dashboard
   const handleBackToDashboard = () => {
+    if (audioRef.current && isAudioPlaying) {
+      audioRef.current.pause();
+    }
     dispatch(resetPracticeState());
     router.push("/dashboard");
   };
 
   useEffect(() => {
     return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
       // Cleanup when component unmounts
       if (socketRef.current) socketRef.current.close();
       if (mediaStreamRef.current) {
@@ -534,16 +564,40 @@ const router = useRouter();
               {/* Audio Player */}
               <div className="mb-8 flex justify-center">
                 <button
-                  onClick={handlePlayAudio}
-                  className="flex items-center justify-center bg-indigo-100 text-indigo-600 p-4 rounded-full hover:bg-indigo-200 transition-colors"
-                  disabled={isRecording}
+                  onClick={toggleAudioPlayback}
+                  disabled={isAudioLoading || isRecording}
+                  className={`flex items-center justify-center ${
+                    isAudioLoading
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-indigo-100 hover:bg-indigo-200"
+                  } text-indigo-600 p-4 rounded-full transition-colors min-w-[180px]`}
                 >
-                  <FaPlay className="text-xl" />
-                  <span className="ml-2">Listen Again</span>
+                  {isAudioLoading ? (
+                    <FaSpinner className="animate-spin text-xl" />
+                  ) : isAudioPlaying ? (
+                    <FaPause className="text-xl" />
+                  ) : (
+                    <FaPlay className="text-xl" />
+                  )}
+                  <span className="ml-2">
+                    {isAudioLoading
+                      ? "Loading..."
+                      : isAudioPlaying
+                      ? "Pause"
+                      : "Listen Again"}
+                  </span>
                 </button>
+
+                {/* Audio element */}
                 <audio
                   ref={audioRef}
                   src={audioUrl}
+                  onPlay={() => setIsAudioPlaying(true)}
+                  onPause={() => setIsAudioPlaying(false)}
+                  onEnded={() => setIsAudioPlaying(false)}
+                  onLoadedData={() => setIsAudioLoading(false)}
+                  onWaiting={() => setIsAudioLoading(true)}
+                  onCanPlay={() => setIsAudioLoading(false)}
                   className="hidden"
                 />
               </div>

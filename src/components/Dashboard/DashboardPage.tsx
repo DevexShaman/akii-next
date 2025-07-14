@@ -1,26 +1,46 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { generateParagraph } from "../../store/slices/paragraphSlice";
-import { FaSpinner, FaVolumeUp } from "react-icons/fa";
+import { FaPause, FaSpinner, FaVolumeUp } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 
-
-
 const Dashboard = () => {
   const dispatch = useAppDispatch();
- const router = useRouter();
+  const router = useRouter();
   const { generatedParagraph, isLoading } = useAppSelector(
     (state) => state.paragraph
   );
 
-  console.log("generatedParagraph", generatedParagraph)
+  console.log("generatedParagraph", generatedParagraph);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // const { user } = useAppSelector((state) => state.auth);
+  const getUsername = () => {
+    return localStorage.getItem("username") || "unknown_user";
+  };
+  const getAuthToken = () => {
+    try {
+      const rawToken =
+        localStorage.getItem("access_token") ||
+        sessionStorage.getItem("access_token") ||
+        "";
+
+      return rawToken ? `Bearer ${rawToken}` : "";
+    } catch (error) {
+      console.error("Error retrieving auth token:", error);
+      return "";
+    }
+  };
+
+  const user = getUsername();
+  // Get user info
 
   // Options for dropdowns
   const classOptions = [
@@ -84,40 +104,101 @@ const Dashboard = () => {
       });
   };
 
-const speakParagraph = (accent) => {
-  if ("speechSynthesis" in window && generatedParagraph) {
-    const utterance = new SpeechSynthesisUtterance(generatedParagraph);
-    const voices = speechSynthesis.getVoices();
-    const selectedVoice = voices.find((voice) =>
-      voice.name.toLowerCase().includes(accent.toLowerCase())
-    );
-    if (selectedVoice) {
-      utterance.voice = selectedVoice;
+  const speakParagraph = (accent) => {
+    if ("speechSynthesis" in window && generatedParagraph) {
+      const utterance = new SpeechSynthesisUtterance(generatedParagraph);
+      const voices = speechSynthesis.getVoices();
+      const selectedVoice = voices.find((voice) =>
+        voice.name.toLowerCase().includes(accent.toLowerCase())
+      );
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      speechSynthesis.speak(utterance);
+    } else {
+      toast.warn("Text-to-speech not supported in this browser");
     }
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    speechSynthesis.speak(utterance);
-  } else {
-    toast.warn("Text-to-speech not supported in this browser");
-  }
-};
+  };
 
+  const handlePractice = () => {
+    if (!generatedParagraph) {
+      toast.error("No paragraph generated to practice");
+      return;
+    }
 
-const handlePractice = () => {
-  if (!generatedParagraph) {
-    toast.error("No paragraph generated to practice");
-    return;
-  }
+    // Encode and pass paragraph via URL
+    const encodedParagraph = encodeURIComponent(generatedParagraph);
+    router.push(`/practice?paragraph=${encodedParagraph}`);
+  };
 
-  // Encode and pass paragraph via URL
-  const encodedParagraph = encodeURIComponent(generatedParagraph);
-  router.push(`/practice?paragraph=${encodedParagraph}`);
-};
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+  const token = getAuthToken();
+
+  const fetchAndPlayAudio = async () => {
+    if (!user || !token) {
+      toast.error("Authentication required");
+      return;
+    }
+
+    setIsAudioLoading(true);
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const username = user;
+      const response = await fetch(
+        `${baseUrl}/get-tts-audio?username=${username}`,
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Audio fetch failed");
+
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+
+      // Clean up previous audio if exists
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+
+      // Create new audio instance
+      audioRef.current = new Audio(audioUrl);
+      audioRef.current.onended = () => setIsSpeaking(false);
+      audioRef.current.onpause = () => setIsSpeaking(false);
+
+      await audioRef.current.play();
+      setIsSpeaking(true);
+    } catch (error) {
+      toast.error("Failed to play audio: " + error.message);
+    } finally {
+      setIsAudioLoading(false);
+    }
+  };
+
+  const handleSpeakButtonClick = () => {
+    if (isSpeaking && audioRef.current) {
+      audioRef.current.pause();
+      setIsSpeaking(false);
+    } else {
+      fetchAndPlayAudio();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8">
-
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -289,18 +370,48 @@ const handlePractice = () => {
                 <h3 className="text-lg font-semibold text-indigo-800 mb-4">
                   Generated Paragraph
                 </h3>
-                <button
-                  onClick={() => speakParagraph(/* accent */ values.accent)}
 
-                  disabled={isSpeaking}
-                  className={`p-3 rounded-full ${
-                    isSpeaking
+                <button
+                  onClick={handleSpeakButtonClick}
+                  disabled={isAudioLoading}
+                  className={`p-3 rounded-full relative ${
+                    isAudioLoading
+                      ? "text-indigo-300 cursor-not-allowed"
+                      : isSpeaking
                       ? "bg-indigo-200 text-indigo-600"
                       : "bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
                   } transition-colors`}
-                  aria-label="Listen to paragraph"
+                  aria-label={
+                    isSpeaking ? "Pause audio" : "Listen to paragraph"
+                  }
                 >
-                  <FaVolumeUp className="text-xl" />
+                  {isAudioLoading ? (
+                    <FaSpinner className="text-xl animate-spin" />
+                  ) : isSpeaking ? (
+                    <FaPause className="text-xl" />
+                  ) : (
+                    <FaVolumeUp className="text-xl" />
+                  )}
+
+                  {/* Wave animation */}
+                  {isSpeaking && !isAudioLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center space-x-1">
+                      {[...Array(3)].map((_, i) => (
+                        <motion.span
+                          key={i}
+                          className="w-1 h-4 bg-indigo-500 rounded-full"
+                          animate={{
+                            height: ["0.5rem", "1.25rem", "0.5rem"],
+                          }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            delay: i * 0.2,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </button>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-inner">

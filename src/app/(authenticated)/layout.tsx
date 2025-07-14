@@ -1,17 +1,14 @@
-// src/app/dashboard/layout.tsx
-"use client";
-
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import Layout from "@/components/Layout/Layout";
-
-export default function DashboardLayout({
+import React from "react";
+export default function AuthLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    
+    <ProtectedRoute>
       <Layout>{children}</Layout>
-    
+    </ProtectedRoute>
   );
 }

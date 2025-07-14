@@ -8,13 +8,13 @@ import { logoutUser } from "@/store/slices/authSlice";
 import Button from "@/components/UI/Button";
 
 const Header = () => {
- const router = useRouter();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
-    router.push("/login");
+    router.push("/signin");
   };
 
   return (

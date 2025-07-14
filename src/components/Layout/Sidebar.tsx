@@ -7,11 +7,21 @@ import { LayoutDashboard } from "lucide-react";
 import { clsx } from "clsx";
 
 const Sidebar = () => {
-    const pathname = usePathname();
+  const pathname = usePathname();
   const navigationItems = [
     {
       name: "Student Form",
       href: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      name: "Teacher Form",
+      href: "/teacher",
+      icon: LayoutDashboard,
+    },
+    {
+      name: "Chat with us",
+      href: "/chat",
       icon: LayoutDashboard,
     },
   ];
@@ -37,7 +47,6 @@ const Sidebar = () => {
             </Link>
           );
         })}
-
       </nav>
     </aside>
   );

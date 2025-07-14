@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 import authSlice from "@/store/slices/authSlice";
 import paragraphReducer from "@/store/slices/paragraphSlice";
 import practiceSlice from "@/store/slices/practiceSlice";
+import teacherReducer from "./slices/teacherSlice";
+import chatReducer from "./slices/chatSlice";
 
 export function makeStore() {
   return configureStore({
@@ -10,6 +12,8 @@ export function makeStore() {
       auth: authSlice,
       paragraph: paragraphReducer,
       practice: practiceSlice,
+      teacher: teacherReducer,
+      chat: chatReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({

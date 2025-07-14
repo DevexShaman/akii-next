@@ -18,7 +18,6 @@ const SignUp = () => {
   const router = useRouter();
   const { isLoading, error } = useAppSelector((state: any) => state.auth);
 
-
   const validationSchema = Yup.object({
     // name: Yup.string().required("Name is required"),
     email: Yup.string().email("Invalid email").required("Email is required"),
@@ -32,17 +31,16 @@ const SignUp = () => {
       .required("Confirm password is required"),
   });
 
-  const handleSubmit = async (values:any) => {
+  const handleSubmit = async (values: any) => {
     setLoading(true);
-    console.log("signing up")
+    console.log("signing up");
     // Simulate API call
     const params = {
       email: values.email,
       password: values.password,
-      confirm_password:values.confirmPassword,
+      confirm_password: values.confirmPassword,
       username: values.username,
     };
-
 
     dispatch(registerUser(params)).then((data) => {
       console.log(data);
@@ -57,43 +55,44 @@ const SignUp = () => {
   };
 
   return (
-    <AuthLayout title="Create your account">
-      <div className="auth-form">
-        <h2 className="form-title">Sign Up</h2>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <AuthLayout title="Create your account">
+        <div className="auth-form">
+          <h2 className="form-title">Sign Up</h2>
 
-        <Formik
-          initialValues={{
-            username: "",
-            email: "",
-            // phone: "",
-            password: "",
-            confirmPassword: "",
-          }}
-          validationSchema={validationSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ values, errors, touched, handleChange }) => (
-            <Form>
-              <AuthInput
-                icon={<FiUser />}
-                name="username"
-                placeholder="Usrename"
-                value={values.username}
-                onChange={handleChange}
-                error={touched.username && errors.username}
-              />
+          <Formik
+            initialValues={{
+              username: "",
+              email: "",
+              // phone: "",
+              password: "",
+              confirmPassword: "",
+            }}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ values, errors, touched, handleChange }) => (
+              <Form>
+                <AuthInput
+                  icon={<FiUser />}
+                  name="username"
+                  placeholder="Usrename"
+                  value={values.username}
+                  onChange={handleChange}
+                  error={touched.username && errors.username}
+                />
 
-              <AuthInput
-                icon={<FiMail />}
-                name="email"
-                type="email"
-                placeholder="Email Address"
-                value={values.email}
-                onChange={handleChange}
-                error={touched.email && errors.email}
-              />
+                <AuthInput
+                  icon={<FiMail />}
+                  name="email"
+                  type="email"
+                  placeholder="Email Address"
+                  value={values.email}
+                  onChange={handleChange}
+                  error={touched.email && errors.email}
+                />
 
-              {/* <AuthInput
+                {/* <AuthInput
                 icon={<FiPhone />}
                 name="phone"
                 placeholder="Phone Number (Optional)"
@@ -102,51 +101,52 @@ const SignUp = () => {
                 error={touched.phone && errors.phone}
               /> */}
 
-              <AuthInput
-                icon={<FiLock />}
-                name="password"
-                type="password"
-                placeholder="Password"
-                value={values.password}
-                onChange={handleChange}
-                error={touched.password && errors.password}
-              />
+                <AuthInput
+                  icon={<FiLock />}
+                  name="password"
+                  type="password"
+                  placeholder="Password"
+                  value={values.password}
+                  onChange={handleChange}
+                  error={touched.password && errors.password}
+                />
 
-              <PasswordStrength password={values.password} />
+                <PasswordStrength password={values.password} />
 
-              <AuthInput
-                icon={<FiLock />}
-                name="confirmPassword"
-                type="password"
-                placeholder="Confirm Password"
-                value={values.confirmPassword}
-                onChange={handleChange}
-                error={touched.confirmPassword && errors.confirmPassword}
-              />
+                <AuthInput
+                  icon={<FiLock />}
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={values.confirmPassword}
+                  onChange={handleChange}
+                  error={touched.confirmPassword && errors.confirmPassword}
+                />
 
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ${
-                  loading ? "opacity-75 cursor-not-allowed" : ""
-                }`}
-              >
-                {loading ? "Creating Account..." : "Create Account"}
-              </button>
-            </Form>
-          )}
-        </Formik>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ${
+                    loading ? "opacity-75 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {loading ? "Creating Account..." : "Create Account"}
+                </button>
+              </Form>
+            )}
+          </Formik>
 
-        <div className="auth-footer">
-          <p>
-            Already have an account? <Link href="/signin">Sign In</Link>
-          </p>
-          <p className="mt-2 text-xs">
-            By signing up, you agree to our Terms and Privacy Policy
-          </p>
+          <div className="auth-footer">
+            <p>
+              Already have an account? <Link href="/signin">Sign In</Link>
+            </p>
+            <p className="mt-2 text-xs">
+              By signing up, you agree to our Terms and Privacy Policy
+            </p>
+          </div>
         </div>
-      </div>
-    </AuthLayout>
+      </AuthLayout>
+    </div>
   );
 };
 
