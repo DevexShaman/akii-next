@@ -2,15 +2,14 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User, Settings } from "lucide-react";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { LogOut, Settings } from "lucide-react";
+import { useAppDispatch } from "@/store";
 import { logoutUser } from "@/store/slices/authSlice";
 import Button from "@/components/UI/Button";
 
 const Header = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
@@ -39,11 +38,17 @@ const Header = () => {
             variant="ghost"
             size="sm"
             onClick={() => router.push("/profile")}
+            className={""}
           >
             <Settings className="w-4 h-4" />
           </Button>
 
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
+          <Button
+            className={""}
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+          >
             <LogOut className="w-4 h-4" />
           </Button>
         </div>

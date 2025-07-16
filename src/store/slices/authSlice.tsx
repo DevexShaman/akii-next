@@ -1,25 +1,72 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { apiPost, apiGet } from "@/components/services/api";
+import { apiPost } from "@/components/services/api";
+import axios from "axios";
 
-const getInitialAuthState = () => {
-  const token = localStorage.getItem("access_token");
-  const refreshToken = localStorage.getItem("refresh_token");
+// const getInitialAuthState = () => {
+//   const token = localStorage.getItem("access_token");
+//   // const refreshToken = localStorage.getItem("refresh_token");
 
-  return {
-    user: null,
-    tokens: {
-      access: localStorage.getItem("access_token"),
-    },
-    username: localStorage.getItem("username"),
-    isAuthenticated: !!token,
-    isLoading: !!token,
-    error: null,
-  };
-};
+//   return {
+//     user: null,
+//     tokens: {
+//       access: localStorage.getItem("access_token"),
+//     },
+//     username: localStorage.getItem("username"),
+//     isAuthenticated: !!token,
+//     isLoading: !!token,
+//     error: null,
+//   };
+// };
 
+interface LoginCredentials {
+  username: string;
+  password: string;
+}
 
+interface RegisterParams {
+  email: string;
+  password: string;
+  confirm_password: string;
+  username: string;
+}
 
-const initialState = {
+interface AuthResponse {
+  user: User;
+  tokens: Tokens;
+}
+
+interface AuthError {
+  message: string;
+  code?: number;
+}
+
+interface Tokens {
+  access_token: string;
+  refresh_token?: string;
+}
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  // Add other user properties as needed
+}
+
+interface AuthError {
+  message: string;
+  code?: number;
+}
+
+interface AuthState {
+  user: User | null;
+  tokens: Tokens | null;
+  username: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: AuthError | null;
+}
+
+const initialState: AuthState = {
   user: null,
   tokens: null,
   username: null,
@@ -28,10 +75,9 @@ const initialState = {
   error: null,
 };
 
-
 export const loginUser = createAsyncThunk(
   "/login",
-  async (credentials, { rejectWithValue }) => {
+  async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
       console.log("Auth slice: Calling API login with:", credentials);
       const response = await apiPost("/login", credentials);
@@ -46,27 +92,40 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-export const registerUser = createAsyncThunk(
-  "/register",
-  async (data, { rejectWithValue }) => {
-    try {
-      const response = await apiPost("/register", data);
-      console.log("---- response -----", response);
-      return response;
-    } catch (error) {
-      console.log("-------- error --------------", error);
-      return rejectWithValue(
-        error.response?.data || error.message || "Registration failed"
-      );
+export const registerUser = createAsyncThunk<
+  AuthResponse, // resolved value
+  RegisterParams, // argument type
+  { rejectValue: AuthError } // rejectWithValue type
+>("auth/register", async (data, { rejectWithValue }) => {
+  try {
+    const response = await apiPost("/register", data);
+    return response as AuthResponse;
+  } catch (unknownErr) {
+    // 1) Start from unknown
+    let errorPayload: AuthError;
+
+    // 2) Is it an AxiosError with a well‑typed response?
+    if (axios.isAxiosError(unknownErr) && unknownErr.response?.data) {
+      errorPayload = unknownErr.response.data as AuthError;
     }
+    // 3) Or at least a JS Error?
+    else if (unknownErr instanceof Error) {
+      errorPayload = { message: unknownErr.message };
+    }
+    // 4) Fallback to stringifying whatever it is
+    else {
+      errorPayload = { message: String(unknownErr) };
+    }
+
+    return rejectWithValue(errorPayload);
   }
-);
+});
 
 export const logoutUser = createAsyncThunk(
   "/logout",
   async (_, { rejectWithValue }) => {
     try {
-      await apiService.apiPost("/logout");
+      await apiPost("/logout");
       return undefined;
     } catch (error) {
       return rejectWithValue(error.response?.data?.detail || "Logout failed");
@@ -74,16 +133,14 @@ export const logoutUser = createAsyncThunk(
   }
 );
 
-
-
 export const verifyAuth = createAsyncThunk(
   "/verifyAuth",
   async (_, { rejectWithValue }) => {
     try {
-      const token = localStorage.getItem('access_token')
-      console.log(token)
+      const token = localStorage.getItem("access_token");
+      console.log(token);
 
-      return token?true:false;
+      return token ? true : false;
     } catch (error) {
       return rejectWithValue(error.response?.data?.detail || "Logout failed");
     }
@@ -131,7 +188,7 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload;
+        state.error = action.payload as unknown as any;
         state.isAuthenticated = false;
         localStorage.removeItem("access_token");
       });
@@ -173,7 +230,7 @@ const authSlice = createSlice({
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload;
+        state.error = action.payload as unknown as any;
         state.user = null;
         state.tokens = null;
         state.isAuthenticated = false;
@@ -182,16 +239,16 @@ const authSlice = createSlice({
         localStorage.removeItem("username");
       });
 
-     // Logout
+    // Logout
     builder
       .addCase(verifyAuth.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(verifyAuth.fulfilled, (state,action) => {
+      .addCase(verifyAuth.fulfilled, (state, action) => {
         state.isLoading = false;
         state.isAuthenticated = action.payload;
       })
-      .addCase(verifyAuth.rejected, (state, action) => {
+      .addCase(verifyAuth.rejected, (state) => {
         state.isAuthenticated = false;
       });
   },

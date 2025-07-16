@@ -3,7 +3,7 @@
 import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "@/store/index";
+import { RootState, AppDispatch } from "@/store/index";
 import {
   setClass,
   setSubject,
@@ -13,10 +13,19 @@ import {
 } from "@/store/slices/teacherSlice";
 import Button from "@/components/UI/Button";
 import Progress from "@/components/UI/Progress";
-import { FileText, X, UploadCloud } from "lucide-react";
+import {
+  FileText,
+  X,
+  UploadCloud,
+  ChevronDown,
+  BookOpen,
+  Bookmark,
+  GraduationCap,
+  LayoutGrid,
+} from "lucide-react";
 
 const Teacher = () => {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const {
     class: className,
     subject,
@@ -32,7 +41,7 @@ const Teacher = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setLocalFiles((prev: any) => [...prev, ...acceptedFiles]);
+    setLocalFiles((prev: File[]) => [...prev, ...acceptedFiles]);
   }, []);
 
   const handleRemoveFile = (fileName: string) => {
@@ -62,7 +71,7 @@ const Teacher = () => {
 
     try {
       setIsProcessing(true);
-      await dispatch(processFiles(localFiles) as any);
+      await dispatch(processFiles(localFiles));
     } catch (error) {
       console.error("Processing error:", error);
     } finally {
@@ -173,6 +182,7 @@ const Teacher = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleRemoveFile(file.name)}
+                  className={""}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -202,6 +212,7 @@ const Teacher = () => {
             <Button
               variant="outline"
               onClick={() => setShowResults(!showResults)}
+              className={""}
             >
               {showResults ? "Hide Results" : "Show Results"}
             </Button>
@@ -226,11 +237,12 @@ const Teacher = () => {
         <Button
           onClick={handleSubmit}
           disabled={isProcessing || localFiles.length === 0}
+          className={""}
         >
           {isProcessing ? "Processing..." : "Upload & Process"}
         </Button>
 
-        <Button variant="outline" onClick={handleReset}>
+        <Button variant="outline" onClick={handleReset} className={""}>
           Reset
         </Button>
       </div>

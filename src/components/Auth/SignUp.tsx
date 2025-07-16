@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { FiUser, FiMail, FiPhone, FiLock } from "react-icons/fi";
+import { FiUser, FiMail, FiLock } from "react-icons/fi";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-hot-toast";
@@ -8,15 +8,23 @@ import AuthLayout from "./AuthLayout";
 import AuthInput from "@/components/Auth/AuthInput";
 import PasswordStrength from "@/components/Auth/PasswordStrength";
 import { registerUser } from "@/store/slices/authSlice";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch } from "@/store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { FormikHelpers } from "formik";
+
+interface FormValues {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
 
 const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { isLoading, error } = useAppSelector((state: any) => state.auth);
+  // const { isLoading, error } = useAppSelector((state: any) => state.auth);
 
   const validationSchema = Yup.object({
     // name: Yup.string().required("Name is required"),
@@ -31,10 +39,12 @@ const SignUp = () => {
       .required("Confirm password is required"),
   });
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (
+    values: FormValues,
+    { setSubmitting }: FormikHelpers<FormValues>
+  ) => {
     setLoading(true);
-    console.log("signing up");
-    // Simulate API call
+
     const params = {
       email: values.email,
       password: values.password,
@@ -42,16 +52,21 @@ const SignUp = () => {
       username: values.username,
     };
 
-    dispatch(registerUser(params)).then((data) => {
-      console.log(data);
-      setLoading(false);
-      if (data.payload && !data.error) {
+    try {
+      const result = await dispatch(registerUser(params));
+      if (registerUser.fulfilled.match(result)) {
         toast.success("Account created successfully!");
         router.push("/signin");
       } else {
-        toast.error("Error");
+        toast.error("Error creating account");
       }
-    });
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+      console.log("error", error);
+    } finally {
+      setLoading(false);
+      setSubmitting(false);
+    }
   };
 
   return (

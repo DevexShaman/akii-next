@@ -1,20 +1,36 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const getAuthToken = () => {
+interface Tokens {
+  access: string;
+  refresh: string;
+}
+
+export class ApiError extends Error {
+  status?: number;
+  data?: any;
+
+  constructor(message: string, status?: number, data?: any) {
+    super(message);
+    this.status = status;
+    this.data = data;
+  }
+}
+
+const getAuthToken = (): string | null => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("access_token");
   }
   return null;
 };
 
-export function setTokens({ access, refresh }) {
+export function setTokens({ access, refresh }: Tokens): void {
   if (typeof window !== "undefined") {
     localStorage.setItem("access_token", access);
     localStorage.setItem("refresh_token", refresh);
   }
 }
 
-async function handleResponse(response) {
+async function handleResponse(response: Response): Promise<any> {
   if (response.status === 401) {
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
@@ -22,28 +38,49 @@ async function handleResponse(response) {
       localStorage.removeItem("username");
       window.location.href = "/signin";
     }
-    return Promise.reject(new Error("Session expired"));
+    return Promise.reject(new ApiError("Session expired", 401));
   }
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const error = new Error(
-      errorData.detail || errorData.message || "API Error"
+    let errorData: any = {};
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      // Ignore JSON parsing errors
+    }
+    const error = new ApiError(
+      errorData.detail || errorData.message || "API Error",
+      response.status,
+      errorData
     );
-    error.status = response.status;
-    error.data = errorData;
     throw error;
   }
 
   return response.json();
 }
 
-export async function apiGet(endpoint, options = {}) {
+//   if (!response.ok) {
+//     const errorData = await response.json().catch(() => ({}));
+//     const error = new Error(
+//       errorData.detail || errorData.message || "API Error"
+//     );
+//     error.status = response.status;
+//     error.data = errorData;
+//     throw error;
+//   }
+
+//   return response.json();
+// }
+
+export async function apiGet(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<any> {
   const token = getAuthToken();
-  const headers = {
+  const headers: HeadersInit = {
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
+    ...((options.headers as Record<string, string>) || {}),
   };
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
@@ -54,7 +91,11 @@ export async function apiGet(endpoint, options = {}) {
   return handleResponse(response);
 }
 
-export async function apiPost(endpoint, data = {}, options = {}) {
+export async function apiPost(
+  endpoint: string,
+  data: any | FormData = {},
+  options: RequestInit = {}
+): Promise<any> {
   const token = getAuthToken();
 
   // Create headers object
@@ -71,19 +112,27 @@ export async function apiPost(endpoint, data = {}, options = {}) {
 
   // Merge custom headers
   if (options.headers) {
-    Object.entries(options.headers).forEach(([key, value]) => {
-      headers.set(key, value);
+    const headersInit: [string, string][] =
+      options.headers instanceof Headers
+        ? Array.from(options.headers.entries())
+        : Array.isArray(options.headers)
+        ? options.headers
+        : Object.entries(options.headers);
+
+    headersInit.forEach(([key, value]) => {
+      headers.append(key, value);
     });
   }
 
   // Prepare body
   const body = data instanceof FormData ? data : JSON.stringify(data);
+  const { headers: _, ...restOptions } = options;
 
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     method: "POST",
     headers,
     body,
-    ...options,
+    ...restOptions,
   });
 
   return handleResponse(response);

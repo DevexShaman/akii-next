@@ -13,9 +13,11 @@ import { toast } from "react-hot-toast";
 const Dashboard = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const { generatedParagraph, isLoading } = useAppSelector(
+  const { generatedParagraph, isLoading, essayId } = useAppSelector(
     (state) => state.paragraph
   );
+
+  console.log("essayId", essayId);
 
   console.log("generatedParagraph", generatedParagraph);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -104,23 +106,23 @@ const Dashboard = () => {
       });
   };
 
-  const speakParagraph = (accent) => {
-    if ("speechSynthesis" in window && generatedParagraph) {
-      const utterance = new SpeechSynthesisUtterance(generatedParagraph);
-      const voices = speechSynthesis.getVoices();
-      const selectedVoice = voices.find((voice) =>
-        voice.name.toLowerCase().includes(accent.toLowerCase())
-      );
-      if (selectedVoice) {
-        utterance.voice = selectedVoice;
-      }
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      speechSynthesis.speak(utterance);
-    } else {
-      toast.warn("Text-to-speech not supported in this browser");
-    }
-  };
+  // const speakParagraph = (accent) => {
+  //   if ("speechSynthesis" in window && generatedParagraph) {
+  //     const utterance = new SpeechSynthesisUtterance(generatedParagraph);
+  //     const voices = speechSynthesis.getVoices();
+  //     const selectedVoice = voices.find((voice) =>
+  //       voice.name.toLowerCase().includes(accent.toLowerCase())
+  //     );
+  //     if (selectedVoice) {
+  //       utterance.voice = selectedVoice;
+  //     }
+  //     utterance.onstart = () => setIsSpeaking(true);
+  //     utterance.onend = () => setIsSpeaking(false);
+  //     speechSynthesis.speak(utterance);
+  //   } else {
+  //     toast.warn("Text-to-speech not supported in this browser");
+  //   }
+  // };
 
   const handlePractice = () => {
     if (!generatedParagraph) {
@@ -130,7 +132,7 @@ const Dashboard = () => {
 
     // Encode and pass paragraph via URL
     const encodedParagraph = encodeURIComponent(generatedParagraph);
-    router.push(`/practice?paragraph=${encodedParagraph}`);
+    router.push(`/practice?paragraph=${encodedParagraph}&essay_id=${essayId}`);
   };
 
   useEffect(() => {

@@ -1,8 +1,6 @@
-'use client';
-
-import ProtectedRoute from '@/components/Auth/ProtectedRoute';
-import Layout from '@/components/Layout/Layout';
-import ProfilePage from '@/pages/Profile/ProfilePage';
+import ProtectedRoute from "@/components/Auth/ProtectedRoute";
+import Layout from "@/components/Layout/Layout";
+import ProfilePage from "@/components/Profile/ProfilePage";
 
 export default function ProfileWrapper() {
   return (

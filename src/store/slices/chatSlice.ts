@@ -1,42 +1,70 @@
 // src/lib/features/chat/chatSlice.ts
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-interface ChatRequest {
+// interface ChatRequest {
+//   question: string;
+//   student_class: string;
+//   subject: string;
+//   curriculum: string;
+// }
+
+// interface ChatResponse {
+//   question: string;
+//   answer: string;
+//   context_used: string;
+// }
+
+interface UserQuestion {
   question: string;
-  student_class: string;
+  curriculum: string;
   subject: string;
 }
 
-interface ChatResponse {
-  question: string;
-  answer: string;
-  context_used: string;
+interface ChatError {
+  message: string;
 }
 
 export const sendChatMessage = createAsyncThunk(
   "chat/sendMessage",
-  async (payload: ChatRequest, { rejectWithValue }) => {
+  async (userQuestion: UserQuestion, { rejectWithValue }) => {
     try {
-      const response = await fetch("/chat", {
+      // const state = getState() as { teacher: UploadState };
+      // const { class: studentClass, subject, curriculum } = state.teacher;
+
+      const payload = {
+        question: userQuestion.question,
+        subject: userQuestion.subject || "",
+        curriculum: userQuestion.curriculum || "",
+      };
+
+      const backendUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://13.127.53.221";
+
+      const response = await fetch(`${backendUrl}/chat/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        throw new Error(`Invalid response: ${text.substring(0, 100)}`);
+      }
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Request failed");
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Request failed");
       }
 
       return await response.json();
-    } catch (error: any) {
-      return rejectWithValue(error.message || "An error occurred");
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as ChatError).message || "An error occurred"
+      );
     }
   }
 );
-
 interface ChatState {
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;

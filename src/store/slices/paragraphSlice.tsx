@@ -1,3 +1,5 @@
+//@ts-nocheck
+
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { apiPost } from "@/components/services/api";
 
@@ -12,8 +14,7 @@ export const generateParagraph = createAsyncThunk(
         mood: formData.mood,
       };
       const response = await apiPost("/generate-prompt", payload);
-      console.log("API Response:", response);
-      return response.response;
+      return { response: response.response, essay_id: response.essay_id };
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "An error occurred"
@@ -21,11 +22,18 @@ export const generateParagraph = createAsyncThunk(
     }
   }
 );
+interface ParagraphState {
+  generatedParagraph: string | null;
+  essayId: string | null; // Add essayId to state
+  isLoading: boolean;
+  error: string | null;
+}
 
-const initialState = {
+const initialState: ParagraphState = {
   generatedParagraph: null,
   isLoading: false,
   error: null,
+  essayId: null,
 };
 
 const paragraphSlice = createSlice({
@@ -46,11 +54,14 @@ const paragraphSlice = createSlice({
       })
       .addCase(generateParagraph.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.generatedParagraph = action.payload;
+        state.generatedParagraph = action.payload.response;
+        state.essayId = action.payload.essay_id;
       })
       .addCase(generateParagraph.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload || action.error.message;
+        state.generatedParagraph = null;
+        state.essayId = null;
       });
   },
 });

@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import {
-  FiMail,
   FiLock,
   FiGithub,
   FiTwitter,
@@ -15,15 +14,19 @@ import { toast } from "react-hot-toast";
 import AuthLayout from "./AuthLayout";
 import AuthInput from "@/components/Auth/AuthInput";
 import { loginUser } from "@/store/slices/authSlice";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch } from "@/store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+interface LoginFormValues {
+  username: string;
+  password: string;
+}
 const SignIn = () => {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
+  // const { isLoading, error } = useAppSelector((state) => state.auth);
   const router = useRouter();
 
   const validationSchema = Yup.object({
@@ -31,25 +34,28 @@ const SignIn = () => {
     password: Yup.string().required("Password is required"),
   });
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: LoginFormValues) => {
     setLoading(true);
-    // Simulate API call
-    dispatch(loginUser(values))
-      .then((data: any) => {
-        setLoading(false);
-        if (data.payload && !data.error && data.payload.access_token) {
-          console.log("Login data:", values);
+    try {
+      const result = await dispatch(loginUser(values));
+
+      if (loginUser.fulfilled.match(result)) {
+        const data = result.payload;
+        if (data && data.access_token) {
           toast.success("Login successful!");
           router.push("/dashboard");
         } else {
-          toast.error("Error");
+          toast.error("Authentication failed");
         }
-      })
-      .catch((err: any) => {
-        setLoading(false);
-
-        console.log(err);
-      });
+      } else {
+        toast.error(result.error?.message || "Login error");
+      }
+    } catch (err) {
+      toast.error("Unexpected error occurred");
+      console.log("error", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,9 +76,9 @@ const SignIn = () => {
                   name="username"
                   type="text"
                   placeholder="Username"
-                  value={values.email}
+                  value={values.username}
                   onChange={handleChange}
-                  error={touched.email && errors.email}
+                  error={touched.username && errors.username}
                 />
 
                 <AuthInput
@@ -150,7 +156,7 @@ const SignIn = () => {
 
           <div className="auth-footer">
             <p>
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-blue-600">
                 Sign Up
               </Link>

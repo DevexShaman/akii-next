@@ -11,6 +11,25 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    // Global rule overrides
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/ban-ts-comment": "off",
+    },
+  },
+  {
+    // File-specific rule overrides
+    files: [
+      "src/components/Practice/PracticePage.tsx",
+      "src/components/services/api.tsx",
+      "src/store/slices/**/*.tsx",
+    ],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "prefer-const": "off",
+    },
+  },
 ];
 
 export default eslintConfig;

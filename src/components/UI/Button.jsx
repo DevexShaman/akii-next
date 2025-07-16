@@ -9,7 +9,7 @@ const Button = ({
   variant = "primary",
   size = "md",
   loading = false,
-  disabled,
+  disabled = false,
   children,
   className,
   ...props

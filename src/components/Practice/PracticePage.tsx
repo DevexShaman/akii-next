@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../../store";
 import {
   initializePractice,
@@ -9,7 +9,7 @@ import {
   resetPracticeState,
   setAnalysisResults,
 } from "@/store/slices/practiceSlice";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   FaMicrophone,
   FaStop,
@@ -19,7 +19,8 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
-import { FaPause, FaVolumeUp } from "react-icons/fa";
+import { FaPause, FaVolumeUp, FaVolumeMute } from "react-icons/fa";
+import { fetchOverallScoring } from "@/store/slices/practiceSlice";
 
 const PracticePage = () => {
   const dispatch = useAppDispatch();
@@ -27,21 +28,23 @@ const PracticePage = () => {
   const searchParams = useSearchParams();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null); // Add type annotation
+  const [showResultButton, setShowResultButton] = useState(false);
+  const essayId = searchParams.get("essay_id");
 
   const paragraph = searchParams.get("paragraph")
     ? decodeURIComponent(searchParams.get("paragraph")!)
-    : "";
+    : null;
 
-  console.log("PracticePage received paragraph:", paragraph);
-  const audioUrl = searchParams.get("audioUrl") || "";
+  // const audioUrl = searchParams.get("audioUrl") || "";
 
-  const [recordedChunks, setRecordedChunks] = useState([]);
+  // const [recordedChunks, setRecordedChunks] = useState([]);
   const [debugAudioUrl, setDebugAudioUrl] = useState(null);
   const [isMonitoring, setIsMonitoring] = useState(false);
   const monitorRef = useRef(null);
 
-  const debugAudioRef = useRef(null);
+  // const debugAudioRef = useRef(null);
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
   const rawAudioRef = useRef([]);
@@ -63,6 +66,7 @@ const PracticePage = () => {
   );
 
   const getAuthToken = () => {
+    if (typeof window === "undefined") return "";
     try {
       const rawToken =
         localStorage.getItem("access_token") ||
@@ -76,30 +80,88 @@ const PracticePage = () => {
     }
   };
 
-  const toggleAudioPlayback = () => {
+  const fetchAndPlayAudio = async () => {
+    const token = getAuthToken();
+    const username = getUsername();
+
+    if (!username || !token) {
+      toast.error("Authentication required");
+      return;
+    }
+
+    setIsAudioLoading(true);
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const response = await fetch(
+        `${baseUrl}/get-tts-audio?username=${username}`,
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error("Audio fetch failed");
+
+      const audioBlob = await response.blob();
+      const url = URL.createObjectURL(audioBlob);
+
+      // Clean up previous audio if exists
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+
+      setAudioUrl(url);
+      return url;
+    } catch (error) {
+      toast.error("Failed to load audio: " + error.message);
+      return null;
+    } finally {
+      setIsAudioLoading(false);
+    }
+  };
+
+  const toggleAudioPlayback = async () => {
     if (!audioRef.current) return;
 
     if (isAudioPlaying) {
       audioRef.current.pause();
+      setIsAudioPlaying(false);
     } else {
-      audioRef.current.play().catch((error) => {
+      try {
+        let url = audioUrl;
+        if (!url) {
+          url = await fetchAndPlayAudio();
+        }
+
+        if (url && audioRef.current) {
+          if (audioRef.current.src !== url) {
+            audioRef.current.src = url;
+          }
+
+          await audioRef.current.play();
+          setIsAudioPlaying(true);
+        }
+      } catch (error) {
         console.error("Audio playback failed:", error);
         toast.error("Failed to play audio");
-      });
+      }
     }
-    setIsAudioPlaying(!isAudioPlaying);
   };
 
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
-  const testWebSocketConnection = async () => {
+  const testWebSocketConnection = useCallback(async () => {
+    const username = getUsername();
+    if (typeof window === "undefined") return;
     const token = getAuthToken();
     console.log("Testing WebSocket connection with token:", token);
     const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
-    const protocol = window.location.protocol === "http:" ? "ws:" : "ws:";
+    const protocol = window.location.protocol === "https:" ? "wss:" : "wss:";
 
     const testSocket = new WebSocket(
-      `${protocol}//${cleanBaseUrl}/ws/audio?username=test&token=${encodeURIComponent(
+      `${protocol}//${cleanBaseUrl}/ws/audio?username=${username}&token=${encodeURIComponent(
         token
       )}`
     );
@@ -118,7 +180,7 @@ const PracticePage = () => {
     testSocket.onmessage = (e) => {
       console.log("[TEST] Received:", e.data);
     };
-  };
+  }, [BASE_URL]);
 
   const startMicrophoneMonitoring = async () => {
     try {
@@ -164,6 +226,7 @@ const PracticePage = () => {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (paragraph) {
       dispatch(initializePractice(paragraph));
       testWebSocketConnection();
@@ -171,7 +234,7 @@ const PracticePage = () => {
       toast.error("No paragraph found for practice");
       router.push("/dashboard");
     }
-  }, [dispatch, paragraph, router]);
+  }, [dispatch, paragraph, router, testWebSocketConnection]);
 
   useEffect(() => {
     if (error) {
@@ -181,9 +244,11 @@ const PracticePage = () => {
 
   const handleStartRecording = async () => {
     setShowInfoNotice(false);
-    setRecordedChunks([]);
+    // setRecordedChunks([]);
     setDebugAudioUrl(null);
     rawAudioRef.current = [];
+
+    // console.log(recordedChunks);
 
     const hasMicrophone = await checkMicrophoneAccess();
     if (!hasMicrophone) return;
@@ -226,10 +291,9 @@ const PracticePage = () => {
       // });
 
       // Create audio context and processor
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)({
-        sampleRate: 16000,
-      });
+      const AudioContextClass =
+        window.AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioContextClass({ sampleRate: 16000 });
       audioContextRef.current = audioContext;
 
       const source = audioContext.createMediaStreamSource(stream);
@@ -260,7 +324,8 @@ const PracticePage = () => {
       console.log("Using username:", username);
       // mediaRecorderRef.current = mediaRecorder;
       const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
-      const protocol = window.location.protocol === "http:" ? "ws:" : "ws:";
+
+      const protocol = window.location.protocol === "https:" ? "wss:" : "wss:";
       const params = new URLSearchParams({
         username: encodeURIComponent(username),
         token: encodeURIComponent(token),
@@ -278,14 +343,15 @@ const PracticePage = () => {
         console.log("Extensions:", socket.extensions);
         // mediaRecorder.start(3000);
         dispatch(startRecording());
-        socket.sendInterval = setInterval(() => {
+        let sendInterval: NodeJS.Timeout;
+
+        sendInterval = setInterval(() => {
           if (
             rawAudioRef.current.length === 0 ||
             socket.readyState !== WebSocket.OPEN
           )
             return;
 
-          // Combine and send all available PCM chunks
           const chunks = rawAudioRef.current;
           rawAudioRef.current = [];
 
@@ -301,9 +367,8 @@ const PracticePage = () => {
             offset += chunk.length;
           });
 
-          // Send raw PCM data directly
           socket.send(combined.buffer);
-        }, 10000);
+        }, 3000);
       };
 
       socket.onmessage = (event) => {
@@ -337,7 +402,7 @@ const PracticePage = () => {
       //     });
 
       // Store chunk for debugging
-      setRecordedChunks((prev) => [...prev, event.data]);
+      // setRecordedChunks((prev) => [...prev, event.data]);
       const reader = new FileReader();
 
       // Send to WebSocket
@@ -364,60 +429,60 @@ const PracticePage = () => {
     }
   };
 
-  const playRecordedAudio = () => {
-    if (rawAudioRef.current.length === 0) return;
+  // const playRecordedAudio = () => {
+  //   if (rawAudioRef.current.length === 0) return;
 
-    // Combine all PCM chunks
-    const chunks = rawAudioRef.current;
-    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-    const combined = new Int16Array(totalLength);
-    let offset = 0;
+  //   // Combine all PCM chunks
+  //   const chunks = rawAudioRef.current;
+  //   const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+  //   const combined = new Int16Array(totalLength);
+  //   let offset = 0;
 
-    chunks.forEach((chunk) => {
-      combined.set(chunk, offset);
-      offset += chunk.length;
-    });
+  //   chunks.forEach((chunk) => {
+  //     combined.set(chunk, offset);
+  //     offset += chunk.length;
+  //   });
 
-    // Create WAV file for playback only
-    const wavBuffer = createWavFile(combined);
-    const blob = new Blob([wavBuffer], { type: "audio/wav" });
-    const url = URL.createObjectURL(blob);
-    setDebugAudioUrl(url);
-  };
+  //   // Create WAV file for playback only
+  //   const wavBuffer = createWavFile(combined);
+  //   const blob = new Blob([wavBuffer], { type: "audio/wav" });
+  //   const url = URL.createObjectURL(blob);
+  //   setDebugAudioUrl(url);
+  // };
 
-  const createWavFile = (pcmData) => {
-    const buffer = new ArrayBuffer(44 + pcmData.length * 2);
-    const view = new DataView(buffer);
+  // const createWavFile = (pcmData) => {
+  //   const buffer = new ArrayBuffer(44 + pcmData.length * 2);
+  //   const view = new DataView(buffer);
 
-    const writeString = (view, offset, string) => {
-      for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i));
-      }
-    };
+  //   const writeString = (view, offset, string) => {
+  //     for (let i = 0; i < string.length; i++) {
+  //       view.setUint8(offset + i, string.charCodeAt(i));
+  //     }
+  //   };
 
-    writeString(view, 0, "RIFF");
-    view.setUint32(4, 36 + pcmData.length * 2, true);
-    writeString(view, 8, "WAVE");
+  //   writeString(view, 0, "RIFF");
+  //   view.setUint32(4, 36 + pcmData.length * 2, true);
+  //   writeString(view, 8, "WAVE");
 
-    writeString(view, 12, "fmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, 16000, true);
-    view.setUint32(28, 16000 * 2, true);
-    view.setUint16(32, 2, true);
-    view.setUint16(34, 16, true);
+  //   writeString(view, 12, "fmt ");
+  //   view.setUint32(16, 16, true);
+  //   view.setUint16(20, 1, true);
+  //   view.setUint16(22, 1, true);
+  //   view.setUint32(24, 16000, true);
+  //   view.setUint32(28, 16000 * 2, true);
+  //   view.setUint16(32, 2, true);
+  //   view.setUint16(34, 16, true);
 
-    writeString(view, 36, "data");
-    view.setUint32(40, pcmData.length * 2, true);
+  //   writeString(view, 36, "data");
+  //   view.setUint32(40, pcmData.length * 2, true);
 
-    const dataOffset = 44;
-    for (let i = 0; i < pcmData.length; i++) {
-      view.setInt16(dataOffset + i * 2, pcmData[i], true);
-    }
+  //   const dataOffset = 44;
+  //   for (let i = 0; i < pcmData.length; i++) {
+  //     view.setInt16(dataOffset + i * 2, pcmData[i], true);
+  //   }
 
-    return buffer;
-  };
+  //   return buffer;
+  // };
 
   const handleStopRecording = () => {
     setShowInfoNotice(false);
@@ -479,16 +544,9 @@ const PracticePage = () => {
     }
 
     dispatch(stopRecording());
+    setShowResultButton(true);
   };
 
-  // Play audio function
-  const handlePlayAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.play();
-    }
-  };
-
-  // Navigate back to dashboard
   const handleBackToDashboard = () => {
     if (audioRef.current && isAudioPlaying) {
       audioRef.current.pause();
@@ -497,10 +555,28 @@ const PracticePage = () => {
     router.push("/dashboard");
   };
 
+  const handleSeeResults = () => {
+    if (!essayId) {
+      toast.error("Essay ID is missing");
+      return;
+    }
+
+    dispatch(fetchOverallScoring(essayId))
+      .unwrap()
+      .then((response) => {
+        // Navigate to result page with sessionId
+        router.push(`/result?essayId=${essayId}`);
+      })
+      .catch((error) => {
+        toast.error("Failed to fetch results: " + error.message);
+      });
+  };
+
   useEffect(() => {
+    const audioEl = audioRef.current;
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (audioEl) {
+        audioEl.pause();
       }
       // Cleanup when component unmounts
       if (socketRef.current) socketRef.current.close();
@@ -508,7 +584,7 @@ const PracticePage = () => {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       }
     };
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     return () => {
@@ -516,10 +592,16 @@ const PracticePage = () => {
     };
   }, [debugAudioUrl]);
 
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8">
-      <toast position="top-right" autoClose={5000} />
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -678,123 +760,39 @@ const PracticePage = () => {
                     ))}
                   </div>
                 )}
-              </div>
-              {recordedChunks.length > 0 && (
-                <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
-                  <h3 className="font-bold text-yellow-800">Debug Panel</h3>
-                  <p className="text-sm text-yellow-700 mb-2">
-                    {recordedChunks.length} chunks recorded (
-                    {recordedChunks.reduce((acc, chunk) => acc + chunk, 0)}{" "}
-                    bytes)
-                  </p>
-
-                  <button
-                    onClick={playRecordedAudio}
-                    className="bg-yellow-500 text-white px-3 py-1 rounded text-sm"
+                {showResultButton && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-8 flex justify-center"
                   >
-                    Play Recorded Audio
-                  </button>
-
-                  {debugAudioUrl && (
-                    <div className="mt-2">
-                      <audio
-                        ref={debugAudioRef}
-                        src={debugAudioUrl}
-                        controls
-                        className="w-full"
-                      />
-                      <a
-                        href={debugAudioUrl}
-                        download="debug-audio.webm"
-                        className="text-blue-600 text-sm underline mt-1 block"
-                      >
-                        Download Audio
-                      </a>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Analysis Results */}
-              {analysisResults && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="mt-8 p-6 bg-white rounded-xl border border-indigo-100 shadow-md"
-                >
-                  <h3 className="text-xl font-semibold text-indigo-800 mb-4">
-                    Your Analysis Results
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-indigo-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-indigo-700">
-                        Pronunciation
-                      </h4>
-                      <p className="text-2xl font-bold text-indigo-600">
-                        {analysisResults.pronunciationScore || "8.5"}/10
-                      </p>
-                    </div>
-                    <div className="bg-indigo-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-indigo-700">Fluency</h4>
-                      <p className="text-2xl font-bold text-indigo-600">
-                        {analysisResults.fluencyScore || "7.2"}/10
-                      </p>
-                    </div>
-                  </div>
-
-                  <h3 className="font-bold text-blue-800 mb-2">
-                    Microphone Diagnostics
-                  </h3>
-
-                  <div className="flex items-center gap-4">
                     <button
-                      onClick={
-                        isMonitoring
-                          ? stopMicrophoneMonitoring
-                          : startMicrophoneMonitoring
-                      }
-                      className={`flex items-center px-4 py-2 rounded-md ${
-                        isMonitoring
-                          ? "bg-red-500 hover:bg-red-600"
-                          : "bg-blue-500 hover:bg-blue-600"
-                      } text-white`}
+                      onClick={handleSeeResults}
+                      disabled={isAnalyzing}
+                      className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-lg font-semibold flex items-center disabled:opacity-75"
                     >
-                      {isMonitoring ? (
-                        <FaVolumeMute className="mr-2" />
-                      ) : (
-                        <FaVolumeUp className="mr-2" />
+                      {isAnalyzing ? (
+                        <FaSpinner className="animate-spin mr-2" />
+                      ) : null}
+                      See Detailed Results
+                      {!isAnalyzing && (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 ml-2"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
                       )}
-                      {isMonitoring ? "Stop Monitoring" : "Test Microphone"}
                     </button>
-
-                    <p className="text-sm text-blue-700">
-                      {isMonitoring
-                        ? "You should hear your microphone input now"
-                        : "Click to verify microphone works"}
-                    </p>
-                  </div>
-
-                  <div className="mt-4">
-                    <h4 className="font-medium text-indigo-700 mb-2">
-                      Feedback
-                    </h4>
-                    <ul className="space-y-2">
-                      {(
-                        analysisResults.feedback || [
-                          "Good job on pronunciation!",
-                          "Try to speak a bit slower for better clarity.",
-                          "Watch your intonation on questions.",
-                        ]
-                      ).map((item, i) => (
-                        <li key={i} className="flex items-start">
-                          <span className="text-green-500 mr-2">✓</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </div>
             </>
           )}
         </div>

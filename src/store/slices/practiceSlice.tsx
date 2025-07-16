@@ -1,15 +1,31 @@
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { apiGet } from "@/components/services/api";
 
 // Async thunk for initializing practice session
 export const initializePractice = createAsyncThunk(
   "practice/initialize",
-  async (paragraph, { rejectWithValue }) => {
+  async (paragraph: string, { rejectWithValue }) => {
     try {
       return { paragraph };
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to initialize practice"
+      );
+    }
+  }
+);
+
+export const fetchOverallScoring = createAsyncThunk(
+  "practice/fetchOverallScoring",
+  async (essayId: string, { rejectWithValue }) => {
+    try {
+      const response = await apiGet(
+        `/overall-scoring-by-id?essay_id=${essayId}`
+      );
+      return response;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch overall scoring"
       );
     }
   }
@@ -25,7 +41,6 @@ const initialState = {
   socket: null,
   mediaRecorder: null,
   stream: null,
-  sessionId: null,
 };
 
 const practiceSlice = createSlice({
@@ -80,6 +95,18 @@ const practiceSlice = createSlice({
       .addCase(initializePractice.rejected, (state, action) => {
         state.isAnalyzing = false;
         state.error = action.payload;
+      })
+      .addCase(fetchOverallScoring.pending, (state) => {
+        state.isAnalyzing = true;
+        state.error = null;
+      })
+      .addCase(fetchOverallScoring.fulfilled, (state, action) => {
+        state.isAnalyzing = false;
+        state.analysisResults = action.payload;
+      })
+      .addCase(fetchOverallScoring.rejected, (state, action) => {
+        state.isAnalyzing = false;
+        state.error = action.payload as string;
       });
   },
 });

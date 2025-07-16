@@ -7,20 +7,26 @@ import { useDispatch } from "react-redux";
 import { verifyAuth } from "@/store/slices/authSlice";
 
 const useAuth = () => {
-  const reduxAuth = useAppSelector((state) => state.auth.isAuthenticated);
-   const [hasToken, setHasToken] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
-   const dispatch = useDispatch<AppDispatch>()
-  console.log(reduxAuth)
-   useEffect(()=>{dispatch(verifyAuth())},[])
+  const dispatch = useDispatch<AppDispatch>();
+  console.log(isAuthenticated);
   useEffect(() => {
-    const token = typeof window !== "undefined"
-      ? localStorage.getItem("access_token")
-      : null;
-    setHasToken(!!token);
-  }, []);
+    const checkAuth = async () => {
+      try {
+        await dispatch(verifyAuth()).unwrap();
+      } catch (error) {
+        console.error("Auth verification failed:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  return {loading:false, isAuthenticated:reduxAuth} || {loading:false, isAuthenticated:!!hasToken};
-}
+    checkAuth();
+  }, [dispatch]);
+
+  return { loading, isAuthenticated };
+};
 
 export default useAuth;
