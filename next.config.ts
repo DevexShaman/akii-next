@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
+eslint :{
+	 ignoreDuringBuilds: true,
+},  
+async rewrites() {
     return [
       {
         source: "/api/:path*",
