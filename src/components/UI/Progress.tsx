@@ -3,9 +3,14 @@ import React from "react";
 interface ProgressProps {
   value: number;
   className?: string;
+  indicatorClassName?: string;
 }
 
-const Progress: React.FC<ProgressProps> = ({ value, className = "" }) => {
+const Progress: React.FC<ProgressProps> = ({
+  value,
+  className = "",
+  indicatorClassName,
+}) => {
   const progressValue = Math.min(100, Math.max(0, value));
 
   return (
