@@ -390,7 +390,7 @@ const PracticePage = () => {
           reason: event.reason,
           wasClean: event.wasClean,
         });
-        toast.error("WebSocket connection closed unexpectedly");
+        // toast.error("WebSocket connection closed unexpectedly");
       };
 
       // mediaRecorder.ondataavailable = (event) => {

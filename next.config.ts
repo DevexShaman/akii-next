@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://65.0.76.194/:path*",
+        destination: "http://llm.edusmartai.com/:path*",
       },
     ];
   },
