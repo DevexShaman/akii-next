@@ -86,7 +86,7 @@ const PracticePage = () => {
     setIsAudioLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "api/";
       const response = await fetch(
         `${baseUrl}/get-tts-audio?username=${username}`,
         {
