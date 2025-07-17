@@ -24,6 +24,11 @@ const Sidebar = () => {
       href: "/chat",
       icon: LayoutDashboard,
     },
+    {
+      name: "Voice Assistant",
+      href: "/voiceassistant",
+      icon: LayoutDashboard,
+    },
   ];
 
   return (
