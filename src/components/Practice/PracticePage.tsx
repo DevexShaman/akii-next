@@ -29,7 +29,7 @@ const PracticePage = () => {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement>(null); // Add type annotation
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [showResultButton, setShowResultButton] = useState(false);
   const essayId = searchParams.get("essay_id");
 
@@ -37,28 +37,22 @@ const PracticePage = () => {
     ? decodeURIComponent(searchParams.get("paragraph")!)
     : null;
 
-  // const audioUrl = searchParams.get("audioUrl") || "";
-
-  // const [recordedChunks, setRecordedChunks] = useState([]);
   const [debugAudioUrl, setDebugAudioUrl] = useState(null);
   const [isMonitoring, setIsMonitoring] = useState(false);
   const monitorRef = useRef(null);
 
-  // const debugAudioRef = useRef(null);
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
   const rawAudioRef = useRef([]);
 
   const [showInfoNotice, setShowInfoNotice] = useState(true);
-  // const { username } = useAppSelector((state) => state.auth);
 
   const getUsername = () => {
     return localStorage.getItem("username") || "unknown_user";
   };
 
-  // New refs for media objects
   const mediaStreamRef = useRef(null);
-  // const mediaRecorderRef = useRef(null);
+
   const socketRef = useRef(null);
 
   const { isRecording, isAnalyzing, analysisResults, error } = useAppSelector(
@@ -107,7 +101,6 @@ const PracticePage = () => {
       const audioBlob = await response.blob();
       const url = URL.createObjectURL(audioBlob);
 
-      // Clean up previous audio if exists
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);
       }
@@ -152,13 +145,24 @@ const PracticePage = () => {
 
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
+  if (!BASE_URL) {
+    console.error("❌ NEXT_PUBLIC_API_URL is not defined");
+    toast.error("Configuration error: API URL missing");
+    return;
+  }
+
   const testWebSocketConnection = useCallback(async () => {
     const username = getUsername();
     if (typeof window === "undefined") return;
     const token = getAuthToken();
     console.log("Testing WebSocket connection with token:", token);
+    if (!token) {
+      toast.error("Authentication token missing");
+      return;
+    }
+
     const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
-    const protocol = window.location.protocol === "https:" ? "wss:" : "wss:";
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 
     const testSocket = new WebSocket(
       `${protocol}//${cleanBaseUrl}/ws/audio?username=${username}&token=${encodeURIComponent(
@@ -244,11 +248,8 @@ const PracticePage = () => {
 
   const handleStartRecording = async () => {
     setShowInfoNotice(false);
-    // setRecordedChunks([]);
     setDebugAudioUrl(null);
     rawAudioRef.current = [];
-
-    // console.log(recordedChunks);
 
     const hasMicrophone = await checkMicrophoneAccess();
     if (!hasMicrophone) return;
@@ -272,25 +273,6 @@ const PracticePage = () => {
 
       mediaStreamRef.current = stream;
 
-      // const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      //   ? "audio/webm;codecs=opus"
-      //   : MediaRecorder.isTypeSupported("audio/webm")
-      //   ? "audio/webm"
-      //   : "";
-
-      // if (!mimeType) {
-      //   toast.error("Browser doesn't support required audio formats");
-      //   return;
-      // }
-
-      // console.log("Using MIME type:", mimeType);
-
-      // const mediaRecorder = new MediaRecorder(stream, {
-      //   mimeType,
-      //   audioBitsPerSecond: 128000,
-      // });
-
-      // Create audio context and processor
       const AudioContextClass =
         window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContextClass({ sampleRate: 16000 });
@@ -308,7 +290,6 @@ const PracticePage = () => {
           pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
         }
 
-        // Add to raw audio buffer
         rawAudioRef.current.push(pcmData);
       };
 
@@ -322,7 +303,7 @@ const PracticePage = () => {
       }
       const username = getUsername();
       console.log("Using username:", username);
-      // mediaRecorderRef.current = mediaRecorder;
+
       const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
 
       const protocol = window.location.protocol === "https:" ? "wss:" : "wss:";
@@ -341,7 +322,7 @@ const PracticePage = () => {
         console.log("WebSocket connected");
         console.log("Protocol:", socket.protocol);
         console.log("Extensions:", socket.extensions);
-        // mediaRecorder.start(3000);
+
         dispatch(startRecording());
         let sendInterval: NodeJS.Timeout;
 
@@ -374,7 +355,6 @@ const PracticePage = () => {
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log("Analysis received:", data);
-        // Handle analysis data (you might want to accumulate or display it)
         dispatch(setAnalysisResults(data));
       };
 
@@ -390,19 +370,8 @@ const PracticePage = () => {
           reason: event.reason,
           wasClean: event.wasClean,
         });
-        // toast.error("WebSocket connection closed unexpectedly");
       };
 
-      // mediaRecorder.ondataavailable = (event) => {
-      //   if (event.data.size > 0) {
-      //     console.log("Audio chunk received:", {
-      //       size: event.data.size,
-      //       type: event.data.type,
-      //       duration: event.data.duration,
-      //     });
-
-      // Store chunk for debugging
-      // setRecordedChunks((prev) => [...prev, event.data]);
       const reader = new FileReader();
 
       // Send to WebSocket
@@ -412,14 +381,7 @@ const PracticePage = () => {
           socket.send(reader.result);
         }
       };
-      // reader.readAsArrayBuffer(event.data);
 
-      // mediaRecorder.onstop = () => {
-      //   if (socket.readyState === WebSocket.OPEN) {
-      //     socket.send(JSON.stringify({ action: "end" }));
-      //     socket.close();
-      //   }
-      // };
       source.connect(processor);
       processor.connect(audioContext.destination);
     } catch (err) {
@@ -428,61 +390,6 @@ const PracticePage = () => {
       dispatch(stopRecording());
     }
   };
-
-  // const playRecordedAudio = () => {
-  //   if (rawAudioRef.current.length === 0) return;
-
-  //   // Combine all PCM chunks
-  //   const chunks = rawAudioRef.current;
-  //   const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-  //   const combined = new Int16Array(totalLength);
-  //   let offset = 0;
-
-  //   chunks.forEach((chunk) => {
-  //     combined.set(chunk, offset);
-  //     offset += chunk.length;
-  //   });
-
-  //   // Create WAV file for playback only
-  //   const wavBuffer = createWavFile(combined);
-  //   const blob = new Blob([wavBuffer], { type: "audio/wav" });
-  //   const url = URL.createObjectURL(blob);
-  //   setDebugAudioUrl(url);
-  // };
-
-  // const createWavFile = (pcmData) => {
-  //   const buffer = new ArrayBuffer(44 + pcmData.length * 2);
-  //   const view = new DataView(buffer);
-
-  //   const writeString = (view, offset, string) => {
-  //     for (let i = 0; i < string.length; i++) {
-  //       view.setUint8(offset + i, string.charCodeAt(i));
-  //     }
-  //   };
-
-  //   writeString(view, 0, "RIFF");
-  //   view.setUint32(4, 36 + pcmData.length * 2, true);
-  //   writeString(view, 8, "WAVE");
-
-  //   writeString(view, 12, "fmt ");
-  //   view.setUint32(16, 16, true);
-  //   view.setUint16(20, 1, true);
-  //   view.setUint16(22, 1, true);
-  //   view.setUint32(24, 16000, true);
-  //   view.setUint32(28, 16000 * 2, true);
-  //   view.setUint16(32, 2, true);
-  //   view.setUint16(34, 16, true);
-
-  //   writeString(view, 36, "data");
-  //   view.setUint32(40, pcmData.length * 2, true);
-
-  //   const dataOffset = 44;
-  //   for (let i = 0; i < pcmData.length; i++) {
-  //     view.setInt16(dataOffset + i * 2, pcmData[i], true);
-  //   }
-
-  //   return buffer;
-  // };
 
   const handleStopRecording = () => {
     setShowInfoNotice(false);
@@ -497,16 +404,13 @@ const PracticePage = () => {
       audioContextRef.current = null;
     }
 
-    // Stop media stream
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
     }
 
-    // Send remaining chunks and close socket
     if (socketRef.current) {
       const socket = socketRef.current;
 
-      // Send any remaining audio chunks
       if (
         rawAudioRef.current.length > 0 &&
         socket.readyState === WebSocket.OPEN
@@ -529,12 +433,10 @@ const PracticePage = () => {
         socket.send(combined.buffer);
       }
 
-      // Clear send interval if exists
       if (socket.sendInterval) {
         clearInterval(socket.sendInterval);
       }
 
-      // Send end signal and close
       if (socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ action: "end" }));
         socket.close(1000, "Recording completed");
@@ -564,7 +466,6 @@ const PracticePage = () => {
     dispatch(fetchOverallScoring(essayId))
       .unwrap()
       .then((response) => {
-        // Navigate to result page with sessionId
         router.push(`/result?essayId=${essayId}`);
       })
       .catch((error) => {
@@ -578,7 +479,7 @@ const PracticePage = () => {
       if (audioEl) {
         audioEl.pause();
       }
-      // Cleanup when component unmounts
+
       if (socketRef.current) socketRef.current.close();
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -629,7 +530,6 @@ const PracticePage = () => {
             </div>
           ) : (
             <>
-              {/* Paragraph Display */}
               {!isRecording && (
                 <div className="mb-8 bg-indigo-50 p-4 rounded-xl border border-indigo-100 transition-all duration-500">
                   <h3 className="text-lg font-semibold text-indigo-800 mb-3">
@@ -643,7 +543,6 @@ const PracticePage = () => {
                 </div>
               )}
 
-              {/* Audio Player */}
               <div className="mb-8 flex justify-center">
                 <button
                   onClick={toggleAudioPlayback}
@@ -670,7 +569,6 @@ const PracticePage = () => {
                   </span>
                 </button>
 
-                {/* Audio element */}
                 <audio
                   ref={audioRef}
                   src={audioUrl}
@@ -684,7 +582,6 @@ const PracticePage = () => {
                 />
               </div>
 
-              {/* Recording Controls */}
               <div className="flex flex-col items-center justify-center my-8">
                 {showInfoNotice && !isRecording && (
                   <motion.div
