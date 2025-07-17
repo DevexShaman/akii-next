@@ -1,19 +1,6 @@
 // src/lib/features/chat/chatSlice.ts
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-// interface ChatRequest {
-//   question: string;
-//   student_class: string;
-//   subject: string;
-//   curriculum: string;
-// }
-
-// interface ChatResponse {
-//   question: string;
-//   answer: string;
-//   context_used: string;
-// }
-
 interface UserQuestion {
   question: string;
   curriculum: string;

@@ -9,8 +9,19 @@ import {
   FaChartLine,
   FaVolumeUp,
   FaLightbulb,
+  FaRegSmile,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
+
+type ResultAPI = {
+  understanding: string;
+  topic_grip: string;
+  suggestions: string[];
+  pronunciation: number | string;
+  grammar: number | string;
+  fluency: number | string;
+  emotion: string;
+};
 
 const ResultPage = () => {
   const router = useRouter();
@@ -88,25 +99,20 @@ const ResultPage = () => {
         pronunciation: parseScore(resultData.pronunciation),
         fluency: parseScore(resultData.fluency),
         grammar: parseScore(resultData.grammar),
-        vocabulary: 0, // Not in API response
-        feedback: [
-          `Understanding: ${resultData.understanding}`,
-          `Topic Grip: ${resultData.topic_grip}`,
-          // ...resultData.suggestions,
-        ],
-        strengths: ["Good effort!"], // Default since API doesn't provide
-        areasToImprove: ["Keep practicing!"], // Default since API doesn't provide
+        emotion: resultData.emotion,
+        understanding: resultData.understanding,
+        topicGrip: resultData.topic_grip,
+        suggestions: resultData.suggestions || [],
       }
     : {
-        // Fallback data
         overallScore: 0,
         pronunciation: 0,
         fluency: 0,
         grammar: 0,
-        vocabulary: 0,
-        feedback: [],
-        strengths: [],
-        areasToImprove: [],
+        emotion: "",
+        understanding: "",
+        topicGrip: "",
+        suggestions: [],
       };
 
   if (loading) {
@@ -139,6 +145,14 @@ const ResultPage = () => {
       </div>
     );
   }
+
+  const emotion = resultData!.emotion;
+
+  const breakdown = [
+    { label: "Pronunciation", score: parseScore(resultData!.pronunciation) },
+    { label: "Fluency", score: parseScore(resultData!.fluency) },
+    { label: "Grammar", score: parseScore(resultData!.grammar) },
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
@@ -199,7 +213,6 @@ const ResultPage = () => {
               {[
                 { label: "Pronunciation", score: result.pronunciation },
                 { label: "Fluency", score: result.fluency },
-                { label: "Vocabulary", score: result.vocabulary },
                 { label: "Grammar", score: result.grammar },
               ].map((item, index) => (
                 <div key={index}>
@@ -218,44 +231,27 @@ const ResultPage = () => {
             </div>
           </div>
 
-          {/* Strengths & Improvements */}
+          {/* Emotion & Suggestions */}
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-lg">
               <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <FaVolumeUp className="text-green-500 mr-2" />
-                Your Strengths
+                <FaRegSmile className="text-indigo-500 mr-2" />
+                Emotion
               </h3>
-              <ul className="space-y-2">
-                {result.strengths.map((strength, index) => (
-                  <li key={index} className="flex items-start">
-                    <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
-                      <svg
-                        className="w-4 h-4 text-green-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        ></path>
-                      </svg>
-                    </div>
-                    <span className="text-gray-700">{strength}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="flex items-center">
+                <span className="inline-block bg-indigo-100 text-indigo-800 text-lg px-4 py-2 rounded-full">
+                  {result.emotion}
+                </span>
+              </div>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-lg">
               <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                 <FaLightbulb className="text-yellow-500 mr-2" />
-                Areas to Improve
+                Suggestions for Improvement
               </h3>
               <ul className="space-y-2">
-                {result.areasToImprove.map((area, index) => (
+                {result.suggestions.map((suggestion, index) => (
                   <li key={index} className="flex items-start">
                     <div className="bg-yellow-100 p-1 rounded-full mr-3 mt-1">
                       <svg
@@ -272,7 +268,7 @@ const ResultPage = () => {
                         ></path>
                       </svg>
                     </div>
-                    <span className="text-gray-700">{area}</span>
+                    <span className="text-gray-700">{suggestion}</span>
                   </li>
                 ))}
               </ul>
@@ -291,18 +287,16 @@ const ResultPage = () => {
             Detailed Feedback
           </h3>
           <div className="space-y-4">
-            {result.feedback.map((item, index) => (
-              <div
-                key={index}
-                className={`p-4 rounded-xl border-l-4 ${
-                  index % 2 === 0
-                    ? "bg-blue-50 border-l-blue-500"
-                    : "bg-purple-50 border-l-purple-500"
-                }`}
-              >
-                <p className="text-gray-700">{item}</p>
-              </div>
-            ))}
+            <div className="p-4 rounded-xl bg-blue-50 border-l-4 border-l-blue-500">
+              <h4 className="font-semibold text-gray-800 mb-2">
+                Understanding
+              </h4>
+              <p className="text-gray-700">{result.understanding}</p>
+            </div>
+            <div className="p-4 rounded-xl bg-purple-50 border-l-4 border-l-purple-500">
+              <h4 className="font-semibold text-gray-800 mb-2">Topic Grip</h4>
+              <p className="text-gray-700">{result.topicGrip}</p>
+            </div>
           </div>
         </motion.div>
 

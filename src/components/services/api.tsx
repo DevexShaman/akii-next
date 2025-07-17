@@ -1,4 +1,4 @@
-//const BASE_URL = process.env;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface Tokens {
   access: string;
@@ -83,7 +83,7 @@ export async function apiGet(
     ...((options.headers as Record<string, string>) || {}),
   };
 
-  const response = await fetch(`api/${endpoint}`, {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
     method: "GET",
     headers,
     ...options,
@@ -128,7 +128,7 @@ export async function apiPost(
   const body = data instanceof FormData ? data : JSON.stringify(data);
   const { headers: _, ...restOptions } = options;
 
-  const response = await fetch(`api/${endpoint}`, {
+  const response = await fetch(`${BASE_URL}${endpoint}`, {
     method: "POST",
     headers,
     body,
