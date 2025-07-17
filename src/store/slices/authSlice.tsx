@@ -93,18 +93,16 @@ export const loginUser = createAsyncThunk(
 );
 
 export const registerUser = createAsyncThunk<
-  AuthResponse, // resolved value
-  RegisterParams, // argument type
-  { rejectValue: AuthError } // rejectWithValue type
+  AuthResponse,
+  RegisterParams,
+  { rejectValue: AuthError }
 >("auth/register", async (data, { rejectWithValue }) => {
   try {
     const response = await apiPost("/register", data);
     return response as AuthResponse;
   } catch (unknownErr) {
-    // 1) Start from unknown
     let errorPayload: AuthError;
 
-    // 2) Is it an AxiosError with a well‑typed response?
     if (axios.isAxiosError(unknownErr) && unknownErr.response?.data) {
       errorPayload = unknownErr.response.data as AuthError;
     }

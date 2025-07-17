@@ -37,8 +37,7 @@ export const sendChatMessage = createAsyncThunk(
         curriculum: userQuestion.curriculum || "",
       };
 
-      const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://13.127.53.221";
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL;
 
       const response = await fetch(`${backendUrl}/chat/`, {
         method: "POST",
