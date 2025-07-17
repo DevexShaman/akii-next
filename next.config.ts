@@ -4,11 +4,7 @@ const nextConfig: NextConfig = {
 eslint :{
 	 ignoreDuringBuilds: true,
 },  
-async rewrites() {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  async rewrites() {
+async rewrites(){
     return [
       {
         source: "/api/:path*",

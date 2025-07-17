@@ -38,7 +38,7 @@ export const sendChatMessage = createAsyncThunk(
       };
 
       const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://13.127.53.221";
+        process.env.NEXT_PUBLIC_API_URL || "https://llm.edusmartai.com/api";
 
       const response = await fetch(`${backendUrl}/chat/`, {
         method: "POST",
