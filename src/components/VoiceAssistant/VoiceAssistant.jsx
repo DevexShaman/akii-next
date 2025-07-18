@@ -34,11 +34,10 @@ export default function VoiceAssistant() {
   const processorRef = useRef(null);
   const rawAudioRef = useRef([]);
   const sendIntervalRef = useRef(null);
-  const aiResponseAudioRef = useRef(null);
+  const [transcription, setTranscription] = useState("");
+  const isPlayingRef = useRef(false);
+  const audioQueueRef = useRef([]);
 
-  const previousBlobUrlRef = useRef(null);
-
-  // Initialize WebRTC
   const initWebRTC = async () => {
     try {
       setStatus("connecting");
@@ -58,6 +57,21 @@ export default function VoiceAssistant() {
       if (localAudioRef.current) {
         localAudioRef.current.srcObject = stream;
       }
+
+      const playAudioBuffer = async (arrayBuffer) => {
+        try {
+          const context = new (window.AudioContext ||
+            window.webkitAudioContext)();
+          const audioBuffer = await context.decodeAudioData(arrayBuffer);
+          const source = context.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(context.destination);
+          source.start(0);
+          source.onended = () => context.close();
+        } catch (e) {
+          console.error("Error playing audio:", e);
+        }
+      };
 
       const AudioContextClass =
         window.AudioContext || window.webkitAudioContext;
@@ -125,22 +139,15 @@ export default function VoiceAssistant() {
         }
       };
 
-      // Handle remote tracks
       pc.ontrack = (event) => {
         console.log("Received remote tracks");
-        if (aiResponseAudioRef.current) {
-          // Create new audio context for playback
-          const playbackContext = new (window.AudioContext ||
-            window.webkitAudioContext)();
-          const remoteSource = playbackContext.createMediaStreamSource(
-            event.streams[0]
-          );
-
-          // Connect to destination (speakers)
-          remoteSource.connect(playbackContext.destination);
+        if (remoteAudioRef.current && !remoteAudioRef.current.srcObject) {
+          remoteAudioRef.current.srcObject = event.streams[0];
+          remoteAudioRef.current
+            .play()
+            .catch((e) => console.error("Remote audio play error:", e));
         }
       };
-
       const username = getUsername();
       const authHeader = getAuthToken();
       const token = authHeader.replace(/^Bearer\s+/i, "");
@@ -150,7 +157,6 @@ export default function VoiceAssistant() {
       wsUrl.searchParams.append("token", token);
 
       const ws = new WebSocket(wsUrl.toString());
-      console.log("22222222222", ws);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -204,53 +210,19 @@ export default function VoiceAssistant() {
           });
       };
 
-      //   sendIntervalRef.current = setInterval(() => {
-      //     if (
-      //       rawAudioRef.current.length === 0 ||
-      //       ws.readyState !== WebSocket.OPEN
-      //     )
-      //       return;
-
-      //     const chunks = [...rawAudioRef.current];
-      //     rawAudioRef.current = [];
-
-      //     const totalLength = chunks.reduce(
-      //       (acc, chunk) => acc + chunk.length,
-      //       0
-      //     );
-      //     const combined = new Int16Array(totalLength);
-      //     let offset = 0;
-
-      //     chunks.forEach((chunk) => {
-      //       combined.set(chunk, offset);
-      //       offset += chunk.length;
-      //     });
-
-      //     ws.send(combined.buffer);
-      //   }, 300); // Reduced interval for better real-time feel
-
       ws.onmessage = async (event) => {
         console.log("WebSocket message:", event.data);
 
-        if (event.data instanceof ArrayBuffer) {
-          console.log("Received AI audio response");
-          if (previousBlobUrlRef.current) {
-            URL.revokeObjectURL(previousBlobUrlRef.current);
-          }
-
-          // Create a blob from the binary data
-          const blob = new Blob([event.data], { type: "audio/wav" });
-          const url = URL.createObjectURL(blob);
-          previousBlobUrlRef.current = url;
-
-          // Play the audio
-          if (aiResponseAudioRef.current) {
-            aiResponseAudioRef.current.src = url;
-            aiResponseAudioRef.current.play().catch((error) => {
-              console.error("Error playing AI response:", error);
-            });
-          }
+        if (event.data instanceof Blob) {
+          console.log("Received Blob audio");
+          const arrayBuffer = await event.data.arrayBuffer();
+          playAudioBuffer(arrayBuffer);
+        } else if (event.data instanceof ArrayBuffer) {
+          console.log("Received ArrayBuffer audio");
+          playAudioBuffer(event.data);
         }
+        // Handle text messages (signaling and transcriptions)
+
         // Handle text messages (WebRTC signaling)
         else if (typeof event.data === "string") {
           try {
@@ -303,17 +275,13 @@ export default function VoiceAssistant() {
         sum += dataArray[i];
       }
       const average = sum / bufferLength;
-      setAudioLevel(average / 128); // Normalize to 0-1
+      setAudioLevel(average / 128);
     };
 
     draw();
   };
 
-  // Cleanup on unmount
-
   const cleanup = () => {
-    // Clear audio sending interval
-
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -323,7 +291,6 @@ export default function VoiceAssistant() {
       sendIntervalRef.current = null;
     }
 
-    // Close audio processing
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
@@ -334,33 +301,23 @@ export default function VoiceAssistant() {
       audioContextRef.current = null;
     }
 
-    // Clear audio buffer
     rawAudioRef.current = [];
 
-    // Close peer connection
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
     }
 
-    // Close WebSocket
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
     }
 
-    // Stop media stream
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
-    if (aiResponseAudioRef.current) {
-      aiResponseAudioRef.current.pause();
-      aiResponseAudioRef.current.src = "";
-    }
-    if (previousBlobUrlRef.current) {
-      URL.revokeObjectURL(previousBlobUrlRef.current);
-    }
+
     rawAudioRef.current = [];
     mediaStreamRef.current = null;
     pcRef.current = null;
@@ -368,10 +325,6 @@ export default function VoiceAssistant() {
     analyzerRef.current = null;
     audioContextRef.current = null;
     processorRef.current = null;
-    if (aiResponseAudioRef.current) {
-      aiResponseAudioRef.current.pause();
-      aiResponseAudioRef.current.src = "";
-    }
   };
 
   const stopAssistant = () => {
@@ -379,7 +332,6 @@ export default function VoiceAssistant() {
     cleanup();
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return cleanup;
   }, []);
@@ -391,7 +343,6 @@ export default function VoiceAssistant() {
     error: "bg-red-500",
   };
 
-  // Status messages
   const statusMessages = {
     idle: "Ready to start",
     connecting: "Connecting...",
@@ -402,15 +353,12 @@ export default function VoiceAssistant() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-center">
           <h1 className="text-2xl font-bold text-white">Voice Assistant</h1>
           <p className="text-indigo-200 mt-1">AI-powered voice assistant</p>
         </div>
 
-        {/* Main Content */}
         <div className="p-8 flex flex-col items-center">
-          {/* Visualizer */}
           <div className="relative mb-8">
             <div className="w-48 h-48 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center shadow-inner">
               <AnimatePresence>
@@ -537,7 +485,6 @@ export default function VoiceAssistant() {
             </div>
           </div>
 
-          {/* Tips */}
           <div className="mt-8 text-center text-gray-600 text-sm">
             {status === "idle" && <p>Click the microphone to start speaking</p>}
             {status === "connected" && (
@@ -546,13 +493,14 @@ export default function VoiceAssistant() {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="bg-gray-50 p-4 text-center text-gray-500 text-sm">
           Powered by WebRTC & AI
         </div>
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg max-w-full">
+          <p className="text-sm text-gray-700 font-semibold">Transcription:</p>
+          <p className="text-gray-600 break-words">{transcription}</p>
+        </div>
       </div>
-
-      {/* Hidden audio elements */}
       <audio
         ref={localAudioRef}
         muted
@@ -560,8 +508,8 @@ export default function VoiceAssistant() {
         playsInline
         className="hidden"
       />
+
       <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-      <audio ref={aiResponseAudioRef} autoPlay playsInline className="hidden" />
     </div>
   );
 }
