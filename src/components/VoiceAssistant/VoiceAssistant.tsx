@@ -22,6 +22,7 @@ const getAuthToken = () => {
 export default function VoiceAssistant() {
   const [status, setStatus] = useState("idle");
   const [audioLevel, setAudioLevel] = useState(0);
+  const [transcription, setTranscription] = useState("");
   const localAudioRef = useRef(null);
   const remoteAudioRef = useRef(null);
   const pcRef = useRef(null);
@@ -29,14 +30,149 @@ export default function VoiceAssistant() {
   const mediaStreamRef = useRef(null);
   const analyzerRef = useRef(null);
   const animationRef = useRef(null);
-
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
   const rawAudioRef = useRef([]);
   const sendIntervalRef = useRef(null);
-  const [transcription, setTranscription] = useState("");
   const isPlayingRef = useRef(false);
   const audioQueueRef = useRef([]);
+  const playbackContextRef = useRef(null); // New ref for playback context
+
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, []);
+
+  const initializeAudioProcessing = async (stream) => {
+    // Create audio context if needed
+    try {
+      if (
+        !audioContextRef.current ||
+        audioContextRef.current.state === "closed"
+      ) {
+        const AudioContextClass =
+          window.AudioContext || window.webkitAudioContext;
+        audioContextRef.current = new AudioContextClass({ sampleRate: 16000 });
+      }
+
+      const audioContext = audioContextRef.current;
+
+      if (audioContext.state === "suspended") {
+        await audioContext.resume();
+      }
+
+      // Create analyzer for visualization
+      const analyzer = audioContext.createAnalyser();
+      analyzerRef.current = analyzer;
+      analyzer.fftSize = 256;
+
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyzer);
+
+      // Create processor for audio capture
+      const processor = audioContext.createScriptProcessor(4096, 1, 1);
+      processorRef.current = processor;
+
+      // Process audio chunks
+      processor.onaudioprocess = (event) => {
+        if (isPlayingRef.current) return;
+        const inputData = event.inputBuffer.getChannelData(0);
+        const pcmData = new Int16Array(inputData.length);
+        for (let i = 0; i < inputData.length; i++) {
+          const s = Math.max(-1, Math.min(1, inputData[i]));
+          pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+        }
+        rawAudioRef.current.push(pcmData);
+      };
+
+      source.connect(processor);
+      processor.connect(audioContext.destination);
+
+      visualizeAudio();
+    } catch (error) {
+      console.error("Audio processing init error:", error);
+      setStatus("error");
+    }
+  };
+
+  const playAudioBuffer = async (arrayBuffer) => {
+    if (isPlayingRef.current) {
+      audioQueueRef.current.push(arrayBuffer);
+      return;
+    }
+
+    try {
+      setStatus("playing");
+      isPlayingRef.current = true;
+
+      // Mute microphone during playback
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => {
+          track.enabled = false;
+        });
+      }
+
+      // Create new context for playback
+      playbackContextRef.current = new (window.AudioContext ||
+        window.webkitAudioContext)({
+        sampleRate: 16000,
+      });
+
+      const context = playbackContextRef.current;
+      const audioBuffer = await context.decodeAudioData(arrayBuffer);
+      const source = context.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(context.destination);
+      source.start(0);
+
+      source.onended = () => {
+        // Unmute microphone
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((track) => {
+            track.enabled = true;
+          });
+        }
+
+        // Clean up playback context
+        context.close();
+        playbackContextRef.current = null;
+
+        // Handle queue
+        if (audioQueueRef.current.length > 0) {
+          const nextBuffer = audioQueueRef.current.shift();
+          playAudioBuffer(nextBuffer);
+        } else {
+          setStatus("connected");
+          isPlayingRef.current = false;
+          setTranscription("");
+        }
+      };
+    } catch (e) {
+      console.error("Playback error:", e);
+      // Ensure mic is unmuted on error
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => {
+          track.enabled = true;
+        });
+      }
+      setStatus("connected");
+      isPlayingRef.current = false;
+
+      if (playbackContextRef.current) {
+        playbackContextRef.current.close();
+        playbackContextRef.current = null;
+      }
+
+      if (audioQueueRef.current.length > 0) {
+        const nextBuffer = audioQueueRef.current.shift();
+        playAudioBuffer(nextBuffer);
+      } else {
+        // FIX: Ensure status reset when queue is empty
+        isPlayingRef.current = false;
+      }
+    }
+  };
 
   const initWebRTC = async () => {
     try {
@@ -58,53 +194,8 @@ export default function VoiceAssistant() {
         localAudioRef.current.srcObject = stream;
       }
 
-      const playAudioBuffer = async (arrayBuffer) => {
-        try {
-          const context = new (window.AudioContext ||
-            window.webkitAudioContext)();
-          const audioBuffer = await context.decodeAudioData(arrayBuffer);
-          const source = context.createBufferSource();
-          source.buffer = audioBuffer;
-          source.connect(context.destination);
-          source.start(0);
-          source.onended = () => context.close();
-        } catch (e) {
-          console.error("Error playing audio:", e);
-        }
-      };
-
-      const AudioContextClass =
-        window.AudioContext || window.webkitAudioContext;
-      const audioContext = new AudioContextClass({ sampleRate: 16000 });
-      audioContextRef.current = audioContext;
-      const analyzer = audioContext.createAnalyser();
-      analyzerRef.current = analyzer;
-      analyzer.fftSize = 256;
-
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(analyzer);
-      visualizeAudio();
-
-      const processor = audioContext.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
-
-      // Process audio chunks
-      processor.onaudioprocess = (event) => {
-        const inputData = event.inputBuffer.getChannelData(0);
-        const pcmData = new Int16Array(inputData.length);
-        for (let i = 0; i < inputData.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-        }
-        rawAudioRef.current.push(pcmData);
-      };
-
-      source.connect(processor);
-      processor.connect(audioContext.destination);
-
-      if (localAudioRef.current) {
-        localAudioRef.current.srcObject = stream;
-      }
+      // Initialize audio processing
+      await initializeAudioProcessing(stream);
 
       // Create peer connection
       const pc = new RTCPeerConnection({
@@ -112,17 +203,25 @@ export default function VoiceAssistant() {
           { urls: "stun:stun.l.google.com:19302" },
           // Add your TURN servers here if needed
         ],
-        iceTransportPolicy: "all",
-        bundlePolicy: "max-bundle",
-        rtcpMuxPolicy: "require",
       });
       pcRef.current = pc;
       console.log("PeerConnection created");
+
       // Add local audio track
       stream.getTracks().forEach((track) => {
         pc.addTrack(track, stream);
       });
-      ``;
+
+      // Monitor connection state
+      pc.onconnectionstatechange = () => {
+        console.log("Connection state:", pc.connectionState);
+        if (
+          pc.connectionState === "disconnected" ||
+          pc.connectionState === "failed"
+        ) {
+          setStatus("error");
+        }
+      };
 
       pc.onicecandidate = (event) => {
         if (event.candidate) {
@@ -148,6 +247,7 @@ export default function VoiceAssistant() {
             .catch((e) => console.error("Remote audio play error:", e));
         }
       };
+
       const username = getUsername();
       const authHeader = getAuthToken();
       const token = authHeader.replace(/^Bearer\s+/i, "");
@@ -162,6 +262,14 @@ export default function VoiceAssistant() {
       ws.onopen = () => {
         console.log("WebSocket connected");
 
+        // Add ping mechanism to keep connection alive
+        ws.pingInterval = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "ping" }));
+          }
+        }, 30000);
+
+        // Send audio chunks
         sendIntervalRef.current = setInterval(() => {
           if (
             rawAudioRef.current.length === 0 ||
@@ -186,6 +294,7 @@ export default function VoiceAssistant() {
 
           ws.send(combined.buffer);
         }, 3000);
+
         // Create offer
         pc.createOffer({
           offerToReceiveAudio: true,
@@ -213,17 +322,14 @@ export default function VoiceAssistant() {
       ws.onmessage = async (event) => {
         console.log("WebSocket message:", event.data);
 
-        if (event.data instanceof Blob) {
-          console.log("Received Blob audio");
-          const arrayBuffer = await event.data.arrayBuffer();
+        if (event.data instanceof Blob || event.data instanceof ArrayBuffer) {
+          console.log("Received audio data");
+          const arrayBuffer = await (event.data instanceof Blob
+            ? event.data.arrayBuffer()
+            : event.data);
           playAudioBuffer(arrayBuffer);
-        } else if (event.data instanceof ArrayBuffer) {
-          console.log("Received ArrayBuffer audio");
-          playAudioBuffer(event.data);
         }
-        // Handle text messages (signaling and transcriptions)
-
-        // Handle text messages (WebRTC signaling)
+        // Handle text messages
         else if (typeof event.data === "string") {
           try {
             const message = JSON.parse(event.data);
@@ -235,6 +341,9 @@ export default function VoiceAssistant() {
             } else if (message.type === "candidate") {
               console.log("Received ICE candidate");
               await pc.addIceCandidate(new RTCIceCandidate(message.candidate));
+            } else if (message.type === "transcript") {
+              console.log("Received transcription:", message.text);
+              setTranscription(message.text);
             }
           } catch (error) {
             console.error("Message handling error:", error);
@@ -291,26 +400,36 @@ export default function VoiceAssistant() {
       sendIntervalRef.current = null;
     }
 
+    if (wsRef.current) {
+      // Clear ping interval
+      if (wsRef.current.pingInterval) {
+        clearInterval(wsRef.current.pingInterval);
+      }
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
     }
 
     if (audioContextRef.current) {
-      audioContextRef.current.close();
+      audioContextRef.current
+        .close()
+        .catch((e) => console.error("Error closing audio context:", e));
       audioContextRef.current = null;
     }
 
-    rawAudioRef.current = [];
+    // Close playback context if exists
+    if (playbackContextRef.current) {
+      playbackContextRef.current.close();
+      playbackContextRef.current = null;
+    }
 
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
-    }
-
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
     }
 
     if (mediaStreamRef.current) {
@@ -319,12 +438,7 @@ export default function VoiceAssistant() {
     }
 
     rawAudioRef.current = [];
-    mediaStreamRef.current = null;
-    pcRef.current = null;
-    wsRef.current = null;
-    analyzerRef.current = null;
-    audioContextRef.current = null;
-    processorRef.current = null;
+    setTranscription("");
   };
 
   const stopAssistant = () => {
@@ -332,14 +446,11 @@ export default function VoiceAssistant() {
     cleanup();
   };
 
-  useEffect(() => {
-    return cleanup;
-  }, []);
-
   const statusColors = {
     idle: "bg-gray-500",
     connecting: "bg-yellow-500",
     connected: "bg-green-500",
+    playing: "bg-blue-500",
     error: "bg-red-500",
   };
 
@@ -347,6 +458,7 @@ export default function VoiceAssistant() {
     idle: "Ready to start",
     connecting: "Connecting...",
     connected: "Listening...",
+    playing: "Assistant is speaking...",
     error: "Connection error",
   };
 
@@ -373,7 +485,6 @@ export default function VoiceAssistant() {
 
               <div className="relative z-10">
                 <div className="w-32 h-32 rounded-full bg-white shadow-lg flex items-center justify-center">
-                  {/* Microphone Button */}
                   <motion.button
                     onClick={status === "idle" ? initWebRTC : stopAssistant}
                     className={`w-20 h-20 rounded-full flex items-center justify-center focus:outline-none ${
@@ -421,12 +532,14 @@ export default function VoiceAssistant() {
             </div>
 
             {/* Audio Visualizer */}
-            {status === "connected" && (
+            {(status === "connected" || status === "playing") && (
               <div className="absolute bottom-0 left-0 right-0 flex justify-center space-x-1 h-8">
                 {Array.from({ length: 15 }).map((_, i) => (
                   <motion.div
                     key={i}
-                    className="w-2 bg-indigo-500 rounded-t"
+                    className={`w-2 rounded-t ${
+                      status === "playing" ? "bg-blue-500" : "bg-indigo-500"
+                    }`}
                     animate={{
                       height: Math.max(
                         4,
@@ -474,6 +587,8 @@ export default function VoiceAssistant() {
                       ? "60%"
                       : status === "connected"
                       ? "100%"
+                      : status === "playing"
+                      ? "100%"
                       : "0%",
                 }}
                 transition={{
@@ -489,6 +604,9 @@ export default function VoiceAssistant() {
             {status === "idle" && <p>Click the microphone to start speaking</p>}
             {status === "connected" && (
               <p>Speak naturally - I'm listening to you</p>
+            )}
+            {status === "playing" && (
+              <p>Assistant is responding to your question</p>
             )}
           </div>
         </div>

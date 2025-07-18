@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "api/";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface Tokens {
   access: string;
