@@ -52,7 +52,7 @@ export default function VoiceAssistant() {
         audioContextRef.current.state === "closed"
       ) {
         const AudioContextClass =
-          window.AudioContext || window.webkitAudioContext;
+          window.AudioContext || (window as any).webkitAudioContext;
         audioContextRef.current = new AudioContextClass({ sampleRate: 16000 });
       }
 
@@ -115,7 +115,7 @@ export default function VoiceAssistant() {
 
       // Create new context for playback
       playbackContextRef.current = new (window.AudioContext ||
-        window.webkitAudioContext)({
+        (window as any).webkitAudioContext)({
         sampleRate: 16000,
       });
 
@@ -263,7 +263,7 @@ export default function VoiceAssistant() {
         console.log("WebSocket connected");
 
         // Add ping mechanism to keep connection alive
-        ws.pingInterval = setInterval(() => {
+        (ws as any).pingInterval = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "ping" }));
           }
