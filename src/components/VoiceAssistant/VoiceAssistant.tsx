@@ -275,7 +275,7 @@ export default function VoiceAssistant() {
       const wsUrl = new URL("wss://llm.edusmartai.com/api/ws/assistant");
       wsUrl.searchParams.append("username", username);
       wsUrl.searchParams.append("token", token);
-            wsUrl.searchParams.append("student_class", classOption);
+      wsUrl.searchParams.append("student_class", classOption);
       wsUrl.searchParams.append("accent", accentOption);
       wsUrl.searchParams.append("topic", topicInput);
       wsUrl.searchParams.append("mood", moodOption);
