@@ -25,7 +25,7 @@ const Sidebar = () => {
       icon: LayoutDashboard,
     },
     {
-      name: "Voice Assistant",
+      name: "Speech Practice",
       href: "/voiceassistant",
       icon: LayoutDashboard,
     },

@@ -457,21 +457,30 @@ const PracticePage = () => {
     router.push("/dashboard");
   };
 
-  const handleSeeResults = () => {
-    if (!essayId) {
-      toast.error("Essay ID is missing");
-      return;
-    }
+const handleSeeResults = () => {
+  if (!essayId) {
+    toast.error("Essay ID is missing");
+    return;
+  }
 
-    dispatch(fetchOverallScoring(essayId))
-      .unwrap()
-      .then((response) => {
-        router.push(`/result?essayId=${essayId}`);
-      })
-      .catch((error) => {
-        toast.error("Failed to fetch results: " + error.message);
-      });
-  };
+  // Set loading state
+  dispatch(setAnalysisResults({ isAnalyzing: true })); // Update to accept object
+
+  dispatch(fetchOverallScoring(essayId))
+    .unwrap()
+    .then((response) => {
+      // Store results before navigation
+      dispatch(setAnalysisResults({ 
+        results: response, 
+        isAnalyzing: false 
+      }));
+      router.push(`/result?essayId=${essayId}`);
+    })
+    .catch((error) => {
+      toast.error("Failed to fetch results: " + error.message);
+      dispatch(setAnalysisResults({ isAnalyzing: false }));
+    });
+};
 
   useEffect(() => {
     const audioEl = audioRef.current;

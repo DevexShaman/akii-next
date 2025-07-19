@@ -466,7 +466,7 @@ export default function VoiceAssistant() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-center">
-          <h1 className="text-2xl font-bold text-white">Voice Assistant</h1>
+          <h1 className="text-2xl font-bold text-white">Speech Assistant</h1>
           <p className="text-indigo-200 mt-1">AI-powered voice assistant</p>
         </div>
 

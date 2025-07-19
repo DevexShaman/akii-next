@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { apiGet } from "@/components/services/api";
 
-// Async thunk for initializing practice session
+
 export const initializePractice = createAsyncThunk(
   "practice/initialize",
   async (paragraph: string, { rejectWithValue }) => {
@@ -81,6 +81,10 @@ const practiceSlice = createSlice({
     resetPracticeState: (state) => {
       Object.assign(state, initialState);
     },
+     setAnalyzing: (state, action) => {
+    state.isAnalyzing = action.payload;
+  },
+
   },
   extraReducers: (builder) => {
     builder
