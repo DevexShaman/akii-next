@@ -504,7 +504,7 @@ export default function VoiceAssistant() {
               <select
                 value={classOption}
                 onChange={(e) => setClassOption(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full text-black rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 {CLASS_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -520,7 +520,7 @@ export default function VoiceAssistant() {
               <select
                 value={accentOption}
                 onChange={(e) => setAccentOption(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full text-black rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 {ACCENT_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -538,7 +538,7 @@ export default function VoiceAssistant() {
                 value={topicInput}
                 onChange={(e) => setTopicInput(e.target.value)}
                 placeholder="Enter discussion topic"
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full text-black rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
@@ -548,7 +548,7 @@ export default function VoiceAssistant() {
               <select
                 value={moodOption}
                 onChange={(e) => setMoodOption(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full text-black rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 {MOOD_OPTIONS.map((option) => (
                   <option key={option} value={option}>

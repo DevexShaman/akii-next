@@ -141,7 +141,7 @@ const Teacher = () => {
               <select
                 value={className || ""}
                 onChange={(e) => dispatch(setClass(e.target.value))}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                className="w-full text-black pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
               >
                 <option value="">Select Class</option>
                 {classOptions.map((option) => (
@@ -167,7 +167,7 @@ const Teacher = () => {
               <select
                 value={subject || ""}
                 onChange={(e) => dispatch(setSubject(e.target.value))}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                className="w-full text-black pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
               >
                 <option value="">Select Subject</option>
                 {subjectOptions.map((option) => (
@@ -193,7 +193,7 @@ const Teacher = () => {
               <select
                 value={curriculum || ""}
                 onChange={(e) => dispatch(setCurriculum(e.target.value))}
-                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
+                className="w-full text-black pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none"
               >
                 <option value="">Select Curriculum</option>
                 {curriculumOptions.map((option) => (
@@ -286,7 +286,7 @@ const Teacher = () => {
                       {getFileIcon(file.name)}
                     </div>
                     <div>
-                      <p className="font-medium truncate max-w-xs">
+                      <p className="text-black font-medium truncate max-w-xs">
                         {file.name}
                       </p>
                       <p className="text-gray-500 text-sm">
@@ -454,7 +454,7 @@ const Teacher = () => {
         <Button
           variant="outline"
           onClick={handleReset}
-          className="px-8 py-3 text-base font-medium border-gray-300 hover:bg-gray-50"
+          className="px-8 py-3 text-base text-black font-medium border-gray-300 hover:bg-gray-50"
         >
           Reset
         </Button>

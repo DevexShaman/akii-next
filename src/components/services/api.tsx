@@ -97,6 +97,8 @@ export async function apiPost(
   options: RequestInit = {}
 ): Promise<any> {
   const token = getAuthToken();
+    const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 300000);
 
   // Create headers object
   const headers = new Headers();
@@ -127,13 +129,25 @@ export async function apiPost(
   // Prepare body
   const body = data instanceof FormData ? data : JSON.stringify(data);
   const { headers: _, ...restOptions } = options;
+ try {
+    const response = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers,
+      body,
+      ...restOptions,
+      signal: controller.signal, // Add abort signal
+    });
+     if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
 
-  const response = await fetch(`${BASE_URL}${endpoint}`, {
-    method: "POST",
-    headers,
-    body,
-    ...restOptions,
-  });
-
-  return handleResponse(response);
+    clearTimeout(timeoutId); // Clear timeout on success
+    return handleResponse(response);
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new ApiError('Request timed out', 504);
+    }
+    throw error;
+  }
 }

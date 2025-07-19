@@ -149,7 +149,7 @@ const Chat = () => {
                     value={curriculum}
                     onChange={(e) => setCurriculum(e.target.value)}
                     placeholder="e.g., ICSE, CBSE"
-                    className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
+                    className="w-full text-black px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
                     required
                   />
                   <FaGraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -166,7 +166,7 @@ const Chat = () => {
                     value={subjectInput}
                     onChange={(e) => setSubjectInput(e.target.value)}
                     placeholder="e.g., Mathematics"
-                    className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm"
+                    className="w-full text-black px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm"
                     required
                   />
                   <FaBook className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -377,7 +377,7 @@ const Chat = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Ask your question..."
-              className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none pr-12 shadow-sm"
+              className="w-full text-black px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none pr-12 shadow-sm"
               rows={1}
               style={{ minHeight: "56px", maxHeight: "150px" }}
               disabled={isLoading || !curriculum || !subjectInput}
