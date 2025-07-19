@@ -48,7 +48,7 @@ const AuthInput = ({
           {icon}
         </div>
         <input
-          className={`w-full pl-10 pr-10 py-3.5 border ${
+          className={`text-black w-full pl-10 pr-10 py-3.5 border ${
             error ? "border-rose-500" : "border-gray-300"
           } rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 shadow-sm`}
           type={
