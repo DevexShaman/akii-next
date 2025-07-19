@@ -19,6 +19,20 @@ const getAuthToken = () => {
   }
 };
 
+const CLASS_OPTIONS = [
+  "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", 
+  "Class 6", "Class 7", "Class 8", "Class 9", "Class 10"
+];
+
+const ACCENT_OPTIONS = [
+  "American", "British", "Australian", "Indian", "Canadian"
+];
+
+const MOOD_OPTIONS = [
+  "Neutral", "Happy", "Excited", "Calm", "Serious", "Playful"
+];
+
+
 export default function VoiceAssistant() {
   const [status, setStatus] = useState("idle");
   const [audioLevel, setAudioLevel] = useState(0);
@@ -37,6 +51,12 @@ export default function VoiceAssistant() {
   const isPlayingRef = useRef(false);
   const audioQueueRef = useRef([]);
   const playbackContextRef = useRef(null); // New ref for playback context
+
+    const [classOption, setClassOption] = useState(CLASS_OPTIONS[0]);
+  const [accentOption, setAccentOption] = useState(ACCENT_OPTIONS[0]);
+  const [topicInput, setTopicInput] = useState("");
+  const [moodOption, setMoodOption] = useState(MOOD_OPTIONS[0]);
+
 
   useEffect(() => {
     return () => {
@@ -255,6 +275,10 @@ export default function VoiceAssistant() {
       const wsUrl = new URL("wss://llm.edusmartai.com/api/ws/assistant");
       wsUrl.searchParams.append("username", username);
       wsUrl.searchParams.append("token", token);
+            wsUrl.searchParams.append("student_class", classOption);
+      wsUrl.searchParams.append("accent", accentOption);
+      wsUrl.searchParams.append("topic", topicInput);
+      wsUrl.searchParams.append("mood", moodOption);
 
       const ws = new WebSocket(wsUrl.toString());
       wsRef.current = ws;
@@ -469,6 +493,73 @@ export default function VoiceAssistant() {
           <h1 className="text-2xl font-bold text-white">Speech Assistant</h1>
           <p className="text-indigo-200 mt-1">AI-powered voice assistant</p>
         </div>
+         {/* Settings Panel */}
+        <div className="p-6 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">Assistant Settings</h2>
+          
+          <div className="grid grid-cols-2 gap-4">
+            {/* Class Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+              <select
+                value={classOption}
+                onChange={(e) => setClassOption(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                {CLASS_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Accent Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Accent</label>
+              <select
+                value={accentOption}
+                onChange={(e) => setAccentOption(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                {ACCENT_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Topic Input */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Topic</label>
+              <input
+                type="text"
+                value={topicInput}
+                onChange={(e) => setTopicInput(e.target.value)}
+                placeholder="Enter discussion topic"
+                className="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Mood Dropdown */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mood</label>
+              <select
+                value={moodOption}
+                onChange={(e) => setMoodOption(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                {MOOD_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
 
         <div className="p-8 flex flex-col items-center">
           <div className="relative mb-8">
