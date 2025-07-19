@@ -8,18 +8,25 @@ import { motion } from "framer-motion";
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
-      <div className="flex">
-        <Sidebar />
-        <motion.main 
-          className="flex-1 p-4 md:p-8"
+      <div className="flex pt-16">
+        <Sidebar 
+        collapsed={sidebarCollapsed} 
+          setCollapsed={setSidebarCollapsed} 
+        />
+         <motion.main 
+          className={`flex-1 min-h-[calc(100vh-4rem)] p-4 md:p-8 transition-all duration-300 ${
+            sidebarCollapsed ? 'ml-20' : 'ml-64'
+          }`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
+
           <div className="max-w-7xl mx-auto">
             <motion.div
               initial={{ opacity: 0 }}

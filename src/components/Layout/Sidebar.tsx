@@ -16,9 +16,14 @@ import {
 import { clsx } from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
 
-const Sidebar = () => {
+interface SidebarProps {
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
+}
+
+const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  //const [collapsed, setCollapsed] = useState(false);
   
   const navigationItems = [
     {
@@ -45,7 +50,10 @@ const Sidebar = () => {
 
   return (
     <motion.aside 
-      className={`bg-gradient-to-b from-gray-900 to-gray-800 shadow-xl ${collapsed ? 'w-20' : 'w-64'}`}
+       className={`fixed top-16 bottom-0 z-40 bg-gradient-to-b from-gray-900 to-gray-800 shadow-xl ${
+        collapsed ? 'w-20' : 'w-64'
+      }`}
+
       initial={{ width: 256 }}
       animate={{ width: collapsed ? 80 : 256 }}
       transition={{ type: "spring", damping: 20 }}
