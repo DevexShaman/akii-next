@@ -291,7 +291,7 @@ export default function VoiceAssistant() {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "ping" }));
           }
-        }, 30000);
+        }, 2000);
 
         // Send audio chunks
         sendIntervalRef.current = setInterval(() => {
