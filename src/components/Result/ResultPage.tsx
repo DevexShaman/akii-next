@@ -1,7 +1,7 @@
 // app/result/page.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   FaArrowLeft,
@@ -30,44 +30,53 @@ const ResultPage = () => {
   const [resultData, setResultData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 10; // Max 10 retries (30 seconds total)
+  const retryDelay = 3000; // 3 seconds between retries
+ const fetchResults = useCallback(async () => {
+    if (!essayId) return;
 
-  useEffect(() => {
-    if (!essayId) {
-      setError("Missing essay ID");
-      setLoading(false);
-      return;
-    }
-
-    const fetchResults = async () => {
-      try {
-        const token =
+    try {
+             const token =
           localStorage.getItem("access_token") ||
           sessionStorage.getItem("access_token") ||
           "";
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/overall-scoring-by-id?essay_id=${essayId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/overall-scoring-by-id?essay_id=${essayId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+      if (!response.ok) throw new Error("Failed to fetch results");
 
-        if (!response.ok) throw new Error("Failed to fetch results");
-
-        const data = await response.json();
+      const data = await response.json();
+      
+      // Check if analysis is complete
+      if (data && data.understanding) {
         setResultData(data);
-        console.log("1111111111111111111111111111", resultData);
-      } catch (err) {
-        setError(err.message || "Error loading results");
-      } finally {
         setLoading(false);
+      } else if (retryCount < maxRetries) {
+        // Retry after delay if data not ready
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          fetchResults();
+        }, retryDelay);
+      } else {
+        throw new Error("Analysis is taking too long. Please try again later.");
       }
-    };
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  }, [essayId, retryCount]);
 
-    fetchResults();
-  }, [essayId]);
+  useEffect(() => {
+    if (essayId) fetchResults();
+    else {
+      setError("Missing essay ID");
+      setLoading(false);
+    }
+  }, [essayId, fetchResults]);
+
 
   const parseScore = (value) => {
     if (typeof value === "number") return value;
@@ -115,16 +124,24 @@ const ResultPage = () => {
         suggestions: [],
       };
 
-  if (loading) {
+if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
           <FaSpinner className="animate-spin text-indigo-600 text-4xl mx-auto mb-4" />
-          <p className="text-gray-700 text-lg">Analyzing your performance...</p>
+          <p className="text-gray-700 text-lg">
+            Analyzing your performance... {retryCount > 0 && "(This may take a moment)"}
+          </p>
+          {retryCount > 3 && (
+            <p className="text-gray-500 mt-2">
+              Still processing... {maxRetries - retryCount} attempts remaining
+            </p>
+          )}
         </div>
       </div>
     );
   }
+
 
   if (error) {
     return (
