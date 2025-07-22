@@ -50,130 +50,133 @@ const ForgotPassword = () => {
 
   return (
     <AuthLayout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="text-center mb-8"
-      >
-        <div className="flex justify-center mb-4">
-          <div className="bg-indigo-100 p-3 rounded-full">
-            <div className="bg-indigo-600 text-white p-3 rounded-full">
-              <FiMail size={28} />
+      <div className="w-[34%] mx-auto px-4">
+        {" "}
+        {/* Added container with max width */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="text-center mb-8"
+        >
+          <div className="flex justify-center mb-4">
+            <div className="bg-indigo-100 p-3 rounded-full">
+              <div className="bg-indigo-600 text-white p-3 rounded-full">
+                <FiMail size={28} />
+              </div>
             </div>
           </div>
-        </div>
 
-        {emailSent ? (
-          <>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Check Your Email
-            </h2>
-            <p className="text-gray-600 mb-6">
-              We've sent a password reset link to your email address
-            </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-              <p className="text-blue-800">
-                <span className="font-medium">Didn't receive the email?</span>
-                <br />
-                Check your spam folder or resend the link
+          {emailSent ? (
+            <>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Check Your Email
+              </h2>
+              <p className="text-gray-600 mb-6">
+                We've sent a password reset link to your email address
               </p>
-            </div>
-          </>
-        ) : (
-          <>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Forgot Password
-            </h2>
-            <p className="text-gray-600">
-              Enter your email to reset your password
-            </p>
-          </>
-        )}
-      </motion.div>
-
-      {!emailSent ? (
-        <Formik
-          initialValues={{ email: "" }}
-          validationSchema={validationSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ values, errors, touched, handleChange }) => (
-            <Form>
-              <AuthInput
-                icon={<FiMail />}
-                name="email"
-                type="email"
-                placeholder="Email address"
-                value={values.email}
-                onChange={handleChange}
-                error={touched.email && errors.email}
-              />
-
-              <motion.div
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className="mb-6"
-              >
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className={`w-full bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl ${
-                    loading
-                      ? "opacity-80 cursor-not-allowed"
-                      : "hover:from-indigo-700 hover:to-purple-800"
-                  }`}
-                >
-                  {loading ? (
-                    <div className="flex items-center justify-center">
-                      <svg
-                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Sending...
-                    </div>
-                  ) : (
-                    "Send Reset Link"
-                  )}
-                </button>
-              </motion.div>
-            </Form>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <p className="text-blue-800">
+                  <span className="font-medium">Didn't receive the email?</span>
+                  <br />
+                  Check your spam folder or resend the link
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Forgot Password
+              </h2>
+              <p className="text-gray-600">
+                Enter your email to reset your password
+              </p>
+            </>
           )}
-        </Formik>
-      ) : (
-        " "
-      )}
+        </motion.div>
+        {!emailSent ? (
+          <Formik
+            initialValues={{ email: "" }}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ values, errors, touched, handleChange }) => (
+              <Form className="form-sec">
+                {/* <AuthInput
+                  icon={<FiMail />}
+                  name="email"
+                  type="email"
+                  placeholder="Email address"
+                  value={values.email}
+                  onChange={handleChange}
+                  error={touched.email && errors.email}
+                /> */}
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="text-center"
-      >
-        <Link
-          href="/signin"
-          className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                <motion.div
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="mb-6"
+                >
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl ${
+                      loading
+                        ? "opacity-80 cursor-not-allowed"
+                        : "hover:from-indigo-700 hover:to-purple-800"
+                    } w-full block`}
+                  >
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Sending...
+                      </div>
+                    ) : (
+                      "Send Reset Link"
+                    )}
+                  </button>
+                </motion.div>
+              </Form>
+            )}
+          </Formik>
+        ) : (
+          " "
+        )}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="text-center"
         >
-          <FiArrowLeft className="mr-2" />
-          Back to Sign In
-        </Link>
-      </motion.div>
+          <Link
+            href="/signin"
+            className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+          >
+            <FiArrowLeft className="mr-2" />
+            Back to Sign In
+          </Link>
+        </motion.div>
+      </div>{" "}
+      {/* End of container */}
     </AuthLayout>
   );
 };

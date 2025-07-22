@@ -100,7 +100,7 @@ const ForgotPassword = () => {
           onSubmit={handleSubmit}
         >
           {({ values, errors, touched, handleChange }) => (
-            <Form>
+            <Form className="w-[40%] mx-auto">
               <AuthInput
                 icon={<FiMail />}
                 name="email"
@@ -165,13 +165,13 @@ const ForgotPassword = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="text-center"
+        className="text-center shadow-2xl"
       >
         <Link
           href="/signin"
           className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
         >
-          <FiArrowLeft className="mr-2" />
+          <FiArrowLeft className="mr-2 " />
           Back to Sign In
         </Link>
       </motion.div>
