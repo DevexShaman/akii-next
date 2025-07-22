@@ -102,7 +102,7 @@ const ForgotPassword = () => {
           >
             {({ values, errors, touched, handleChange }) => (
               <Form className="form-sec">
-                {/* <AuthInput
+                <AuthInput
                   icon={<FiMail />}
                   name="email"
                   type="email"
@@ -110,7 +110,7 @@ const ForgotPassword = () => {
                   value={values.email}
                   onChange={handleChange}
                   error={touched.email && errors.email}
-                /> */}
+                />
 
                 <motion.div
                   whileHover={{ scale: 1.01 }}
