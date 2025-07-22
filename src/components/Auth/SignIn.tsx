@@ -180,7 +180,7 @@ const SignIn = () => {
               </label>
 
               <Link
-                href="#"
+                href="/forgetpassword"
                 className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
               >
                 Forgot password?

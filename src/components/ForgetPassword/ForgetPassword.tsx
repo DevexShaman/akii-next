@@ -1,3 +1,4 @@
+// app/forgotten-password/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -5,7 +6,7 @@ import { FiMail, FiArrowLeft } from "react-icons/fi";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-hot-toast";
-import AuthLayout from "../(authenticated)/layout";
+import AuthLayout from "@/app/(authenticated)/layout";
 import AuthInput from "@/components/Auth/AuthInput";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -28,9 +29,7 @@ const ForgotPassword = () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: values.email,
-          }),
+          body: JSON.stringify({ email: values.email }),
         }
       );
 
@@ -50,7 +49,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <>
+    <AuthLayout>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -83,7 +82,7 @@ const ForgotPassword = () => {
           </>
         ) : (
           <>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2 ">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
               Forgot Password
             </h2>
             <p className="text-gray-600">
@@ -126,7 +125,7 @@ const ForgotPassword = () => {
                   }`}
                 >
                   {loading ? (
-                    <div className="flex items-center justify-center w-2.5">
+                    <div className="flex items-center justify-center">
                       <svg
                         className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                         xmlns="http://www.w3.org/2000/svg"
@@ -158,7 +157,7 @@ const ForgotPassword = () => {
           )}
         </Formik>
       ) : (
-        ""
+        " "
       )}
 
       <motion.div
@@ -175,7 +174,7 @@ const ForgotPassword = () => {
           Back to Sign In
         </Link>
       </motion.div>
-    </>
+    </AuthLayout>
   );
 };
 
