@@ -23,6 +23,7 @@ interface FormValues {
 
 const SignUp = () => {
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
   const dispatch = useAppDispatch();
   const router = useRouter();
   // const { isLoading, error } = useAppSelector((state: any) => state.auth);
@@ -45,6 +46,7 @@ const SignUp = () => {
     { setSubmitting }: FormikHelpers<FormValues>
   ) => {
     setLoading(true);
+    setApiError("");
 
     const params = {
       email: values.email,
@@ -58,12 +60,19 @@ const SignUp = () => {
       if (registerUser.fulfilled.match(result)) {
         toast.success("Account created successfully!");
         router.push("/signin");
-      } else {
-        toast.error("Error creating account");
+      } else if (registerUser.rejected.match(result)) {
+        // Extract error message from payload
+        console.log("123456782345678923456789", result);
+        const errorMessage =
+          result.payload?.message || "Error creating account";
+        setApiError(errorMessage);
+        toast.error(errorMessage);
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
-      console.log("error", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      setApiError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
       setSubmitting(false);
@@ -114,6 +123,16 @@ const SignUp = () => {
       >
         {({ values, errors, touched, handleChange }) => (
           <Form>
+            {apiError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg"
+              >
+                {apiError}
+              </motion.div>
+            )}
+
             <AuthInput
               icon={<FiUser />}
               name="username"

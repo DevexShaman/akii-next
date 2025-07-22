@@ -5,7 +5,14 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useAppDispatch, useAppSelector } from "../../store";
 import { generateParagraph } from "../../store/slices/paragraphSlice";
-import { FaPause, FaSpinner, FaVolumeUp, FaMagic, FaRobot, FaPlay } from "react-icons/fa";
+import {
+  FaPause,
+  FaSpinner,
+  FaVolumeUp,
+  FaMagic,
+  FaRobot,
+  FaPlay,
+} from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
@@ -22,11 +29,11 @@ const Dashboard = () => {
   const [isAudioLoading, setIsAudioLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [activeTab, setActiveTab] = useState("form"); // "form" or "paragraph"
-  
+
   const getUsername = () => {
     return localStorage.getItem("username") || "unknown_user";
   };
-  
+
   const getAuthToken = () => {
     try {
       const rawToken =
@@ -45,15 +52,36 @@ const Dashboard = () => {
 
   // Options for dropdowns
   const classOptions = [
-    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
   ];
 
   const accentOptions = [
-    "American", "British", "Australian", "Indian", "Canadian", "Irish"
+    "American",
+    "British",
+    "Australian",
+    "Indian",
+    "Canadian",
+    "Irish",
   ];
 
   const moodOptions = [
-    "Happy", "Excited", "Calm", "Serious", "Playful", "Confident"
+    "Happy",
+    "Excited",
+    "Calm",
+    "Serious",
+    "Playful",
+    "Confident",
   ];
 
   const difficultyOptions = ["Easy", "Medium", "Strong"];
@@ -107,7 +135,7 @@ const Dashboard = () => {
       }
     };
   }, []);
-  
+
   const token = getAuthToken();
 
   const fetchAndPlayAudio = async () => {
@@ -165,7 +193,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -177,9 +205,9 @@ const Dashboard = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white opacity-10"></div>
           <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-pink-500 opacity-20"></div>
           <div className="absolute -right-5 -bottom-10 w-32 h-32 rounded-full bg-indigo-500 opacity-20"></div>
-          
+
           <div className="relative z-10 flex items-center justify-center gap-3">
-            <motion.div 
+            <motion.div
               animate={{ rotate: [0, 15, 0, -15, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
@@ -196,7 +224,7 @@ const Dashboard = () => {
           <button
             onClick={() => setActiveTab("form")}
             className={`flex-1 py-4 font-medium text-center transition-all duration-300 ${
-              activeTab === "form" 
+              activeTab === "form"
                 ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
@@ -209,9 +237,9 @@ const Dashboard = () => {
           <button
             onClick={() => generatedParagraph && setActiveTab("paragraph")}
             className={`flex-1 py-4 font-medium text-center transition-all duration-300 ${
-              activeTab === "paragraph" 
+              activeTab === "paragraph"
                 ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50"
-                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50" + 
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50" +
                   (generatedParagraph ? "" : " opacity-50 cursor-not-allowed")
             }`}
             disabled={!generatedParagraph}
@@ -349,7 +377,8 @@ const Dashboard = () => {
                         {/* Difficulty Dropdown */}
                         <div>
                           <label className="block mb-2 text-sm font-medium text-gray-700">
-                            Difficulty Level <span className="text-red-500">*</span>
+                            Difficulty Level{" "}
+                            <span className="text-red-500">*</span>
                           </label>
                           <div className="relative">
                             <Field
@@ -386,17 +415,30 @@ const Dashboard = () => {
                               ? "bg-gray-400 cursor-not-allowed"
                               : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                           }`}
-                          whileHover={!(isLoading || !(isValid && dirty)) ? { 
-                            scale: 1.03,
-                            boxShadow: "0 10px 25px -5px rgba(99, 102, 241, 0.4)"
-                          } : {}}
-                          whileTap={!(isLoading || !(isValid && dirty)) ? { scale: 0.98 } : {}}
+                          whileHover={
+                            !(isLoading || !(isValid && dirty))
+                              ? {
+                                  scale: 1.03,
+                                  boxShadow:
+                                    "0 10px 25px -5px rgba(99, 102, 241, 0.4)",
+                                }
+                              : {}
+                          }
+                          whileTap={
+                            !(isLoading || !(isValid && dirty))
+                              ? { scale: 0.98 }
+                              : {}
+                          }
                         >
                           {isLoading ? (
                             <span className="flex items-center">
                               <motion.div
                                 animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                transition={{
+                                  duration: 1,
+                                  repeat: Infinity,
+                                  ease: "linear",
+                                }}
                                 className="mr-3"
                               >
                                 <FaSpinner />
@@ -447,12 +489,18 @@ const Dashboard = () => {
                       } transition-all duration-300 shadow-sm`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      aria-label={isSpeaking ? "Pause audio" : "Listen to paragraph"}
+                      aria-label={
+                        isSpeaking ? "Pause audio" : "Listen to paragraph"
+                      }
                     >
                       {isAudioLoading ? (
                         <motion.div
                           animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
                         >
                           <FaSpinner className="text-xl" />
                         </motion.div>
@@ -483,7 +531,7 @@ const Dashboard = () => {
                       )}
                     </motion.button>
                   </div>
-                  
+
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -503,12 +551,12 @@ const Dashboard = () => {
                     >
                       Create New
                     </motion.button>
-                    
+
                     <motion.button
                       onClick={handlePractice}
-                      whileHover={{ 
+                      whileHover={{
                         scale: 1.05,
-                        boxShadow: "0 5px 15px -3px rgba(99, 102, 241, 0.3)"
+                        boxShadow: "0 5px 15px -3px rgba(99, 102, 241, 0.3)",
                       }}
                       whileTap={{ scale: 0.98 }}
                       className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all font-bold shadow-md"

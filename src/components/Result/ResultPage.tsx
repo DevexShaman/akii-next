@@ -33,14 +33,14 @@ const ResultPage = () => {
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 10; // Max 10 retries (30 seconds total)
   const retryDelay = 3000; // 3 seconds between retries
- const fetchResults = useCallback(async () => {
+  const fetchResults = useCallback(async () => {
     if (!essayId) return;
 
     try {
-             const token =
-          localStorage.getItem("access_token") ||
-          sessionStorage.getItem("access_token") ||
-          "";
+      const token =
+        localStorage.getItem("access_token") ||
+        sessionStorage.getItem("access_token") ||
+        "";
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/overall-scoring-by-id?essay_id=${essayId}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -49,7 +49,7 @@ const ResultPage = () => {
       if (!response.ok) throw new Error("Failed to fetch results");
 
       const data = await response.json();
-      
+
       // Check if analysis is complete
       if (data && data.understanding) {
         setResultData(data);
@@ -57,7 +57,7 @@ const ResultPage = () => {
       } else if (retryCount < maxRetries) {
         // Retry after delay if data not ready
         setTimeout(() => {
-          setRetryCount(prev => prev + 1);
+          setRetryCount((prev) => prev + 1);
           fetchResults();
         }, retryDelay);
       } else {
@@ -76,7 +76,6 @@ const ResultPage = () => {
       setLoading(false);
     }
   }, [essayId, fetchResults]);
-
 
   const parseScore = (value) => {
     if (typeof value === "number") return value;
@@ -124,13 +123,14 @@ const ResultPage = () => {
         suggestions: [],
       };
 
-if (loading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
           <FaSpinner className="animate-spin text-indigo-600 text-4xl mx-auto mb-4" />
           <p className="text-gray-700 text-lg">
-            Analyzing your performance... {retryCount > 0 && "(This may take a moment)"}
+            Analyzing your performance...{" "}
+            {retryCount > 0 && "(This may take a moment)"}
           </p>
           {retryCount > 3 && (
             <p className="text-gray-500 mt-2">
@@ -141,7 +141,6 @@ if (loading) {
       </div>
     );
   }
-
 
   if (error) {
     return (
@@ -325,12 +324,12 @@ if (loading) {
           >
             Back to Dashboard
           </button>
-          <button
+          {/* <button
             onClick={() => router.push("/practice")}
             className="bg-white text-indigo-600 border border-indigo-600 px-6 py-3 rounded-lg hover:bg-indigo-50 transition-colors font-medium"
           >
             Practice Again
-          </button>
+          </button> */}
         </div>
       </div>
     </div>

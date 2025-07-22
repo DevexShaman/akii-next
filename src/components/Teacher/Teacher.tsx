@@ -6,6 +6,7 @@ import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/store/index";
+import { useRouter } from "next/navigation";
 import {
   setClass,
   setSubject,
@@ -29,6 +30,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const Teacher = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
   const {
     class: className,
     subject,
@@ -85,6 +87,9 @@ const Teacher = () => {
   const handleReset = () => {
     setLocalFiles([]);
     dispatch(resetUpload());
+  };
+  const handleChat = () => {
+    router.push(`/chat`);
   };
 
   const classOptions = ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"];
@@ -245,7 +250,7 @@ const Teacher = () => {
               {isDragActive ? "Drop files here" : "Drag & drop files here"}
             </p>
             <p className="text-gray-500 mt-1">
-              or <span className="text-blue-600 font-medium">browse files</span>{" "}
+              or <span className="text-blue-600 font-medium">browse files</span>
               from your device
             </p>
             <p className="text-sm text-gray-400 mt-3">
@@ -457,6 +462,13 @@ const Teacher = () => {
           className="px-8 py-3 text-base text-black font-medium border-gray-300 hover:bg-gray-50"
         >
           Reset
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleChat}
+          className="px-8 py-3 text-base font-medium hover:bg-blue-400 shadow-2xl border-blue-200 border-1 rounded-md"
+        >
+          Chat with us
         </Button>
       </div>
     </div>

@@ -46,15 +46,24 @@ const SignIn = () => {
         if (data && data.access_token) {
           toast.success("Login successful!");
           router.push("/dashboard");
-        } else {
-          toast.error("Authentication failed");
         }
-      } else {
-        toast.error(result.error?.message || "Login error");
+      } else if (loginUser.rejected.match(result)) {
+        // Handle specific error cases
+        const errorPayload = result.payload as {
+          message?: string;
+          code?: number;
+        };
+
+        if (errorPayload?.message === "Bad credentials") {
+          toast.error("Invalid username or password");
+        } else if (errorPayload?.message) {
+          toast.error(errorPayload.message);
+        } else {
+          toast.error("Login failed. Please try again.");
+        }
       }
     } catch (err) {
       toast.error("Unexpected error occurred");
-      console.log("error", err);
     } finally {
       setLoading(false);
     }

@@ -59,19 +59,6 @@ async function handleResponse(response: Response): Promise<any> {
   return response.json();
 }
 
-//   if (!response.ok) {
-//     const errorData = await response.json().catch(() => ({}));
-//     const error = new Error(
-//       errorData.detail || errorData.message || "API Error"
-//     );
-//     error.status = response.status;
-//     error.data = errorData;
-//     throw error;
-//   }
-
-//   return response.json();
-// }
-
 export async function apiGet(
   endpoint: string,
   options: RequestInit = {}
@@ -97,8 +84,8 @@ export async function apiPost(
   options: RequestInit = {}
 ): Promise<any> {
   const token = getAuthToken();
-    const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 300000);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 300000);
 
   // Create headers object
   const headers = new Headers();
@@ -129,7 +116,7 @@ export async function apiPost(
   // Prepare body
   const body = data instanceof FormData ? data : JSON.stringify(data);
   const { headers: _, ...restOptions } = options;
- try {
+  try {
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
       headers,
@@ -137,17 +124,38 @@ export async function apiPost(
       ...restOptions,
       signal: controller.signal, // Add abort signal
     });
-     if (!response.ok) {
-      throw new Error(`Server error: ${response.status}`);
+    if (!response.ok) {
+      let errorData: any = {};
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // If JSON parsing fails, use status text
+        errorData = { message: response.statusText };
+      }
+
+      // Create detailed error with server response
+      throw new ApiError(
+        errorData.detail || errorData.message || "API Error",
+        response.status,
+        errorData // Include full response data
+      );
     }
 
     clearTimeout(timeoutId); // Clear timeout on success
     return handleResponse(response);
   } catch (error) {
     clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new ApiError('Request timed out', 504);
+    if (error.name === "AbortError") {
+      throw new ApiError("Request timed out", 504);
     }
-    throw error;
+    // Re-throw ApiError instances as-is
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    // Wrap other errors
+    throw new ApiError(
+      error instanceof Error ? error.message : "Unknown error",
+      500
+    );
   }
 }

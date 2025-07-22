@@ -4,14 +4,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  User, 
-  UserPlus, 
-  MessageCircle, 
+import {
+  LayoutDashboard,
+  User,
+  UserPlus,
+  MessageCircle,
   Mic,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,8 +23,7 @@ interface SidebarProps {
 
 const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
   const pathname = usePathname();
-  //const [collapsed, setCollapsed] = useState(false);
-  
+
   const navigationItems = [
     {
       name: "Student Form",
@@ -49,11 +48,10 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
   ];
 
   return (
-    <motion.aside 
-       className={`fixed top-16 bottom-0 z-40 bg-gradient-to-b from-gray-900 to-gray-800 shadow-xl ${
-        collapsed ? 'w-20' : 'w-64'
+    <motion.aside
+      className={`fixed top-16 bottom-0 z-40 bg-gradient-to-b from-gray-900 to-gray-800 shadow-xl ${
+        collapsed ? "w-20" : "w-64"
       }`}
-
       initial={{ width: 256 }}
       animate={{ width: collapsed ? 80 : 256 }}
       transition={{ type: "spring", damping: 20 }}
@@ -69,7 +67,7 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </motion.button>
         </div>
-        
+
         <nav className="p-4 space-y-1 flex-1">
           {navigationItems.map((item, index) => {
             const isActive = pathname === item.href;
@@ -94,12 +92,15 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
                     <item.icon className="w-6 h-6 flex-shrink-0" />
                     <AnimatePresence>
                       {!collapsed && (
-                        <motion.span 
+                        <motion.span
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -10 }}
                           transition={{ duration: 0.2 }}
-                          className={clsx("ml-3", collapsed ? 'hidden' : 'block')}
+                          className={clsx(
+                            "ml-3",
+                            collapsed ? "hidden" : "block"
+                          )}
                         >
                           {item.name}
                         </motion.span>
@@ -112,7 +113,7 @@ const Sidebar = ({ collapsed, setCollapsed }: SidebarProps) => {
           })}
         </nav>
 
-        <motion.div 
+        <motion.div
           className="p-4 border-t border-gray-700"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

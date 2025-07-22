@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { apiPost } from "@/components/services/api";
+import { ApiError, apiPost } from "@/components/services/api";
 import axios from "axios";
 
 // const getInitialAuthState = () => {
@@ -79,15 +79,24 @@ export const loginUser = createAsyncThunk(
   "/login",
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
-      console.log("Auth slice: Calling API login with:", credentials);
       const response = await apiPost("/login", credentials);
-      console.log("Auth slice: API response:", response);
       return response;
     } catch (error) {
       console.error("Auth slice: Login error:", error);
-      return rejectWithValue(
-        error.response?.data?.detail || error.message || "Login failed"
-      );
+
+      // Handle ApiError instances
+      if (error instanceof ApiError) {
+        return rejectWithValue({
+          message: error.data?.detail || error.message,
+          code: error.status,
+        });
+      }
+
+      // Handle other errors
+      return rejectWithValue({
+        message: error instanceof Error ? error.message : "Login failed",
+        code: 500,
+      });
     }
   }
 );
@@ -100,22 +109,18 @@ export const registerUser = createAsyncThunk<
   try {
     const response = await apiPost("/register", data);
     return response as AuthResponse;
-  } catch (unknownErr) {
-    let errorPayload: AuthError;
-
-    if (axios.isAxiosError(unknownErr) && unknownErr.response?.data) {
-      errorPayload = unknownErr.response.data as AuthError;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      // Use the detailed error message from server response
+      return rejectWithValue({
+        message: error.data?.detail || error.message,
+        code: error.status,
+      });
     }
-    // 3) Or at least a JS Error?
-    else if (unknownErr instanceof Error) {
-      errorPayload = { message: unknownErr.message };
-    }
-    // 4) Fallback to stringifying whatever it is
-    else {
-      errorPayload = { message: String(unknownErr) };
-    }
-
-    return rejectWithValue(errorPayload);
+    // Handle non-ApiError cases
+    return rejectWithValue({
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 });
 
