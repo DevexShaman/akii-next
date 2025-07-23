@@ -32,6 +32,7 @@ const PracticePage = () => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [showResultButton, setShowResultButton] = useState(false);
   const essayId = searchParams.get("essay_id");
+  const essay_id = searchParams.get("essay_id");
 
   const paragraph = searchParams.get("paragraph")
     ? decodeURIComponent(searchParams.get("paragraph")!)
@@ -164,10 +165,16 @@ const PracticePage = () => {
     const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
 
+    const params = new URLSearchParams({
+      username: encodeURIComponent(username),
+      token: encodeURIComponent(token),
+    });
+    if (essayId) {
+      params.append("essay_id", essayId);
+    }
+
     const testSocket = new WebSocket(
-      `${protocol}//${cleanBaseUrl}/ws/audio?username=${username}&token=${encodeURIComponent(
-        token
-      )}`
+      `${protocol}//${cleanBaseUrl}/ws/audio?${params.toString()}`
     );
     testSocket.onopen = () => {
       console.log("[TEST] WebSocket connected");
@@ -184,7 +191,7 @@ const PracticePage = () => {
     testSocket.onmessage = (e) => {
       console.log("[TEST] Received:", e.data);
     };
-  }, [BASE_URL]);
+  }, [BASE_URL, essayId]);
 
   const startMicrophoneMonitoring = async () => {
     try {
@@ -311,6 +318,10 @@ const PracticePage = () => {
         username: encodeURIComponent(username),
         token: encodeURIComponent(token),
       });
+      if (essayId) {
+        params.append("essay_id", essayId);
+      }
+
       const socket = new WebSocket(
         `${protocol}//${cleanBaseUrl}/ws/audio?${params.toString()}`
       );
@@ -457,30 +468,32 @@ const PracticePage = () => {
     router.push("/dashboard");
   };
 
-const handleSeeResults = () => {
-  if (!essayId) {
-    toast.error("Essay ID is missing");
-    return;
-  }
+  const handleSeeResults = () => {
+    if (!essayId) {
+      toast.error("Essay ID is missing");
+      return;
+    }
 
-  // Set loading state
-  dispatch(setAnalysisResults({ isAnalyzing: true })); // Update to accept object
+    // Set loading state
+    dispatch(setAnalysisResults({ isAnalyzing: true })); // Update to accept object
 
-  dispatch(fetchOverallScoring(essayId))
-    .unwrap()
-    .then((response) => {
-      // Store results before navigation
-      dispatch(setAnalysisResults({ 
-        results: response, 
-        isAnalyzing: false 
-      }));
-      router.push(`/result?essayId=${essayId}`);
-    })
-    .catch((error) => {
-      toast.error("Failed to fetch results: " + error.message);
-      dispatch(setAnalysisResults({ isAnalyzing: false }));
-    });
-};
+    dispatch(fetchOverallScoring(essayId))
+      .unwrap()
+      .then((response) => {
+        // Store results before navigation
+        dispatch(
+          setAnalysisResults({
+            results: response,
+            isAnalyzing: false,
+          })
+        );
+        router.push(`/result?essayId=${essayId}`);
+      })
+      .catch((error) => {
+        toast.error("Failed to fetch results: " + error.message);
+        dispatch(setAnalysisResults({ isAnalyzing: false }));
+      });
+  };
 
   useEffect(() => {
     const audioEl = audioRef.current;

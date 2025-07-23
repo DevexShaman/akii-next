@@ -10,7 +10,6 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    // Skip protection for password reset routes
     const isPasswordResetRoute = pathname.startsWith("/forgotten-password");
 
     if (isPasswordResetRoute) return;
@@ -20,7 +19,6 @@ const ProtectedRoute = ({ children }) => {
     }
   }, [isAuthenticated, loading, router, pathname]);
 
-  // Show loading spinner only for protected routes
   if (
     !pathname.startsWith("/forgotten-password") &&
     (loading || !isAuthenticated)
@@ -35,7 +33,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  return children;
+  return isAuthenticated ? children : null;
 };
 
 export default ProtectedRoute;
