@@ -146,7 +146,6 @@ export const verifyAuth = createAsyncThunk(
       }, 10000);
 
       const response = await apiGet(`/validate-reset-token/${token}`);
-      console.log("response", response);
       return response.valid;
     } catch (error) {
       localStorage.removeItem("access_token");

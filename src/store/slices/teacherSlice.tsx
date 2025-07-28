@@ -58,7 +58,6 @@ export const processFiles = createAsyncThunk(
         dispatch(setProgress(progress));
 
         const response = await apiPost("/upload/", formData);
-        console.log("response", response);
 
         results[file.name] = response.data?.extracted_text || "No text";
         uploadResults[file.name] = {

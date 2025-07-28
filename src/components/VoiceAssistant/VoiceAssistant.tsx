@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { fetchOverallScoring } from "@/store/slices/assistant/assistantSlice";
+import { useRouter } from "next/navigation";
 
 const getUsername = () => {
   return localStorage.getItem("username") || "unknown_user";
@@ -50,6 +53,8 @@ const MOOD_OPTIONS = [
 ];
 
 export default function VoiceAssistant() {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
   const [status, setStatus] = useState("idle");
   const [audioLevel, setAudioLevel] = useState(0);
   const [transcription, setTranscription] = useState("");
@@ -78,6 +83,12 @@ export default function VoiceAssistant() {
     topic: false,
     mood: false,
   });
+
+  const scoringState = useAppSelector((state) => state.assistant);
+  const [essayId, setEssayId] = useState("");
+  const [showResultButton, setShowResultButton] = useState(false);
+  const [loadingResult, setLoadingResult] = useState(false);
+  const [loadingText, setLoadingText] = useState("Preparing your results...");
 
   const validateForm = () => {
     const newErrors = {
@@ -227,6 +238,10 @@ export default function VoiceAssistant() {
   };
 
   const initWebRTC = async () => {
+    setEssayId("");
+    setShowResultButton(false);
+    setLoadingResult(false);
+
     if (!validateForm()) {
       return;
     }
@@ -391,9 +406,14 @@ export default function VoiceAssistant() {
         }
         // Handle text messages
         else if (typeof event.data === "string") {
+          console.log("111111111111111111111111");
           try {
             const message = JSON.parse(event.data);
-
+            console.log("message", message);
+            if (message.essay_id) {
+              console.log("Received essay ID:", message.essay_id);
+              setEssayId(message.essay_id);
+            }
             if (message.type === "answer") {
               console.log("Received answer");
               await pc.setRemoteDescription(new RTCSessionDescription(message));
@@ -504,6 +524,39 @@ export default function VoiceAssistant() {
   const stopAssistant = () => {
     setStatus("idle");
     cleanup();
+    if (essayId) {
+      setLoadingResult(true);
+      setTimeout(() => {
+        setLoadingResult(false);
+        setShowResultButton(true);
+      }, 3000);
+    }
+  };
+
+  const handleShowResult = async () => {
+    if (essayId) {
+      try {
+        setLoadingResult(true);
+        setLoadingText("Preparing your results...");
+
+        // Set timeout to update loading text after 15 seconds
+        const textTimeout = setTimeout(() => {
+          if (loadingResult) {
+            setLoadingText("Almost there, finalizing results...");
+          }
+        }, 15000);
+
+        // Fetch scoring data and wait
+        await dispatch(fetchOverallScoring(essayId)).unwrap();
+
+        // Clear timeout and navigate
+        clearTimeout(textTimeout);
+        router.push(`/assistantresult?essay_id=${essayId}`);
+      } catch (error) {
+        console.error("Failed to fetch scoring:", error);
+        setLoadingResult(false);
+      }
+    }
   };
 
   const statusColors = {
@@ -615,7 +668,6 @@ export default function VoiceAssistant() {
               )}
             </div>
 
-            {/* Mood Dropdown */}
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Mood {errors.mood && <span className="text-red-600">*</span>}
@@ -706,7 +758,6 @@ export default function VoiceAssistant() {
               </div>
             </div>
 
-            {/* Audio Visualizer */}
             {(status === "connected" || status === "playing") && (
               <div className="absolute bottom-0 left-0 right-0 flex justify-center space-x-1 h-8">
                 {Array.from({ length: 15 }).map((_, i) => (
@@ -793,6 +844,40 @@ export default function VoiceAssistant() {
           <p className="text-sm text-gray-700 font-semibold">Transcription:</p>
           <p className="text-gray-600 break-words">{transcription}</p>
         </div>
+      </div>
+      <div className="mt-6 flex flex-col items-center">
+        {/* Loading indicator */}
+        {loadingResult && (
+          <div className="flex flex-col items-center">
+            <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+            <p className="text-gray-600 max-w-xs text-center">{loadingText}</p>
+            <p className="text-xs text-gray-500 mt-2">
+              This may take up to 15 seconds...
+            </p>
+          </div>
+        )}
+
+        {/* Result button */}
+        {showResultButton && !loadingResult && (
+          <motion.button
+            onClick={handleShowResult}
+            className="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium py-3 px-8 rounded-full shadow-lg"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            View Detailed Results
+          </motion.button>
+        )}
+
+        {/* Error message */}
+        {scoringState.error && (
+          <p className="mt-2 text-red-500 text-sm">
+            Error loading results: {scoringState.error}
+          </p>
+        )}
       </div>
       <audio
         ref={localAudioRef}

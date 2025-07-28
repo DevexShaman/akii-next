@@ -11,7 +11,7 @@ const useAuth = () => {
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
 
   const dispatch = useDispatch<AppDispatch>();
-  console.log("000000000000000000000", isAuthenticated);
+  console.log(isAuthenticated);
   useEffect(() => {
     const checkAuth = async () => {
       try {

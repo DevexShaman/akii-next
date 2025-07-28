@@ -45,7 +45,6 @@ const Teacher = () => {
     ocrResults,
     uploadResults,
   } = useSelector((state: RootState) => state.teacher);
-  console.log("uploadResults", uploadResults);
 
   const [showResults, setShowResults] = useState(false);
   const [localFiles, setLocalFiles] = useState<File[]>([]);
@@ -421,7 +420,7 @@ const Teacher = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleRemoveFile(file.name);
+                        handleRemoveFile();
                       }}
                       className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-red-500 transition-colors"
                     >
