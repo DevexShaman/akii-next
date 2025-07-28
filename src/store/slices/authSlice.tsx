@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { ApiError, apiPost } from "@/components/services/api";
+import { ApiError, apiGet, apiPost } from "@/components/services/api";
 import axios from "axios";
 
 // const getInitialAuthState = () => {
@@ -141,11 +141,18 @@ export const verifyAuth = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("access_token");
-      console.log(token);
+      setTimeout(() => {
+        if (!token) return false;
+      }, 10000);
 
-      return token ? true : false;
+      const response = await apiGet(`/validate-reset-token/${token}`);
+      console.log("response", response);
+      return response.valid;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.detail || "Logout failed");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("username");
+      return false;
     }
   }
 );
