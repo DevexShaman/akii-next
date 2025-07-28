@@ -20,18 +20,34 @@ const getAuthToken = () => {
 };
 
 const CLASS_OPTIONS = [
-  "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", 
-  "Class 6", "Class 7", "Class 8", "Class 9", "Class 10"
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4",
+  "Class 5",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
 ];
 
 const ACCENT_OPTIONS = [
-  "American", "British", "Australian", "Indian", "Canadian"
+  "American",
+  "British",
+  "Australian",
+  "Indian",
+  "Canadian",
 ];
 
 const MOOD_OPTIONS = [
-  "Neutral", "Happy", "Excited", "Calm", "Serious", "Playful"
+  "Neutral",
+  "Happy",
+  "Excited",
+  "Calm",
+  "Serious",
+  "Playful",
 ];
-
 
 export default function VoiceAssistant() {
   const [status, setStatus] = useState("idle");
@@ -52,11 +68,27 @@ export default function VoiceAssistant() {
   const audioQueueRef = useRef([]);
   const playbackContextRef = useRef(null); // New ref for playback context
 
-    const [classOption, setClassOption] = useState(CLASS_OPTIONS[0]);
-  const [accentOption, setAccentOption] = useState(ACCENT_OPTIONS[0]);
+  const [classOption, setClassOption] = useState("");
+  const [accentOption, setAccentOption] = useState("");
   const [topicInput, setTopicInput] = useState("");
-  const [moodOption, setMoodOption] = useState(MOOD_OPTIONS[0]);
+  const [moodOption, setMoodOption] = useState("");
+  const [errors, setErrors] = useState({
+    class: false,
+    accent: false,
+    topic: false,
+    mood: false,
+  });
 
+  const validateForm = () => {
+    const newErrors = {
+      class: !classOption,
+      accent: !accentOption,
+      topic: !topicInput.trim(),
+      mood: !moodOption,
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((error) => error);
+  };
 
   useEffect(() => {
     return () => {
@@ -195,6 +227,9 @@ export default function VoiceAssistant() {
   };
 
   const initWebRTC = async () => {
+    if (!validateForm()) {
+      return;
+    }
     try {
       setStatus("connecting");
       console.log("Getting user media...");
@@ -246,6 +281,7 @@ export default function VoiceAssistant() {
       pc.onicecandidate = (event) => {
         if (event.candidate) {
           const ws = wsRef.current;
+
           if (ws && ws.readyState === WebSocket.OPEN) {
             console.log("Sending ICE candidate", event.candidate);
             ws.send(
@@ -493,18 +529,25 @@ export default function VoiceAssistant() {
           <h1 className="text-2xl font-bold text-white">Speech Assistant</h1>
           <p className="text-indigo-200 mt-1">AI-powered voice assistant</p>
         </div>
-         {/* Settings Panel */}
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">Assistant Settings</h2>
-          
+          <h2 className="text-lg font-semibold text-gray-800 mb-3">
+            Assistant Settings
+          </h2>
+
           <div className="grid grid-cols-2 gap-4">
-            {/* Class Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Class {errors.class && <span className="text-red-600">*</span>}
+              </label>
               <select
                 value={classOption}
-                onChange={(e) => setClassOption(e.target.value)}
-                className="w-full text-black rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                onChange={(e) => {
+                  setClassOption(e.target.value);
+                  if (errors.class) setErrors({ ...errors, class: false });
+                }}
+                className={`w-full text-black rounded-lg border ${
+                  errors.class ? "border-red-500" : "border-gray-300"
+                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               >
                 {CLASS_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -512,15 +555,28 @@ export default function VoiceAssistant() {
                   </option>
                 ))}
               </select>
+              {errors.class && (
+                <p className="mt-1 text-sm text-red-600">
+                  Please select a class
+                </p>
+              )}
             </div>
 
             {/* Accent Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Accent</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Accent{" "}
+                {errors.accent && <span className="text-red-600">*</span>}
+              </label>
               <select
                 value={accentOption}
-                onChange={(e) => setAccentOption(e.target.value)}
-                className="w-full text-black rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                onChange={(e) => {
+                  setAccentOption(e.target.value);
+                  if (errors.accent) setErrors({ ...errors, accent: false });
+                }}
+                className={`w-full text-black rounded-lg border ${
+                  errors.accent ? "border-red-500" : "border-gray-300"
+                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               >
                 {ACCENT_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -528,27 +584,51 @@ export default function VoiceAssistant() {
                   </option>
                 ))}
               </select>
+              {errors.accent && (
+                <p className="mt-1 text-sm text-red-600">
+                  Please select an accent
+                </p>
+              )}
             </div>
 
             {/* Topic Input */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Topic</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Topic {errors.topic && <span className="text-red-600">*</span>}
+              </label>
               <input
                 type="text"
                 value={topicInput}
-                onChange={(e) => setTopicInput(e.target.value)}
+                onChange={(e) => {
+                  setTopicInput(e.target.value);
+                  if (errors.topic) setErrors({ ...errors, topic: false });
+                }}
                 placeholder="Enter discussion topic"
-                className="w-full text-black rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className={`w-full text-black rounded-lg border ${
+                  errors.topic ? "border-red-500" : "border-gray-300"
+                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               />
+              {errors.topic && (
+                <p className="mt-1 text-sm text-red-600">
+                  Please enter a topic
+                </p>
+              )}
             </div>
 
             {/* Mood Dropdown */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mood</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mood {errors.mood && <span className="text-red-600">*</span>}
+              </label>
               <select
                 value={moodOption}
-                onChange={(e) => setMoodOption(e.target.value)}
-                className="w-full text-black rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                onChange={(e) => {
+                  setMoodOption(e.target.value);
+                  if (errors.mood) setErrors({ ...errors, mood: false });
+                }}
+                className={`w-full text-black rounded-lg border ${
+                  errors.mood ? "border-red-500" : "border-gray-300"
+                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               >
                 {MOOD_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -556,10 +636,14 @@ export default function VoiceAssistant() {
                   </option>
                 ))}
               </select>
+              {errors.mood && (
+                <p className="mt-1 text-sm text-red-600">
+                  Please select a mood
+                </p>
+              )}
             </div>
           </div>
         </div>
-
 
         <div className="p-8 flex flex-col items-center">
           <div className="relative mb-8">
