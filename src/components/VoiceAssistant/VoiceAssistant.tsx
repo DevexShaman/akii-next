@@ -590,7 +590,8 @@ export default function VoiceAssistant() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Class {errors.class && <span className="text-red-600">*</span>}
+                Class <span className="text-red-600">*</span>
+                {/* Class {errors.class && <span className="text-red-600">*</span>} */}
               </label>
               <select
                 value={classOption}
@@ -618,8 +619,8 @@ export default function VoiceAssistant() {
             {/* Accent Dropdown */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Accent{" "}
-                {errors.accent && <span className="text-red-600">*</span>}
+                Accent <span className="text-red-600">*</span>
+                {/* {errors.accent && <span className="text-red-600">*</span>} */}
               </label>
               <select
                 value={accentOption}
@@ -647,7 +648,8 @@ export default function VoiceAssistant() {
             {/* Topic Input */}
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Topic {errors.topic && <span className="text-red-600">*</span>}
+                Topic <span className="text-red-600">*</span>
+                {/* Topic {errors.topic && <span className="text-red-600">*</span>} */}
               </label>
               <input
                 type="text"
@@ -670,7 +672,8 @@ export default function VoiceAssistant() {
 
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Mood {errors.mood && <span className="text-red-600">*</span>}
+                Mood <span className="text-red-600">*</span>
+                {/* Mood {errors.mood && <span className="text-red-600">*</span>} */}
               </label>
               <select
                 value={moodOption}
