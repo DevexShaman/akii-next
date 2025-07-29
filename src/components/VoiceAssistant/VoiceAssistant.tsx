@@ -716,14 +716,27 @@ export default function VoiceAssistant() {
               <div className="relative z-10">
                 <div className="w-32 h-32 rounded-full bg-white shadow-lg flex items-center justify-center">
                   <motion.button
-                    onClick={status === "idle" ? initWebRTC : stopAssistant}
+                    onClick={
+                      status === "idle"
+                        ? initWebRTC
+                        : status !== "playing"
+                        ? stopAssistant
+                        : undefined
+                    }
                     className={`w-20 h-20 rounded-full flex items-center justify-center focus:outline-none ${
                       status === "idle"
                         ? "bg-indigo-100 hover:bg-indigo-200 text-indigo-600"
+                        : status === "playing"
+                        ? "bg-gray-400 text-white cursor-not-allowed" // Disabled style
                         : "bg-red-500 hover:bg-red-600 text-white"
                     }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={
+                      status !== "playing" ? { scale: 1.05 } : undefined // Disable hover animation
+                    }
+                    whileTap={
+                      status !== "playing" ? { scale: 0.95 } : undefined // Disable tap animation
+                    }
+                    disabled={status === "playing"} // Actually disable the button
                   >
                     {status === "idle" ? (
                       <svg
