@@ -206,21 +206,21 @@ const Dashboard = () => {
           <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-pink-500 opacity-20"></div>
           <div className="absolute -right-5 -bottom-10 w-32 h-32 rounded-full bg-indigo-500 opacity-20"></div>
 
-          <div className="relative z-10 flex items-center justify-center gap-3">
+          <div className="relative z-10 flex items-center justify-center gap-3 mob-block">
             <motion.div
               animate={{ rotate: [0, 15, 0, -15, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
             >
               <FaRobot className="text-white text-3xl" />
             </motion.div>
-            <h2 className="text-2xl font-bold text-white text-center">
+            <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white text-center">
               AI English Practice Generator
             </h2>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 mob-block">
           <button
             onClick={() => setActiveTab("form")}
             className={`flex-1 py-4 font-medium text-center transition-all duration-300 ${
@@ -410,7 +410,7 @@ const Dashboard = () => {
                         <motion.button
                           type="submit"
                           disabled={isLoading || !(isValid && dirty)}
-                          className={`px-8 py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300/50 ${
+                          className={`px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300/50 ${
                             isLoading || !(isValid && dirty)
                               ? "bg-gray-400 cursor-not-allowed"
                               : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"

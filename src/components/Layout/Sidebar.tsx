@@ -1,7 +1,6 @@
-// Sidebar.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -30,7 +29,7 @@ const Sidebar = ({
   setIsOpen,
 }: SidebarProps) => {
   const pathname = usePathname();
-
+  const wasMobileRef = useRef(null);
   const navigationItems = [
     {
       name: "Student Form",
@@ -54,6 +53,28 @@ const Sidebar = ({
     },
   ];
 
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth <= 768;
+
+      // If first run or crossing from desktop to mobile
+      if (
+        // wasMobileRef.current === null || // first run
+        !wasMobileRef.current &&
+        isMobile // transition from desktop to mobile
+      ) {
+        setCollapsed(true);
+      }
+
+      wasMobileRef.current = isMobile;
+    };
+
+    handleResize(); // Run on mount
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   return (
     <>
       <AnimatePresence>
@@ -68,7 +89,7 @@ const Sidebar = ({
         )}
       </AnimatePresence>
       <motion.aside
-        className={`fixed top-16 bottom-0 z-40 bg-gradient-to-b from-gray-900 to-gray-800 shadow-xl ${
+        className={`fixed top-16 bottom-0 z-40 bg-gradient-to-b from-gray-900 to-gray-800 shadow-xl  ${
           collapsed ? "w-20" : "w-64"
         }`}
         initial={{ width: 256 }}
@@ -76,7 +97,7 @@ const Sidebar = ({
         transition={{ type: "spring", damping: 20 }}
       >
         <div className="flex flex-col h-full">
-          <div className="p-4 flex justify-end">
+          <div className="p-4 flex justify-end text-white">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}

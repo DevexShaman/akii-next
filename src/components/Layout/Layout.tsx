@@ -26,19 +26,19 @@ const Layout = ({ children }) => {
           setIsOpen={setSidebarOpen}
         />
         <motion.main
-          className={`flex-1 min-h-[calc(100vh-4rem)] p-4 md:p-8 transition-all duration-300 ${
+          className={`flex-1 min-h-[calc(100vh-4rem)] p-4 md:p-8 transition-all duration-300 overflow-hidden ${
             sidebarCollapsed ? "ml-20" : "ml-64"
           }`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-7xl mx-auto ff">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl shadow-xl p-6 overflow-hidden"
+              className="bg-white rounded-2xl p-0 sm:p-6 overflow-hidden"
             >
               {children}
             </motion.div>

@@ -552,17 +552,19 @@ export default function VoiceAssistant() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-5xl bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden">
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-center">
-          <h1 className="text-2xl font-bold text-white">Speech Assistant</h1>
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white">
+            Speech Assistant
+          </h1>
           <p className="text-indigo-200 mt-1">AI-powered voice assistant</p>
         </div>
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-3">
+          <h2 className="text-center sm:text-left text-lg font-semibold text-gray-800 mb-3">
             Assistant Settings
           </h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 sm:gap-4 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-1 ">
                 Class <span className="text-red-600">*</span>
                 {/* Class {errors.class && <span className="text-red-600">*</span>} */}
               </label>
@@ -590,7 +592,7 @@ export default function VoiceAssistant() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Accent <span className="text-red-600">*</span>
                 {/* {errors.accent && <span className="text-red-600">*</span>} */}
               </label>
@@ -618,7 +620,7 @@ export default function VoiceAssistant() {
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Topic <span className="text-red-600">*</span>
                 {/* Topic {errors.topic && <span className="text-red-600">*</span>} */}
               </label>
@@ -642,7 +644,7 @@ export default function VoiceAssistant() {
             </div>
 
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Mood <span className="text-red-600">*</span>
                 {/* Mood {errors.mood && <span className="text-red-600">*</span>} */}
               </label>
@@ -673,7 +675,7 @@ export default function VoiceAssistant() {
 
         <div className="p-8 flex flex-col items-center">
           <div className="relative mb-8">
-            <div className="w-48 h-48 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center shadow-inner">
+            <div className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center shadow-inner">
               <AnimatePresence>
                 {status === "connected" && (
                   <motion.div
@@ -827,7 +829,9 @@ export default function VoiceAssistant() {
           Powered by WebRTC & AI
         </div>
         <div className="mt-4 p-4 bg-gray-100 rounded-lg max-w-full">
-          <p className="text-sm text-gray-700 font-semibold">Transcription:</p>
+          <p className="text-sm text-gray-700 font-semibold text-center">
+            Transcription:
+          </p>
           <p className="text-gray-600 break-words">{transcription}</p>
         </div>
       </div>
