@@ -25,7 +25,7 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className=" mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16">
           {/* <div className="mr-2 md:hidden">
             <Button
@@ -116,7 +116,7 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
             transition={{ duration: 0.3 }}
             className="md:hidden bg-indigo-700"
           >
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 flex flex-col items-end">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 flex flex-col items-end mob-view">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

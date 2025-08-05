@@ -102,9 +102,9 @@ const Chat = () => {
     <div className="flex flex-col h-full max-w-4xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
       {/* Header with subtle gradient */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-5 text-white shadow-md">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="bg-white/20 p-2 rounded-lg mr-3">
+        <div className="flex items-center justify-between mob-block ">
+          <div className="flex items-center mob-block  ">
+            <div className="bg-white/20 p-2 rounded-lg mr-3 ">
               <FaRobot className="text-xl" />
             </div>
             <div>
@@ -178,14 +178,14 @@ const Chat = () => {
       </AnimatePresence>
 
       {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto p-5 bg-gradient-to-b from-white to-gray-50">
+      <div className="flex-1 overflow-y-auto p-0 md:p-5 bg-gradient-to-b from-white to-gray-50">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center p-8">
+          <div className="flex flex-col items-center justify-center h-full text-center p-5 md:p-8">
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl w-24 h-24 mb-6 flex items-center justify-center shadow-lg"
+              className="bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl w-20 h-20 sm:w-24 sm:h-24 mb-4 sm:mb-6 flex items-center justify-center shadow-lg"
             >
               <FaRobot className="text-5xl text-indigo-600" />
             </motion.div>
@@ -193,10 +193,11 @@ const Chat = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="text-2xl font-bold text-gray-800 mb-3"
+              className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-2 sm:mb-3"
             >
               Welcome to Study Assistant!
             </motion.h3>
+
             <motion.p
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -371,13 +372,13 @@ const Chat = () => {
           </motion.div>
         )}
 
-        <div className="flex items-end space-x-3">
+        <div className="flex items-end space-x-3  mob-block">
           <div className="flex-1 relative">
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Ask your question..."
-              className="w-full text-black px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none pr-12 shadow-sm"
+              className="w-full text-sm sm:text-base text-black px-3 sm:px-5 py-3 sm:py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none pr-10 sm:pr-12 shadow-sm"
               rows={1}
               style={{ minHeight: "56px", maxHeight: "150px" }}
               disabled={isLoading || !curriculum || !subjectInput}
@@ -387,6 +388,7 @@ const Chat = () => {
                 target.style.height = `${Math.min(target.scrollHeight, 150)}px`;
               }}
             />
+
             <div className="absolute bottom-3 right-3 text-xs text-gray-500 bg-white px-2 py-1 rounded">
               {inputValue.length}/500
             </div>
@@ -418,7 +420,7 @@ const Chat = () => {
           </motion.button>
         </div>
 
-        <div className="mt-3 text-xs text-gray-500 flex justify-between">
+        <div className="mt-3 text-xs text-gray-500 flex justify-between mob-block">
           <span>
             {!curriculum || !subjectInput
               ? "Please enter curriculum and subject"

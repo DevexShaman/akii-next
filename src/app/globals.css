@@ -48,4 +48,16 @@ body {
     filter: blur(2px);
     transition: filter 0.3s ease;
   }
+  .mob-view {
+    align-items: start !important;
+  }
+}
+@media (max-width: 600px) {
+  .mob-block {
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+  }
 }

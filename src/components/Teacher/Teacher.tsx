@@ -170,7 +170,7 @@ const Teacher = () => {
         transition={{ duration: 0.5 }}
         className="text-center mb-10"
       >
-        <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2 sm:mb-3">
+        <h1 className="text-[18px] sm:text-lg md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-1 sm:mb-2 md:mb-3">
           Teaching Material Upload
         </h1>
         <p className="text-gray-600 text-sm sm:text-base max-w-2xl mx-auto px-2">
@@ -535,11 +535,11 @@ const Teacher = () => {
         )}
       </AnimatePresence>
 
-      <div className="flex gap-4 justify-center pt-4">
+      <div className="flex gap-4 justify-center pt-4 mob-block">
         <Button
           onClick={handleSubmit}
           disabled={isProcessing || localFiles.length === 0}
-          className="px-8 py-3 text-base font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
+          className="px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
         >
           {isProcessing ? (
             <span className="flex items-center">
