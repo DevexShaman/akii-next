@@ -1,5 +1,3 @@
-// src/components/Chat/Chat.tsx
-
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -9,6 +7,8 @@ import { FiArrowUp, FiRefreshCw, FiX } from "react-icons/fi";
 import { FaRobot, FaUser, FaBook, FaGraduationCap } from "react-icons/fa";
 import Markdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaChalkboardTeacher } from "react-icons/fa";
+import { FaUser as FaUserIcon } from "react-icons/fa";
 
 const Chat = () => {
   const dispatch = useAppDispatch();
@@ -18,6 +18,8 @@ const Chat = () => {
   const [inputValue, setInputValue] = useState("");
   const [curriculum, setCurriculum] = useState("");
   const [subjectInput, setSubjectInput] = useState("");
+  const [classInput, setClassInput] = useState("");
+  const [username, setUsername] = useState("");
   const [messages, setMessages] = useState<
     Array<{
       id: string;
@@ -38,7 +40,8 @@ const Chat = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!inputValue.trim() || !curriculum || !subjectInput || isLoading) return;
+    if (!inputValue.trim() || !curriculum || !subjectInput || !classInput || !username || isLoading) return;
+    console.log("11111111111", classInput)
 
     const userMessage = {
       id: Date.now().toString(),
@@ -58,6 +61,8 @@ const Chat = () => {
           question: currentInput,
           curriculum: curriculum,
           subject: subjectInput,
+          student_class: classInput,
+          username: username,
         })
       ).unwrap();
 
@@ -139,7 +144,7 @@ const Chat = () => {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
                   <FaGraduationCap className="mr-2 text-indigo-600" />
                   Curriculum
                 </label>
@@ -155,8 +160,56 @@ const Chat = () => {
                   <FaGraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
               </div>
+
+<div>
+                <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
+                  <FaChalkboardTeacher className="mr-2 text-blue-600" />
+                  Class
+                </label>
+                <div className="relative">
+                  <select
+                    value={classInput}
+                    onChange={(e) => setClassInput(e.target.value)}
+                    className="w-full text-black px-4 py-3 pl-10 pr-8 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm appearance-none"
+                    required
+                  >
+                    <option value="">Select class</option>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((grade) => (
+                      <option key={grade} value={`Grade ${grade}`}>
+                        Grade {grade}
+                      </option>
+                    ))}
+                    <option value="College">College</option>
+                  </select>
+                  <FaChalkboardTeacher className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
+                  <FaUserIcon className="mr-2 text-green-600" />
+                  Your Name
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="e.g., John Doe"
+                    className="w-full text-black px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+                    required
+                  />
+                  <FaUserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                </div>
+              </div>
+
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
                   <FaBook className="mr-2 text-purple-600" />
                   Subject
                 </label>
@@ -381,7 +434,8 @@ const Chat = () => {
               className="w-full text-sm sm:text-base text-black px-3 sm:px-5 py-3 sm:py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none pr-10 sm:pr-12 shadow-sm"
               rows={1}
               style={{ minHeight: "56px", maxHeight: "150px" }}
-              disabled={isLoading || !curriculum || !subjectInput}
+              disabled={ isLoading || !curriculum || !subjectInput || !classInput || !username
+}
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = "auto";
@@ -397,7 +451,7 @@ const Chat = () => {
           <motion.button
             type="submit"
             disabled={
-              isLoading || !inputValue.trim() || !curriculum || !subjectInput
+              isLoading || !inputValue || !curriculum || !subjectInput || !username
             }
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -422,7 +476,7 @@ const Chat = () => {
 
         <div className="mt-3 text-xs text-gray-500 flex justify-between mob-block">
           <span>
-            {!curriculum || !subjectInput
+            {!curriculum || !subjectInput || !classInput|| !username
               ? "Please enter curriculum and subject"
               : "Press Enter to send"}
           </span>
@@ -436,174 +490,4 @@ const Chat = () => {
 };
 
 export default Chat;
-// <div className="flex flex-col h-full max-w-4xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-//   {/* Header */}
-//   <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
-//     <h1 className="text-2xl font-bold">Study Assistant</h1>
-//     <p className="text-blue-200">Ask anything about your subjects</p>
-//   </div>
 
-//   <div className="flex p-4 space-x-3 border-b">
-//     <div className="flex-1">
-//       <label className="block text-sm font-medium text-gray-700 mb-1">
-//         Curriculum
-//       </label>
-//       <input
-//         type="text"
-//         value={curriculum}
-//         onChange={(e) => setCurriculum(e.target.value)}
-//         placeholder="e.g., ICSE, CBSE"
-//         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-//         required
-//       />
-//     </div>
-//     <div className="flex-1">
-//       <label className="block text-sm font-medium text-gray-700 mb-1">
-//         Subject
-//       </label>
-//       <input
-//         type="text"
-//         value={subjectInput}
-//         onChange={(e) => setSubjectInput(e.target.value)}
-//         placeholder="e.g., Mathematics"
-//         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-//         required
-//       />
-//     </div>
-//   </div>
-
-//   <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-//     {messages.length === 0 ? (
-//       <div className="flex flex-col items-center justify-center h-full text-center p-8">
-//         <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 mb-4 flex items-center justify-center">
-//           <FaRobot className="text-3xl text-indigo-600" />
-//         </div>
-//         <h3 className="text-xl font-semibold text-gray-700 mb-2">
-//           Welcome to Study Assistant!
-//         </h3>
-//         <p className="text-gray-500 max-w-md">
-//           Enter your class and subject, then ask your first question to get
-//           started with AI-powered learning help.
-//         </p>
-//       </div>
-//     ) : (
-//       <div className="space-y-4">
-//         {messages.map((message) => (
-//           <div
-//             key={message.id}
-//             className={`flex ${
-//               message.sender === "user" ? "justify-end" : "justify-start"
-//             }`}
-//           >
-//             <div
-//               className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-//                 message.sender === "user"
-//                   ? "bg-blue-600 text-white rounded-br-none"
-//                   : "bg-white border border-gray-200 rounded-bl-none"
-//               }`}
-//             >
-//               <div className="flex items-center mb-1">
-//                 {message.sender === "ai" ? (
-//                   <FaRobot className="mr-2 text-indigo-600" />
-//                 ) : (
-//                   <FaUser className="mr-2 text-blue-400" />
-//                 )}
-//                 <span className="text-xs font-medium">
-//                   {message.sender === "ai" ? "Study Assistant" : "You"}
-//                 </span>
-//               </div>
-//               <div className="prose prose-sm max-w-none">
-//                 <Markdown>{message.text}</Markdown>
-//               </div>
-//               <div
-//                 className={`text-xs mt-2 ${
-//                   message.sender === "user"
-//                     ? "text-blue-200"
-//                     : "text-gray-500"
-//                 }`}
-//               >
-//                 {message.timestamp.toLocaleTimeString([], {
-//                   hour: "2-digit",
-//                   minute: "2-digit",
-//                 })}
-//               </div>
-//             </div>
-//           </div>
-//         ))}
-//         {isLoading && (
-//           <div className="flex justify-start">
-//             <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-none px-4 py-3">
-//               <div className="flex items-center">
-//                 <FaRobot className="mr-2 text-indigo-600" />
-//                 <span className="text-xs font-medium">Study Assistant</span>
-//               </div>
-//               <div className="flex items-center mt-2">
-//                 <FiRefreshCw className="animate-spin text-indigo-600 mr-2" />
-//                 <span>Thinking...</span>
-//               </div>
-//             </div>
-//           </div>
-//         )}
-//         <div ref={messagesEndRef} />
-//       </div>
-//     )}
-//   </div>
-
-//   {/* Input Area */}
-//   <form
-//     onSubmit={handleSubmit}
-//     className="border-t border-gray-200 p-4 bg-white"
-//   >
-//     {error && (
-//       <div className="text-red-500 text-sm mb-2 flex items-center">
-//         <span className="bg-red-100 px-2 py-1 rounded">{error}</span>
-//         <button
-//           type="button"
-//           onClick={() => dispatch(resetError())}
-//           className="ml-auto text-gray-500 hover:text-gray-700"
-//         >
-//           <FiX />
-//         </button>
-//       </div>
-//     )}
-//     <div className="flex">
-//       <input
-//         type="text"
-//         value={inputValue}
-//         onChange={(e) => setInputValue(e.target.value)}
-//         placeholder="Ask your question..."
-//         className="flex-1 px-4 py-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-//         disabled={isLoading || !curriculum || !subjectInput}
-//       />
-//       <button
-//         type="submit"
-//         disabled={
-//           isLoading || !inputValue.trim() || !curriculum || !subjectInput
-//         }
-//         className={`px-5 rounded-r-lg flex items-center justify-center ${
-//           isLoading || !inputValue.trim() || !curriculum || !subjectInput
-//             ? "bg-gray-300 cursor-not-allowed"
-//             : "bg-blue-600 hover:bg-blue-700"
-//         }`}
-//       >
-//         {isLoading ? (
-//           <FiRefreshCw className="animate-spin text-white" />
-//         ) : (
-//           <FiArrowUp className="text-white" />
-//         )}
-//       </button>
-//     </div>
-//     <div className="flex justify-between mt-2 text-xs text-gray-500">
-//       <span>
-//         {!curriculum || !subjectInput
-//           ? "Please enter class and subject"
-//           : "Press Enter to send"}
-//       </span>
-//       <span>{inputValue.length}/500</span>
-//     </div>
-//   </form>
-// </div>
-//   );
-// };
-
-// export default Chat;

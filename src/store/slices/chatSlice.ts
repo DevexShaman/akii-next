@@ -5,6 +5,8 @@ interface UserQuestion {
   question: string;
   curriculum: string;
   subject: string;
+  student_class: string;
+  username: string;
 }
 
 interface ChatError {
@@ -15,13 +17,12 @@ export const sendChatMessage = createAsyncThunk(
   "chat/sendMessage",
   async (userQuestion: UserQuestion, { rejectWithValue }) => {
     try {
-      // const state = getState() as { teacher: UploadState };
-      // const { class: studentClass, subject, curriculum } = state.teacher;
-
       const payload = {
         question: userQuestion.question,
         subject: userQuestion.subject || "",
         curriculum: userQuestion.curriculum || "",
+        student_class: userQuestion.student_class || "",
+        username: userQuestion.username|| "",
       };
 
       const backendUrl =
