@@ -10,6 +10,9 @@ import {
   FaVolumeUp,
   FaLightbulb,
   FaRegSmile,
+  FaBook, // Added for vocabulary section
+  FaCommentAlt, // Added for feedback section
+  FaQuoteLeft,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 
@@ -21,18 +24,21 @@ type ResultAPI = {
   grammar: number | string;
   fluency: number | string;
   emotion: string;
+  feedback: string;
+  examples: string[];
+  "vocabulary error": string;
 };
 
 const ResultPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const essayId = searchParams.get("essayId");
-  const [resultData, setResultData] = useState(null);
+  const [resultData, setResultData] = useState<ResultAPI | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 10; // Max 10 retries (30 seconds total)
-  const retryDelay = 3000; // 3 seconds between retries
+  const maxRetries = 10;
+  const retryDelay = 3000;
   const fetchResults = useCallback(async () => {
     if (!essayId) return;
 
@@ -49,13 +55,11 @@ const ResultPage = () => {
       if (!response.ok) throw new Error("Failed to fetch results");
 
       const data = await response.json();
-
       // Check if analysis is complete
       if (data && data.understanding) {
-        setResultData(data);
+        setResultData(data); // ResultData null
         setLoading(false);
       } else if (retryCount < maxRetries) {
-        // Retry after delay if data not ready
         setTimeout(() => {
           setRetryCount((prev) => prev + 1);
           fetchResults();
@@ -142,7 +146,7 @@ const ResultPage = () => {
     );
   }
 
-  if (error) {
+  if (error || !resultData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="bg-white p-8 rounded-xl shadow-lg max-w-md text-center">
@@ -164,11 +168,20 @@ const ResultPage = () => {
 
   const emotion = resultData!.emotion;
 
-  const breakdown = [
-    { label: "Pronunciation", score: parseScore(resultData!.pronunciation) },
-    { label: "Fluency", score: parseScore(resultData!.fluency) },
-    { label: "Grammar", score: parseScore(resultData!.grammar) },
-  ];
+  const pronunciationScore = parseScore(resultData.pronunciation);
+  const fluencyScore = parseScore(resultData.fluency);
+  const grammarScore = parseScore(resultData.grammar);
+  const overallScore = calculateOverallScore();
+
+  const emotionEmojiMap: Record<string, string> = {
+    surprised: "😲",
+    happy: "😊",
+    neutral: "😐",
+    sad: "😔",
+    angry: "😠",
+    fearful: "😨",
+    disgusted: "🤢",
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
@@ -202,9 +215,7 @@ const ResultPage = () => {
               </div>
               <div className="relative">
                 <div className="w-28 h-28 rounded-full border-4 border-white/30 flex items-center justify-center">
-                  <span className="text-4xl font-bold">
-                    {result.overallScore}
-                  </span>
+                  <span className="text-4xl font-bold">{overallScore}</span>
                   <span className="text-lg">/10</span>
                 </div>
                 <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-white animate-spin-slow"></div>
@@ -227,9 +238,9 @@ const ResultPage = () => {
             </h3>
             <div className="space-y-4">
               {[
-                { label: "Pronunciation", score: result.pronunciation },
-                { label: "Fluency", score: result.fluency },
-                { label: "Grammar", score: result.grammar },
+                { label: "Pronunciation", score: pronunciationScore },
+                { label: "Fluency", score: fluencyScore },
+                { label: "Grammar", score: grammarScore },
               ].map((item, index) => (
                 <div key={index}>
                   <div className="flex justify-between mb-1">
@@ -256,12 +267,13 @@ const ResultPage = () => {
               </h3>
               <div className="flex items-center">
                 <span className="inline-block bg-indigo-100 text-indigo-800 text-lg px-4 py-2 rounded-full">
-                  {result.emotion}
+                  {emotionEmojiMap[resultData.emotion] || "☺"}
+                  <span className="ml-2 capitalize">{resultData.emotion}</span>
                 </span>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-lg">
+            {/* <div className="bg-white p-6 rounded-2xl shadow-lg">
               <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                 <FaLightbulb className="text-yellow-500 mr-2" />
                 Suggestions for Improvement
@@ -288,6 +300,13 @@ const ResultPage = () => {
                   </li>
                 ))}
               </ul>
+            </div> */}
+            <div className="bg-white p-6 rounded-2xl shadow-lg">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <FaBook className="text-indigo-500 mr-2" />
+                Vocabulary Feedback
+              </h3>
+              <p className="text-gray-700">{resultData["vocabulary error"]}</p>
             </div>
           </div>
         </motion.div>
@@ -297,21 +316,99 @@ const ResultPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
+        >
+          <div className="bg-white p-6 rounded-2xl shadow-lg">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <FaLightbulb className="text-yellow-500 mr-2" />
+              Suggestions for Improvement
+            </h3>
+            <ul className="space-y-3">
+              {(resultData.suggestions || []).map((suggestion, index) => (
+                <li key={index} className="flex items-start">
+                  <div className="bg-yellow-100 p-1 rounded-full mr-3 mt-1">
+                    <svg
+                      className="w-4 h-4 text-yellow-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <span className="text-gray-700">{suggestion}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl shadow-lg">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+              <FaQuoteLeft className="text-green-500 mr-2" />
+              Practical Examples
+            </h3>
+            <ul className="space-y-3">
+              {(resultData.examples || []).map((example, index) => (
+                <li key={index} className="flex items-start">
+                  <div className="bg-green-100 p-1 rounded-full mr-3 mt-1">
+                    <svg
+                      className="w-4 h-4 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      ></path>
+                    </svg>
+                  </div>
+                  <span className="text-gray-700">{example}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </motion.div>
+
+        {/* Detailed Feedback */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
           className="bg-white p-6 rounded-2xl shadow-lg mb-8"
         >
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">
-            Detailed Feedback
-          </h3>
+          <div className="flex items-center mb-4">
+            <FaCommentAlt className="text-indigo-500 mr-2 text-xl" />
+            <h3 className="text-xl font-semibold text-gray-800">
+              Detailed Feedback
+            </h3>
+          </div>
+
           <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-indigo-50 border-l-4 border-l-indigo-500">
+              <h4 className="font-semibold text-gray-800 mb-2">
+                Overall Feedback
+              </h4>
+              <p className="text-gray-700">{resultData.feedback}</p>
+            </div>
+
             <div className="p-4 rounded-xl bg-blue-50 border-l-4 border-l-blue-500">
               <h4 className="font-semibold text-gray-800 mb-2">
                 Understanding
               </h4>
-              <p className="text-gray-700">{result.understanding}</p>
+              <p className="text-gray-700">{resultData.understanding}</p>
             </div>
+
             <div className="p-4 rounded-xl bg-purple-50 border-l-4 border-l-purple-500">
               <h4 className="font-semibold text-gray-800 mb-2">Topic Grip</h4>
-              <p className="text-gray-700">{result.topicGrip}</p>
+              <p className="text-gray-700">{resultData.topic_grip}</p>
             </div>
           </div>
         </motion.div>
@@ -324,12 +421,6 @@ const ResultPage = () => {
           >
             Back to Dashboard
           </button>
-          {/* <button
-            onClick={() => router.push("/practice")}
-            className="bg-white text-indigo-600 border border-indigo-600 px-6 py-3 rounded-lg hover:bg-indigo-50 transition-colors font-medium"
-          >
-            Practice Again
-          </button> */}
         </div>
       </div>
     </div>

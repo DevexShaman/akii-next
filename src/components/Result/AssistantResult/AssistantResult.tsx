@@ -100,7 +100,6 @@ export default function ResultsPage() {
 
         {data ? (
           <div className="space-y-8">
-            {/* Score Summary Section */}
             <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
               <h2 className="text-xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200">
                 Performance Summary

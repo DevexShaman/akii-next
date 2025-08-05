@@ -108,7 +108,6 @@ export default function VoiceAssistant() {
   }, []);
 
   const initializeAudioProcessing = async (stream) => {
-    // Create audio context if needed
     try {
       if (
         !audioContextRef.current ||
@@ -125,7 +124,6 @@ export default function VoiceAssistant() {
         await audioContext.resume();
       }
 
-      // Create analyzer for visualization
       const analyzer = audioContext.createAnalyser();
       analyzerRef.current = analyzer;
       analyzer.fftSize = 256;
@@ -133,11 +131,9 @@ export default function VoiceAssistant() {
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyzer);
 
-      // Create processor for audio capture
       const processor = audioContext.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
-      // Process audio chunks
       processor.onaudioprocess = (event) => {
         if (isPlayingRef.current) return;
         const inputData = event.inputBuffer.getChannelData(0);
@@ -169,14 +165,12 @@ export default function VoiceAssistant() {
       setStatus("playing");
       isPlayingRef.current = true;
 
-      // Mute microphone during playback
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => {
           track.enabled = false;
         });
       }
 
-      // Create new context for playback
       playbackContextRef.current = new (window.AudioContext ||
         (window as any).webkitAudioContext)({
         sampleRate: 16000,
@@ -190,18 +184,15 @@ export default function VoiceAssistant() {
       source.start(0);
 
       source.onended = () => {
-        // Unmute microphone
         if (mediaStreamRef.current) {
           mediaStreamRef.current.getTracks().forEach((track) => {
             track.enabled = true;
           });
         }
 
-        // Clean up playback context
         context.close();
         playbackContextRef.current = null;
 
-        // Handle queue
         if (audioQueueRef.current.length > 0) {
           const nextBuffer = audioQueueRef.current.shift();
           playAudioBuffer(nextBuffer);
@@ -213,7 +204,6 @@ export default function VoiceAssistant() {
       };
     } catch (e) {
       console.error("Playback error:", e);
-      // Ensure mic is unmuted on error
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => {
           track.enabled = true;
@@ -231,7 +221,6 @@ export default function VoiceAssistant() {
         const nextBuffer = audioQueueRef.current.shift();
         playAudioBuffer(nextBuffer);
       } else {
-        // FIX: Ensure status reset when queue is empty
         isPlayingRef.current = false;
       }
     }
@@ -249,7 +238,6 @@ export default function VoiceAssistant() {
       setStatus("connecting");
       console.log("Getting user media...");
 
-      // Get user media
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 16000,
@@ -264,25 +252,18 @@ export default function VoiceAssistant() {
         localAudioRef.current.srcObject = stream;
       }
 
-      // Initialize audio processing
       await initializeAudioProcessing(stream);
 
-      // Create peer connection
       const pc = new RTCPeerConnection({
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          // Add your TURN servers here if needed
-        ],
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       });
       pcRef.current = pc;
       console.log("PeerConnection created");
 
-      // Add local audio track
       stream.getTracks().forEach((track) => {
         pc.addTrack(track, stream);
       });
 
-      // Monitor connection state
       pc.onconnectionstatechange = () => {
         console.log("Connection state:", pc.connectionState);
         if (
@@ -337,14 +318,12 @@ export default function VoiceAssistant() {
       ws.onopen = () => {
         console.log("WebSocket connected");
 
-        // Add ping mechanism to keep connection alive
         (ws as any).pingInterval = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "ping" }));
           }
         }, 2000);
 
-        // Send audio chunks
         sendIntervalRef.current = setInterval(() => {
           if (
             rawAudioRef.current.length === 0 ||
@@ -370,7 +349,6 @@ export default function VoiceAssistant() {
           ws.send(combined.buffer);
         }, 3000);
 
-        // Create offer
         pc.createOffer({
           offerToReceiveAudio: true,
           offerToReceiveVideo: false,
@@ -481,7 +459,6 @@ export default function VoiceAssistant() {
     }
 
     if (wsRef.current) {
-      // Clear ping interval
       if (wsRef.current.pingInterval) {
         clearInterval(wsRef.current.pingInterval);
       }
@@ -501,7 +478,6 @@ export default function VoiceAssistant() {
       audioContextRef.current = null;
     }
 
-    // Close playback context if exists
     if (playbackContextRef.current) {
       playbackContextRef.current.close();
       playbackContextRef.current = null;
@@ -539,17 +515,14 @@ export default function VoiceAssistant() {
         setLoadingResult(true);
         setLoadingText("Preparing your results...");
 
-        // Set timeout to update loading text after 15 seconds
         const textTimeout = setTimeout(() => {
           if (loadingResult) {
             setLoadingText("Almost there, finalizing results...");
           }
         }, 15000);
 
-        // Fetch scoring data and wait
         await dispatch(fetchOverallScoring(essayId)).unwrap();
 
-        // Clear timeout and navigate
         clearTimeout(textTimeout);
         router.push(`/assistantresult?essay_id=${essayId}`);
       } catch (error) {
@@ -616,7 +589,6 @@ export default function VoiceAssistant() {
               )}
             </div>
 
-            {/* Accent Dropdown */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Accent <span className="text-red-600">*</span>
@@ -645,7 +617,6 @@ export default function VoiceAssistant() {
               )}
             </div>
 
-            {/* Topic Input */}
             <div className="col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Topic <span className="text-red-600">*</span>
@@ -727,16 +698,16 @@ export default function VoiceAssistant() {
                       status === "idle"
                         ? "bg-indigo-100 hover:bg-indigo-200 text-indigo-600"
                         : status === "playing"
-                        ? "bg-gray-400 text-white cursor-not-allowed" // Disabled style
+                        ? "bg-gray-400 text-white cursor-not-allowed"
                         : "bg-red-500 hover:bg-red-600 text-white"
                     }`}
                     whileHover={
-                      status !== "playing" ? { scale: 1.05 } : undefined // Disable hover animation
+                      status !== "playing" ? { scale: 1.05 } : undefined
                     }
                     whileTap={
-                      status !== "playing" ? { scale: 0.95 } : undefined // Disable tap animation
+                      status !== "playing" ? { scale: 0.95 } : undefined
                     }
-                    disabled={status === "playing"} // Actually disable the button
+                    disabled={status === "playing"}
                   >
                     {status === "idle" ? (
                       <svg
@@ -799,7 +770,6 @@ export default function VoiceAssistant() {
             )}
           </div>
 
-          {/* Status Indicator */}
           <div className="flex flex-col items-center w-full">
             <div className="flex items-center mb-2">
               <motion.div
@@ -862,7 +832,6 @@ export default function VoiceAssistant() {
         </div>
       </div>
       <div className="mt-6 flex flex-col items-center">
-        {/* Loading indicator */}
         {loadingResult && (
           <div className="flex flex-col items-center">
             <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
@@ -873,7 +842,6 @@ export default function VoiceAssistant() {
           </div>
         )}
 
-        {/* Result button */}
         {showResultButton && !loadingResult && (
           <motion.button
             onClick={handleShowResult}
@@ -888,7 +856,6 @@ export default function VoiceAssistant() {
           </motion.button>
         )}
 
-        {/* Error message */}
         {scoringState.error && (
           <p className="mt-2 text-red-500 text-sm">
             Error loading results: {scoringState.error}
