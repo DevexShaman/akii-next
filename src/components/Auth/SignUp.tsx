@@ -26,10 +26,9 @@ const SignUp = () => {
   const [apiError, setApiError] = useState("");
   const dispatch = useAppDispatch();
   const router = useRouter();
-  // const { isLoading, error } = useAppSelector((state: any) => state.auth);
+
 
   const validationSchema = Yup.object({
-    // name: Yup.string().required("Name is required"),
     email: Yup.string().email("Invalid email").required("Email is required"),
     username: Yup.string().required("Username is required"),
     // phone: Yup.string().matches(/^[0-9]{10}$/, "Invalid phone number"),

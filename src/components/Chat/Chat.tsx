@@ -19,7 +19,6 @@ const Chat = () => {
   const [curriculum, setCurriculum] = useState("");
   const [subjectInput, setSubjectInput] = useState("");
   const [classInput, setClassInput] = useState("");
-  const [username, setUsername] = useState("");
   const [messages, setMessages] = useState<
     Array<{
       id: string;
@@ -40,8 +39,15 @@ const Chat = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!inputValue.trim() || !curriculum || !subjectInput || !classInput || !username || isLoading) return;
-    console.log("11111111111", classInput)
+    if (
+      !inputValue.trim() ||
+      !curriculum ||
+      !subjectInput ||
+      !classInput ||
+      isLoading
+    )
+      return;
+    console.log("11111111111", classInput);
 
     const userMessage = {
       id: Date.now().toString(),
@@ -62,7 +68,7 @@ const Chat = () => {
           curriculum: curriculum,
           subject: subjectInput,
           student_class: classInput,
-          username: username,
+          // username: username,
         })
       ).unwrap();
 
@@ -161,7 +167,7 @@ const Chat = () => {
                 </div>
               </div>
 
-<div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
                   <FaChalkboardTeacher className="mr-2 text-blue-600" />
                   Class
@@ -174,22 +180,28 @@ const Chat = () => {
                     required
                   >
                     <option value="">Select class</option>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((grade) => (
-                      <option key={grade} value={`Grade ${grade}`}>
-                        Grade {grade}
-                      </option>
-                    ))}
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                      (grade) => (
+                        <option key={grade} value={`Grade ${grade}`}>
+                          Grade {grade}
+                        </option>
+                      )
+                    )}
                     <option value="College">College</option>
                   </select>
                   <FaChalkboardTeacher className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <svg
+                      className="fill-current h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                    >
                       <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
                     </svg>
                   </div>
                 </div>
               </div>
-               <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
                   <FaUserIcon className="mr-2 text-green-600" />
                   Your Name
@@ -205,8 +217,7 @@ const Chat = () => {
                   />
                   <FaUserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
-              </div>
-
+              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
@@ -434,8 +445,9 @@ const Chat = () => {
               className="w-full text-sm sm:text-base text-black px-3 sm:px-5 py-3 sm:py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none pr-10 sm:pr-12 shadow-sm"
               rows={1}
               style={{ minHeight: "56px", maxHeight: "150px" }}
-              disabled={ isLoading || !curriculum || !subjectInput || !classInput || !username
-}
+              disabled={
+                isLoading || !curriculum || !subjectInput || !classInput
+              }
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = "auto";
@@ -450,9 +462,7 @@ const Chat = () => {
 
           <motion.button
             type="submit"
-            disabled={
-              isLoading || !inputValue || !curriculum || !subjectInput || !username
-            }
+            disabled={isLoading || !inputValue || !curriculum || !subjectInput}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
@@ -476,7 +486,7 @@ const Chat = () => {
 
         <div className="mt-3 text-xs text-gray-500 flex justify-between mob-block">
           <span>
-            {!curriculum || !subjectInput || !classInput|| !username
+            {!curriculum || !subjectInput || !classInput
               ? "Please enter curriculum and subject"
               : "Press Enter to send"}
           </span>
@@ -490,4 +500,3 @@ const Chat = () => {
 };
 
 export default Chat;
-
