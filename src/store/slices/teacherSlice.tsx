@@ -41,6 +41,10 @@ export const processFiles = createAsyncThunk(
     try {
       const state = getState() as { teacher: UploadState };
       const { class: className, subject, curriculum } = state.teacher;
+      let username = "";
+      if (typeof window !== "undefined") {
+        username = localStorage.getItem("username") || "";
+      }
 
       const results: { [fileName: string]: string } = {};
       const uploadResults: UploadState["uploadResults"] = {};
@@ -53,9 +57,11 @@ export const processFiles = createAsyncThunk(
         formData.append("student_class", className || "");
         formData.append("subject", subject || "");
         formData.append("curriculum", curriculum || "");
+        formData.append("username", username);
 
         const progress = Math.floor(((i + 1) / files.length) * 100);
         dispatch(setProgress(progress));
+        console.log("12345678qwertyuwertyuertyertyerter", formData);
 
         const response = await apiPost("/upload/", formData);
 
