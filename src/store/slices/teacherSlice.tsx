@@ -87,8 +87,7 @@ export const processFiles = createAsyncThunk(
             results[file.name] = "Processing in background due to timeout";
             uploadResults[file.name] = {
               status: "success",
-              message:
-                "File uploaded successfully and is being processed. You will be notified when done.",
+              message: "File uploaded successfully and is being processed.",
             };
           } else {
             // Re-throw other errors
