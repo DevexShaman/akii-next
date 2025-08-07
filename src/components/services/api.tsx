@@ -83,11 +83,12 @@ export async function apiGet(
 export async function apiPost(
   endpoint: string,
   data: any | FormData = {},
-  options: RequestInit = {}
+  options: RequestInit & { timeout?: number } = {}
 ): Promise<any> {
   const token = getAuthToken();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 300000);
+  const timeoutDuration = options.timeout || 300000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
 
   // Create headers object
   const headers = new Headers();
@@ -119,6 +120,7 @@ export async function apiPost(
   const body = data instanceof FormData ? data : JSON.stringify(data);
   const { headers: _, ...restOptions } = options;
   try {
+    const { timeout: _, ...restOptions } = options;
     const response = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
       headers,

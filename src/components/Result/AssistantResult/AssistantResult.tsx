@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { CheckCircle, AlertCircle, Smile, Frown, Meh } from "react-feather";
+import { Info } from "react-feather";
 
 // Emotion icon component
 const EmotionIcon = ({ emotion }: { emotion: string }) => {
@@ -102,8 +103,13 @@ export default function ResultsPage() {
           <div className="space-y-8">
             <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
               <h2 className="text-xl font-bold text-gray-900 mb-6 pb-2 border-b border-gray-200">
-                Performance Summary
+                Overall Feedback
               </h2>
+
+              <div className="flex items-start">
+                <CheckCircle className="h-6 w-6 text-indigo-500 mt-0.5 flex-shrink-0" />
+                <p className="ml-3 text-gray-600">{data.feedback}</p>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="border border-gray-100 rounded-lg p-4 shadow-sm">
@@ -171,27 +177,30 @@ export default function ResultsPage() {
               </h2>
 
               <div className="space-y-6">
-                {data.suggestions.map((suggestion, index) => (
-                  <div key={index} className="flex items-start">
-                    <div className="flex-shrink-0 mt-1">
-                      <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs font-bold">
-                        {index + 1}
+                {data?.suggestions ||
+                  [].map((suggestion, index) => (
+                    <div key={index} className="flex items-start">
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center text-xs font-bold">
+                          {index + 1}
+                        </div>
+                      </div>
+
+                      <div className="ml-4">
+                        <p className="text-gray-700 font-medium">
+                          {suggestion}
+                        </p>
+                        {data.suggestions_examples &&
+                          data.suggestions_examples[index] && (
+                            <div className="mt-3 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r">
+                              <p className="text-sm text-yellow-700 italic">
+                                "{data.suggestions_examples[index]}"
+                              </p>
+                            </div>
+                          )}
                       </div>
                     </div>
-
-                    <div className="ml-4">
-                      <p className="text-gray-700 font-medium">{suggestion}</p>
-                      {data.suggestions_examples &&
-                        data.suggestions_examples[index] && (
-                          <div className="mt-3 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r">
-                            <p className="text-sm text-yellow-700 italic">
-                              "{data.suggestions_examples[index]}"
-                            </p>
-                          </div>
-                        )}
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </div>
           </div>

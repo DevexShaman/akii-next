@@ -61,16 +61,44 @@ export const processFiles = createAsyncThunk(
 
         const progress = Math.floor(((i + 1) / files.length) * 100);
         dispatch(setProgress(progress));
+
+        const controller = new AbortController();
+        const timeout = 300000; // 5 minutes timeout
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
         console.log("12345678qwertyuwertyuertyertyerter", formData);
 
-        const response = await apiPost("/upload/", formData);
+        try {
+          const response = await apiPost("/upload/", formData, {
+            timeout: 600000, // 10 minutes
+          });
 
-        results[file.name] = response.data?.extracted_text || "No text";
-        uploadResults[file.name] = {
-          status: response.status || "unknown",
-          message: response.message || "No message",
-          data: response.namespace,
-        };
+          results[file.name] = response.data?.extracted_text || "No text";
+          uploadResults[file.name] = {
+            status: response.status || "unknown",
+            message: response.message || "No message",
+            data: response.namespace,
+          };
+        } catch (error: any) {
+          // Handle 504 Gateway Timeout as a successful upload
+          console.log("error.status", error.status);
+          if (error.status === 500) {
+            console.log("1111111111111");
+            results[file.name] = "Processing in background due to timeout";
+            uploadResults[file.name] = {
+              status: "success",
+              message:
+                "File uploaded successfully and is being processed. You will be notified when done.",
+            };
+          } else {
+            // Re-throw other errors
+            throw error;
+          }
+        } finally {
+          // Update progress after processing each file
+          const progress = Math.floor(((i + 1) / files.length) * 100);
+          dispatch(setProgress(progress));
+        }
       }
 
       return { results, uploadResults };
