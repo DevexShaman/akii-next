@@ -29,6 +29,14 @@ const Chat = () => {
   >([]);
 
   const [isCurriculumVisible, setIsCurriculumVisible] = useState(true);
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+  }, []);
 
   const isLoading = status === "loading";
 
@@ -44,7 +52,8 @@ const Chat = () => {
       !curriculum ||
       !subjectInput ||
       !classInput ||
-      isLoading
+      isLoading ||
+      !username
     )
       return;
     console.log("11111111111", classInput);
@@ -68,7 +77,7 @@ const Chat = () => {
           curriculum: curriculum,
           subject: subjectInput,
           student_class: classInput,
-          // username: username,
+          username: username,
         })
       ).unwrap();
 
