@@ -82,7 +82,7 @@ export const processFiles = createAsyncThunk(
         } catch (error: any) {
           // Handle 504 Gateway Timeout as a successful upload
           console.log("error.status", error.status);
-          if (error.status === 500) {
+          if (error.status === 504) {
             console.log("1111111111111");
             results[file.name] = "Processing in background due to timeout";
             uploadResults[file.name] = {
