@@ -18,7 +18,7 @@ export const fetchOverallScoring = createAsyncThunk(
   async (essay_id: string, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `https://llm.edusmartai.com/api/overall-scoring-by-id?essay_id=${essay_id}`
+        `https://llm.edusmartai.com/api/overall-scoring-by-id-speech-module?essay_id=${essay_id}`
       );
       return response.data;
     } catch (error: any) {
