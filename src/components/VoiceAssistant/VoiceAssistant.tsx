@@ -77,6 +77,8 @@ export default function VoiceAssistant() {
   const [accentOption, setAccentOption] = useState("");
   const [topicInput, setTopicInput] = useState("");
   const [moodOption, setMoodOption] = useState("");
+  const [showPreSpeechPrompt, setShowPreSpeechPrompt] = useState(true);
+
   const [errors, setErrors] = useState({
     class: false,
     accent: false,
@@ -227,6 +229,7 @@ export default function VoiceAssistant() {
   };
 
   const initWebRTC = async () => {
+    setShowPreSpeechPrompt(false);
     setEssayId("");
     setShowResultButton(false);
     setLoadingResult(false);
@@ -500,6 +503,7 @@ export default function VoiceAssistant() {
   const stopAssistant = () => {
     setStatus("idle");
     cleanup();
+    setShowPreSpeechPrompt(true);
     if (essayId) {
       setLoadingResult(true);
       setTimeout(() => {
@@ -578,6 +582,9 @@ export default function VoiceAssistant() {
                   errors.class ? "border-red-500" : "border-gray-300"
                 } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               >
+                <option value="" disabled>
+                  Select class
+                </option>
                 {CLASS_OPTIONS.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -606,6 +613,9 @@ export default function VoiceAssistant() {
                   errors.accent ? "border-red-500" : "border-gray-300"
                 } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               >
+                <option value="" disabled>
+                  Select accent
+                </option>
                 {ACCENT_OPTIONS.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -658,6 +668,9 @@ export default function VoiceAssistant() {
                   errors.mood ? "border-red-500" : "border-gray-300"
                 } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               >
+                <option value="" disabled>
+                  Select mood
+                </option>
                 {MOOD_OPTIONS.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -674,6 +687,37 @@ export default function VoiceAssistant() {
         </div>
 
         <div className="p-8 flex flex-col items-center">
+          <AnimatePresence>
+            {showPreSpeechPrompt && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-center max-w-md"
+              >
+                <div className="flex items-center justify-center mb-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-blue-500 mr-2"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <span className="text-blue-700 font-medium">
+                    Recording Tip
+                  </span>
+                </div>
+                <p className="text-blue-600 text-sm">
+                  For best results, please try speaking in a quiet room.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div className="relative mb-8">
             <div className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center shadow-inner">
               <AnimatePresence>
@@ -829,9 +873,9 @@ export default function VoiceAssistant() {
           Powered by WebRTC & AI
         </div>
         <div className="mt-4 p-4 bg-gray-100 rounded-lg max-w-full">
-          <p className="text-sm text-gray-700 font-semibold text-center">
+          {/* <p className="text-sm text-gray-700 font-semibold text-center">
             Transcription:
-          </p>
+          </p> */}
           <p className="text-gray-600 break-words">{transcription}</p>
         </div>
       </div>

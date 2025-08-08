@@ -41,11 +41,11 @@ const Sidebar = ({
       href: "/teacher",
       icon: UserPlus,
     },
-    {
-      name: "Chat with us",
-      href: "/chat",
-      icon: MessageCircle,
-    },
+    // {
+    //   name: "Chat with us",
+    //   href: "/chat",
+    //   icon: MessageCircle,
+    // },
     {
       name: "Speech Practice",
       href: "/voiceassistant",

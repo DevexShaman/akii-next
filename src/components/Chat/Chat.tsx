@@ -25,6 +25,7 @@ const Chat = () => {
       text: string;
       sender: "user" | "ai";
       timestamp: Date;
+      diagramUrls?: string[];
     }>
   >([]);
 
@@ -89,6 +90,7 @@ const Chat = () => {
           text: result.answer,
           sender: "ai" as const,
           timestamp: new Date(),
+          diagramUrls: result.diagram_urls || [],
         },
       ]);
       if (isCurriculumVisible) {
@@ -116,6 +118,19 @@ const Chat = () => {
   const formVariants = {
     hidden: { height: 0, opacity: 0 },
     visible: { height: "auto", opacity: 1, transition: { duration: 0.3 } },
+  };
+
+  const getImageUrl = (path: string) => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!baseUrl) return `/view-image/${path}`;
+
+    // Remove trailing slash if exists
+    const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+
+    // Remove leading slash from path if exists
+    const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+
+    return `${cleanBaseUrl}/view-image/${cleanPath}`;
   };
 
   return (
@@ -362,6 +377,29 @@ const Chat = () => {
                       }`}
                     >
                       <Markdown>{message.text}</Markdown>
+                      {message.diagramUrls &&
+                        message.diagramUrls.length > 0 && (
+                          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {message.diagramUrls.map((url, index) => (
+                              <div
+                                key={index}
+                                className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 cursor-pointer"
+                                onClick={() =>
+                                  window.open(getImageUrl(url), "_blank")
+                                }
+                              >
+                                <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full aspect-video flex items-center justify-center">
+                                  <span className="text-gray-500 font-medium">
+                                    Diagram {index + 1}
+                                  </span>
+                                </div>
+                                <div className="p-2 text-center text-xs text-gray-500">
+                                  Click to view
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                     </div>
                   </div>
                 </motion.div>
