@@ -380,24 +380,25 @@ const Chat = () => {
                       {message.diagramUrls &&
                         message.diagramUrls.length > 0 && (
                           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {message.diagramUrls.map((url, index) => (
-                              <div
-                                key={index}
-                                className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 cursor-pointer"
-                                onClick={() =>
-                                  window.open(getImageUrl(url), "_blank")
-                                }
-                              >
-                                <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full aspect-video flex items-center justify-center">
-                                  <span className="text-gray-500 font-medium">
-                                    Diagram {index + 1}
-                                  </span>
+                            {message?.diagramUrls ||
+                              [].map((url, index) => (
+                                <div
+                                  key={index}
+                                  className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 cursor-pointer"
+                                  onClick={() =>
+                                    window.open(getImageUrl(url), "_blank")
+                                  }
+                                >
+                                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full aspect-video flex items-center justify-center">
+                                    <span className="text-gray-500 font-medium">
+                                      Diagram {index + 1}
+                                    </span>
+                                  </div>
+                                  <div className="p-2 text-center text-xs text-gray-500">
+                                    Click to view
+                                  </div>
                                 </div>
-                                <div className="p-2 text-center text-xs text-gray-500">
-                                  Click to view
-                                </div>
-                              </div>
-                            ))}
+                              ))}
                           </div>
                         )}
                     </div>
