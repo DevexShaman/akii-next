@@ -27,7 +27,6 @@ const SignUp = () => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-
   const validationSchema = Yup.object({
     email: Yup.string().email("Invalid email").required("Email is required"),
     username: Yup.string().required("Username is required"),

@@ -44,8 +44,19 @@ export const sendChatMessage = createAsyncThunk(
         const errorData = await response.json();
         throw new Error(errorData.detail || "Request failed");
       }
+      const responseData = await response.json();
 
-      return await response.json();
+      let diagramUrls = [];
+      if (responseData.diagram_urls) {
+        diagramUrls = Array.isArray(responseData.diagram_urls)
+          ? responseData.diagram_urls
+          : [responseData.diagram_urls];
+      }
+
+      return {
+        answer: responseData.answer,
+        diagramUrls: diagramUrls,
+      };
     } catch (error: unknown) {
       return rejectWithValue(
         (error as ChatError).message || "An error occurred"

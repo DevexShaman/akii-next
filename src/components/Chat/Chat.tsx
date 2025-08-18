@@ -82,6 +82,8 @@ const Chat = () => {
         })
       ).unwrap();
 
+      console.log("result0000000000000", result);
+
       // Add AI response
       setMessages((prev) => [
         ...prev,
@@ -90,7 +92,7 @@ const Chat = () => {
           text: result.answer,
           sender: "ai" as const,
           timestamp: new Date(),
-          diagramUrls: result.diagram_urls || [],
+          diagramUrls: result.diagramUrls || [],
         },
       ]);
       if (isCurriculumVisible) {
@@ -121,16 +123,32 @@ const Chat = () => {
   };
 
   const getImageUrl = (path: string) => {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (!baseUrl) return `/view-image/${path}`;
+    // Extract the diagrams path if the backend returns extra text
+    const pathRegex = /(\/diagrams\/[^\s]+\.(png|jpg|jpeg|gif))/i;
+    const match = path.match(pathRegex);
+    const cleanPath = match ? match[0] : path;
 
-    // Remove trailing slash if exists
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL || "https://llm.edusmartai.com";
+
+    // Ensure no trailing slash on baseUrl
     const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
 
-    // Remove leading slash from path if exists
-    const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+    // ensure the diagram path *does* start with a slash
+    const finalPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
 
-    return `${cleanBaseUrl}/view-image/${cleanPath}`;
+    // encode the path to avoid issues with spaces etc.
+    const encodedPath = encodeURI(finalPath);
+
+    // NOTE: add the missing slash between endpoint and path
+    return `${cleanBaseUrl}/view-image${encodedPath}`;
+  };
+
+  const cleanDiagramPath = (path: string): string => {
+    // Extract the actual file path from the response
+    const pathRegex = /(\/diagrams\/[^\s]+\.(png|jpg|jpeg|gif))/i;
+    const match = path.match(pathRegex);
+    return match ? match[0] : path;
   };
 
   return (
@@ -379,26 +397,40 @@ const Chat = () => {
                       <Markdown>{message.text}</Markdown>
                       {message.diagramUrls &&
                         message.diagramUrls.length > 0 && (
-                          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {message?.diagramUrls ||
-                              [].map((url, index) => (
+                          <div className="mt-4">
+                            <p className="text-xs text-gray-500 mb-2">
+                              Diagrams:
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {(message.diagramUrls || []).map((url, index) => (
                                 <div
                                   key={index}
-                                  className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100 cursor-pointer"
-                                  onClick={() =>
-                                    window.open(getImageUrl(url), "_blank")
-                                  }
+                                  className="rounded-lg overflow-hidden border border-gray-300 bg-white"
                                 >
-                                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-full aspect-video flex items-center justify-center">
-                                    <span className="text-gray-500 font-medium">
-                                      Diagram {index + 1}
-                                    </span>
-                                  </div>
+                                  <img
+                                    src={getImageUrl(url)}
+                                    alt={`Diagram ${index + 1}`}
+                                    className="w-full h-auto object-contain max-h-48"
+                                    onError={(e) => {
+                                      e.currentTarget.src =
+                                        "/placeholder-diagram.png";
+                                      e.currentTarget.alt =
+                                        "Diagram not available";
+                                    }}
+                                  />
                                   <div className="p-2 text-center text-xs text-gray-500">
-                                    Click to view
+                                    <a
+                                      href={getImageUrl(url)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-500 hover:underline"
+                                    >
+                                      View full size
+                                    </a>
                                   </div>
                                 </div>
                               ))}
+                            </div>
                           </div>
                         )}
                     </div>
