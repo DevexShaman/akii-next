@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { fetchOverallScoring } from "@/store/slices/assistant/assistantSlice";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 const getUsername = () => {
   return localStorage.getItem("username") || "unknown_user";
@@ -423,8 +424,12 @@ export default function VoiceAssistant() {
         else if (typeof event.data === "string") {
           console.log("111111111111111111111111");
           try {
-            setMessages((prev) => [...prev, event.data]); 
             const message = JSON.parse(event.data);
+
+
+           
+               setMessages((prev) => [...prev, event.data]); 
+            
             console.log("message!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", message);
             if (message.essay_id) {
               console.log("Received essay ID:", message.essay_id);
@@ -548,28 +553,34 @@ export default function VoiceAssistant() {
     }
   };
 
-  const handleShowResult = async () => {
-    if (essayId) {
-      try {
-        setLoadingResult(true);
-        setLoadingText("Preparing your results...");
+const handleShowResult = async () => {
+  if (essayId) {
+    try {
+      setLoadingResult(true);
+      setLoadingText("Preparing your results...");
 
-        const textTimeout = setTimeout(() => {
-          if (loadingResult) {
-            setLoadingText("Almost there, finalizing results...");
-          }
-        }, 15000);
+      // 15-second text update
+      const textTimeout = setTimeout(() => {
+        if (loadingResult) {
+          setLoadingText("Almost there, finalizing results...");
+        }
+      }, 15000);
 
-        await dispatch(fetchOverallScoring(essayId)).unwrap();
+      // ✅ Wait 10 seconds before calling the API
+      await new Promise((resolve) => setTimeout(resolve, 13000));
 
-        clearTimeout(textTimeout);
-        router.push(`/assistantresult?essay_id=${essayId}`);
-      } catch (error) {
-        console.error("Failed to fetch scoring:", error);
-        setLoadingResult(false);
-      }
+      await dispatch(fetchOverallScoring(essayId)).unwrap();
+
+      clearTimeout(textTimeout);
+      router.push(`/assistantresult?essay_id=${essayId}`);
+    } catch (error) {
+      toast.error(error);
+      console.error("Failed to fetch scoring:", error);
+      setLoadingResult(false);
     }
-  };
+  }
+};
+
 
   const statusColors = {
     idle: "bg-gray-500",
@@ -929,7 +940,7 @@ export default function VoiceAssistant() {
   <h1 className="text-black text-xl font-bold mb-4">Conversation</h1>
   
   <div className="space-y-4">
-    {messages.map((msg, index) => {
+    {messages.slice(-2).map((msg, index) => {
       let messageData;
       let messageType;
       let messageContent;
@@ -950,10 +961,8 @@ export default function VoiceAssistant() {
         } else if (messageType === "feedback") {
           // Parse the data field for feedback messages
 
-          console.log("Feedback message content------1: ",messageData.data)
-          console.log("Parsing to json------2", safeParseData(messageData.data))
           messageContent = messageData.data ? safeParseData(messageData.data) : null;
-          console.log("type of message content-----3: ",typeof messageData.data)
+          
         } else {
           messageContent = msg;
         }

@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 interface ScoringState {
   data: any;
@@ -16,13 +17,24 @@ const initialState: ScoringState = {
 export const fetchOverallScoring = createAsyncThunk(
   "assistant/fetchOverallScoring",
   async (essay_id: string, { rejectWithValue }) => {
+
+
     try {
+
+      
       const response = await axios.get(
         `https://llm.edusmartai.com/api/overall-scoring-by-id-speech-module?essay_id=${essay_id}`
       );
+
+      console.log("RESULT RESPONSE:", response)
+      if (response.data.error) {
+        throw new Error(response.data.error)
+      }
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || error.message);
+      // toast.error(error.data.error)
+      console.log("results api Error:", error)
+      return rejectWithValue(error.data || error.message);
     }
   }
 );
