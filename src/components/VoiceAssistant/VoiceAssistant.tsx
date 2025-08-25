@@ -52,6 +52,39 @@ const MOOD_OPTIONS = [
   "Playful",
 ];
 
+function safeParseData(data) {
+  try {
+    // If already an object, return as is
+    if (typeof data === "object" && data !== null) {
+
+      return data;
+    }
+
+    // If it's a string, replace Python's None with null before parsing
+    if (typeof data === "string") {
+      let cleaned = data.replace(/\bNone\b/g, "null");
+     
+      // First parse
+      let parsed = JSON.parse(cleaned);
+
+      // If parsed result is still a string (double-encoded), parse again
+      if (typeof parsed === "string") {
+        parsed = JSON.parse(parsed);
+       
+      }
+
+      return parsed;
+    }
+
+    // If data is neither object nor string, return null
+    return null;
+  } catch (err) {
+    console.error("Failed to parse data:", err);
+    return null;
+  }
+}
+
+
 export default function VoiceAssistant() {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -78,6 +111,7 @@ export default function VoiceAssistant() {
   const [topicInput, setTopicInput] = useState("");
   const [moodOption, setMoodOption] = useState("");
   const [showPreSpeechPrompt, setShowPreSpeechPrompt] = useState(true);
+  const [messages, setMessages] = useState<string[]>([]);
 
   const [errors, setErrors] = useState({
     class: false,
@@ -389,8 +423,9 @@ export default function VoiceAssistant() {
         else if (typeof event.data === "string") {
           console.log("111111111111111111111111");
           try {
+            setMessages((prev) => [...prev, event.data]); 
             const message = JSON.parse(event.data);
-            console.log("message", message);
+            console.log("message!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", message);
             if (message.essay_id) {
               console.log("Received essay ID:", message.essay_id);
               setEssayId(message.essay_id);
@@ -876,7 +911,267 @@ export default function VoiceAssistant() {
           {/* <p className="text-sm text-gray-700 font-semibold text-center">
             Transcription:
           </p> */}
-          <p className="text-gray-600 break-words">{transcription}</p>
+          <p className=" break-words">{transcription}</p>
+           {/* <div>
+      <h1 className="text-black
+">WebSocket Messages</h1>
+      {messages.map((msg, index) => (
+        <p className="text-black
+" key={index}>{msg}</p>
+
+      ))} 
+    </div>   */}
+
+
+
+
+<div className="max-w-full">
+  <h1 className="text-black text-xl font-bold mb-4">Conversation</h1>
+  
+  <div className="space-y-4">
+    {messages.map((msg, index) => {
+      let messageData;
+      let messageType;
+      let messageContent;
+      
+
+      try {
+        // Parse the message
+        messageData = typeof msg === "string" ? JSON.parse(msg) : msg;
+
+
+
+
+        messageType = messageData.type;
+        
+        // Handle different message types
+        if (messageType === "ai_response" || messageType === "transcribed_text") {
+          messageContent = messageData.text || messageData.message || msg;
+        } else if (messageType === "feedback") {
+          // Parse the data field for feedback messages
+
+          console.log("Feedback message content------1: ",messageData.data)
+          console.log("Parsing to json------2", safeParseData(messageData.data))
+          messageContent = messageData.data ? safeParseData(messageData.data) : null;
+          console.log("type of message content-----3: ",typeof messageData.data)
+        } else {
+          messageContent = msg;
+        }
+      } catch (error) {
+        console.error("Error parsing message:", error);
+        return (
+          <div key={index} className="flex justify-start">
+            <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
+              <p className="text-red-500 text-sm">Error parsing message</p>
+              <p className="text-black text-sm mt-1">{msg}</p>
+            </div>
+          </div>
+        );
+      }
+
+      // Render based on message type
+      if (messageType === "ai_response") {
+        return (
+          <div key={index} className="flex justify-start">
+            <div className="bg-blue-100 rounded-lg p-3 max-w-xs md:max-w-md">
+              <div className="flex items-center mb-1">
+                <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">AI</span>
+                <span className="text-xs text-gray-500 ml-2">Assistant</span>
+              </div>
+              <p className="text-black">{JSON.parse(messageContent).data}</p>
+              
+            </div>
+          </div>
+        );
+      } 
+      else if (messageType === "transcribed_text") {
+        return (
+          <div key={index} className="flex justify-end">
+            <div className="bg-green-100 rounded-lg p-3 max-w-xs md:max-w-md">
+              <div className="flex items-center mb-1 justify-end">
+                <span className="text-xs text-gray-500 mr-2">You</span>
+                <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Voice</span>
+              </div>
+              <p className="text-black">{JSON.parse(messageContent).data}</p>
+            </div>
+          </div>
+        );
+      } 
+      else if (messageType === "feedback" && messageContent) {
+        return (
+          <div key={index} className="flex justify-center my-6">
+            <div className="bg-white shadow-md rounded-lg p-4 w-full max-w-2xl border border-gray-200 space-y-4">
+              <div className="text-center mb-2">
+                <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">Feedback</span>
+              </div>
+              
+              {/* Feedback Section */}
+              {messageContent.feedback && (
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <h2 className="text-lg text-black font-semibold mb-2">Feedback</h2>
+                  <p className="text-black"><strong>Content Understanding:</strong> {messageContent.feedback.content_understanding}</p>
+                  <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention}</p>
+                  <p className="text-black"><strong>Key points covered:</strong> {messageContent.feedback.key_points_covered}</p>
+                  <p className="text-black"><strong>Missed points:</strong> {messageContent.feedback.missed_points}</p>
+                  
+
+                </div>
+              )}
+
+              {/* Speaking Performance Section */}
+              {messageContent.speaking_performance && (
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
+                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.fluency_assessment}</p>
+                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.pronunciation_assessment}</p>
+                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.grammar_assessment}</p>
+                  <p className="text-black"><strong>Vocabulary:</strong> {messageContent.speaking_performance.vocabulary_usage}</p>
+                </div>
+              )}
+
+              {/* Technical Metrics Section */}
+              {messageContent.technical_metrics && (
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Technical Metrics</h2>
+                  <p className="text-black"><strong>Speaking Rate:</strong> {messageContent.technical_metrics.speaking_rate_analysis}</p>
+                  <p className="text-black"><strong>Pause Analysis:</strong> {messageContent.technical_metrics.pause_analysis}</p>
+                  <p className="text-black"><strong>Filler Words:</strong> {messageContent.technical_metrics.filler_word_usage}</p>
+                  <p className="text-black"><strong>Prosody evaluation:</strong> {messageContent.technical_metrics.prosody_evaluation}</p>
+
+                  
+                </div>
+              )}
+
+           
+
+
+                {/* {messageContent.strengths && (
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
+                  <p className="text-black"> {messageContent.strengths[0]}</p>
+                  <p className="text-black"> {messageContent.strengths[1]}</p>
+                  <p className="text-black"> {messageContent.strengths[2]}</p>
+                  <p className="text-black"> {messageContent.strengths[3]}</p>
+
+                  
+                </div>
+              )} */}
+
+
+
+              {messageContent.strengths && (
+  <div className="bg-yellow-50 p-3 rounded-lg">
+    <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
+    <ul className="list-disc list-inside space-y-1">
+      {messageContent.strengths.map((strength: string, idx: number) => (
+        <li key={idx} className="text-black">{strength}</li>
+      ))}
+    </ul>
+  </div>
+)}
+
+
+
+
+
+   {/* {messageContent.strengths && (
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Practice recommendations</h2>
+                  <p className="text-black"> {messageContent.practice_recommendations[0]}</p>
+                  <p className="text-black"> {messageContent.practice_recommendations[1]}</p>
+                  <p className="text-black"> {messageContent.practice_recommendations[2]}</p>
+                  <p className="text-black"> {messageContent.practice_recommendations[3]}</p>
+
+                  
+                </div>
+              )}  */}
+
+
+{messageContent.practice_recommendations && (
+  <div className="bg-yellow-50 p-3 rounded-lg">
+    <h2 className="text-lg font-semibold mb-2 text-black">Practice Recommendations</h2>
+    <ul className="list-disc list-inside space-y-1">
+      {messageContent.practice_recommendations.map(
+        (recommendation: string, idx: number) => (
+          <li key={idx} className="text-black">
+            {recommendation}
+          </li>
+        )
+      )}
+    </ul>
+  </div>
+)} 
+
+
+
+
+
+                {messageContent.improvement_priority && (
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Improvement priority</h2>
+                  <p className="text-black"> {messageContent.improvement_priority}</p>
+                 
+
+                  
+                </div>
+              )}
+
+
+
+              {messageContent.encouragement && (
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  <h2 className="text-lg text-black font-semibold mb-2">Encouragement </h2>
+                  <p className="text-black"> {messageContent.encouragement}</p>
+                 
+
+                  
+                </div>
+              )}
+
+
+
+                 {/* Overall Scores Section */}
+              {messageContent.overall_scores && (
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Overall Scores</h2>
+                  <ul className="list-disc list-inside">
+                    <li className="text-black">Fluency: {messageContent.overall_scores.fluency}</li>
+                    <li className="text-black">Pronunciation: {messageContent.overall_scores.pronunciation}</li>
+                    <li className="text-black">Grammar: {messageContent.overall_scores.grammar}</li>
+                    <li className="text-black">Emotion: {messageContent.overall_scores.emotion}</li>
+                  </ul>
+                </div>
+              )}
+
+
+            </div>
+          </div>
+        );
+      } 
+      else {
+        // Fallback for unknown message types
+        return (
+          <div key={index} className="flex justify-start">
+            <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
+              <p className="text-black"></p>
+            </div>
+          </div>
+        );
+      }
+    })}
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div className="mt-6 flex flex-col items-center">
