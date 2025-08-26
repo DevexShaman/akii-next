@@ -183,14 +183,30 @@ const Dashboard = () => {
     }
   };
 
-  const handleSpeakButtonClick = () => {
-    if (isSpeaking && audioRef.current) {
-      audioRef.current.pause();
-      setIsSpeaking(false);
-    } else {
-      fetchAndPlayAudio();
-    }
-  };
+const handleSpeakButtonClick = () => {
+  if (isSpeaking) {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    return;
+  }
+
+  if (!generatedParagraph) {
+    toast.error("No paragraph available to speak");
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(generatedParagraph);
+  utterance.lang = "en-US";
+  utterance.rate = 1; // Speed
+  utterance.pitch = 1; // Pitch
+
+  utterance.onstart = () => setIsSpeaking(true);
+  utterance.onend = () => setIsSpeaking(false);
+  utterance.onerror = () => setIsSpeaking(false);
+
+  window.speechSynthesis.speak(utterance);
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-4">
@@ -478,7 +494,7 @@ const Dashboard = () => {
                     </h3>
 
                     <motion.button
-                      onClick={handleSpeakButtonClick}
+                      onClick={handleSpeakButtonClick} 
                       disabled={isAudioLoading}
                       className={`p-3 rounded-xl relative overflow-hidden ${
                         isAudioLoading
