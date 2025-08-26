@@ -197,8 +197,8 @@ const handleSpeakButtonClick = () => {
 
   const utterance = new SpeechSynthesisUtterance(generatedParagraph);
   utterance.lang = "en-US";
-  utterance.rate = 1; // Speed
-  utterance.pitch = 1; // Pitch
+  utterance.rate = 1;
+  utterance.pitch = 1;
 
   utterance.onstart = () => setIsSpeaking(true);
   utterance.onend = () => setIsSpeaking(false);
@@ -206,6 +206,31 @@ const handleSpeakButtonClick = () => {
 
   window.speechSynthesis.speak(utterance);
 };
+
+// Add this useEffect to cancel speech on page refresh/unload
+useEffect(() => {
+  // Cancel speech when component unmounts (page refresh/close)
+  return () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  };
+}, []);
+
+// Optional: Also cancel speech when page is about to refresh
+useEffect(() => {
+  const handleBeforeUnload = () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
+  window.addEventListener('beforeunload', handleBeforeUnload);
+  
+  return () => {
+    window.removeEventListener('beforeunload', handleBeforeUnload);
+  };
+}, []);
 
 
   return (

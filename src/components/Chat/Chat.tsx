@@ -15,6 +15,12 @@ const Chat = () => {
   const dispatch = useAppDispatch();
   const { status, error } = useAppSelector((state) => state.chat);
 
+  
+const selectedClass = searchParams.get("class");
+  const selectedSubject = searchParams.get("subject");
+  const selectedCurriculum = searchParams.get("curriculum");
+
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState("");
   const [curriculum, setCurriculum] = useState("");
@@ -23,9 +29,7 @@ const Chat = () => {
 
     const searchParams = useSearchParams();
 
-  const selectedClass = searchParams.get("class");
-  const selectedSubject = searchParams.get("subject");
-  const selectedCurriculum = searchParams.get("curriculum");
+  
 
 
   const [messages, setMessages] = useState<
@@ -56,6 +60,7 @@ const Chat = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('---f-dsfg-dg-d-gg--')
 
     if (
       !inputValue.trim() ||
@@ -209,7 +214,7 @@ const Chat = () => {
                   <input
                     type="text"
                     value={selectedCurriculum}
-                    onChange={(e) => setCurriculum(e.target.value)}
+                    onChange={(e) => setCurriculum(selectedCurriculum)}
                     placeholder="e.g., ICSE, CBSE"
                     className="w-full text-black px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
                     disabled
@@ -534,9 +539,9 @@ const Chat = () => {
               className="w-full text-sm sm:text-base text-black px-3 sm:px-5 py-3 sm:py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none pr-10 sm:pr-12 shadow-sm"
               rows={1}
               style={{ minHeight: "56px", maxHeight: "150px" }}
-              disabled={
-                isLoading || !curriculum || !subjectInput || !classInput
-              }
+              // disabled={
+              //   isLoading || !curriculum || !subjectInput || !classInput
+              // }
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = "auto";
