@@ -14,7 +14,8 @@ import { useSearchParams } from "next/navigation";
 const Chat = () => {
   const dispatch = useAppDispatch();
   const { status, error } = useAppSelector((state) => state.chat);
-
+  
+const searchParams = useSearchParams();
   
 const selectedClass = searchParams.get("class");
   const selectedSubject = searchParams.get("subject");
@@ -27,7 +28,7 @@ const selectedClass = searchParams.get("class");
   const [subjectInput, setSubjectInput] = useState("");
   const [classInput, setClassInput] = useState("");
 
-    const searchParams = useSearchParams();
+    
 
   
 
@@ -62,15 +63,15 @@ const selectedClass = searchParams.get("class");
     e.preventDefault();
     console.log('---f-dsfg-dg-d-gg--')
 
-    if (
-      !inputValue.trim() ||
-      !curriculum ||
-      !subjectInput ||
-      !classInput ||
-      isLoading ||
-      !username
-    )
-      return;
+    // if (
+    //   !inputValue.trim() ||
+    //   !curriculum ||
+    //   !subjectInput ||
+    //   !classInput ||
+    //   isLoading ||
+    //   !username
+    // )
+      // return;
     console.log("11111111111", classInput);
 
     const userMessage = {
@@ -556,13 +557,14 @@ const selectedClass = searchParams.get("class");
 
           <motion.button
             type="submit"
-            disabled={isLoading || !inputValue || !curriculum || !subjectInput}
+            // disabled={isLoading || !inputValue || !curriculum || !subjectInput}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
-              isLoading || !inputValue.trim() || !curriculum || !subjectInput
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+              isLoading
+                ? "bg-purple-700"
+                // :" bg-gradient-to-r"
+                :"bg-purple-700"
             }`}
           >
             {isLoading ? (
@@ -576,6 +578,17 @@ const selectedClass = searchParams.get("class");
               <FiArrowUp className="text-white text-xl" />
             )}
           </motion.button>
+
+
+
+
+
+          
+
+
+
+
+          
         </div>
 
         <div className="mt-3 text-xs text-gray-500 flex justify-between mob-block">
