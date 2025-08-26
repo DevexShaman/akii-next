@@ -9,6 +9,7 @@ import Markdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaChalkboardTeacher } from "react-icons/fa";
 import { FaUser as FaUserIcon } from "react-icons/fa";
+import { useSearchParams } from "next/navigation";
 
 const Chat = () => {
   const dispatch = useAppDispatch();
@@ -19,6 +20,14 @@ const Chat = () => {
   const [curriculum, setCurriculum] = useState("");
   const [subjectInput, setSubjectInput] = useState("");
   const [classInput, setClassInput] = useState("");
+
+    const searchParams = useSearchParams();
+
+  const selectedClass = searchParams.get("class");
+  const selectedSubject = searchParams.get("subject");
+  const selectedCurriculum = searchParams.get("curriculum");
+
+
   const [messages, setMessages] = useState<
     Array<{
       id: string;
@@ -199,11 +208,11 @@ const Chat = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    value={curriculum}
+                    value={selectedCurriculum}
                     onChange={(e) => setCurriculum(e.target.value)}
                     placeholder="e.g., ICSE, CBSE"
                     className="w-full text-black px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm"
-                    required
+                    disabled
                   />
                   <FaGraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
@@ -216,10 +225,10 @@ const Chat = () => {
                 </label>
                 <div className="relative">
                   <select
-                    value={classInput}
+                    value={selectedClass}
                     onChange={(e) => setClassInput(e.target.value)}
                     className="w-full text-black px-4 py-3 pl-10 pr-8 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm appearance-none"
-                    required
+                    disabled
                   >
                     <option value="">Select class</option>
                     {Array.from({ length: 12 }, (_, i) => i + 1).map(
@@ -269,11 +278,11 @@ const Chat = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    value={subjectInput}
+                    value={selectedSubject}
                     onChange={(e) => setSubjectInput(e.target.value)}
                     placeholder="e.g., Mathematics"
                     className="w-full text-black px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm"
-                    required
+                    disabled
                   />
                   <FaBook className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>

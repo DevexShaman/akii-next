@@ -131,10 +131,24 @@ const Teacher = () => {
     dispatch(resetUpload());
     dispatch(clearUploadResults());
   };
-  const handleChat = () => {
-    router.push(`/chat`);
-  };
+ const selectedClass = useSelector((state: RootState) => state.teacher.class);
+const selectedSubject = useSelector((state: RootState) => state.teacher.subject);
+const selectedCurriculum = useSelector((state: RootState) => state.teacher.curriculum);
 
+const handleChat = () => {
+  if (!selectedClass || !selectedSubject || !selectedCurriculum) {
+    alert("Please select class, subject, and curriculum before chatting");
+    return;
+  }
+
+  const params = new URLSearchParams({
+    class: selectedClass,
+    subject: selectedSubject,
+    curriculum: selectedCurriculum,
+  });
+
+  router.push(`/chat?${params.toString()}`);
+};
   const classOptions = [
     "Grade 1",
     "Grade 2",
