@@ -1053,23 +1053,78 @@ const handleShowResult = async () => {
               {messageContent.feedback && (
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <h2 className="text-lg text-black font-semibold mb-2">Feedback</h2>
-                  <p className="text-black"><strong>Content Understanding:</strong> {messageContent.feedback.content_understanding}</p>
-                  <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention}</p>
+                  <p className="text-black"><strong>Content Understanding:</strong> {messageContent.feedback.content_understanding.score}</p>
+                  <p className="text-black"><strong>Content Understanding:</strong> {messageContent.feedback.content_understanding.explanation}</p>
+                  <p className="text-black"><strong>Content Understanding:</strong> {messageContent.feedback.content_understanding.evidence}</p>
+                  <div>
+                    <h2 className="text-black"><strong>Detail Retention:</strong>lgukj</h2>
+                    <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention.score}</p>
+                    <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention.explanation}</p>
+                    <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention.specifices_metioned}</p>
+                    <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention.axporiations}</p>
+                  </div>
                   <p className="text-black"><strong>Key points covered:</strong> {messageContent.feedback.key_points_covered}</p>
-                  <p className="text-black"><strong>Missed points:</strong> {messageContent.feedback.missed_points}</p>
+                  <p className="text-black"><strong>Missed points:</strong> {messageContent.feedback.potential_missed_opportunities}</p>
                   
 
                 </div>
               )}
 
+
+
+
+
+
+
+
               {/* Speaking Performance Section */}
               {messageContent.speaking_performance && (
                 <div className="bg-green-50 p-3 rounded-lg">
                   <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
-                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.fluency_assessment}</p>
-                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.pronunciation_assessment}</p>
-                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.grammar_assessment}</p>
-                  <p className="text-black"><strong>Vocabulary:</strong> {messageContent.speaking_performance.vocabulary_usage}</p>
+                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.fluency_assessment.scroe}</p>
+                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.fluency_assessment.analysis}</p>
+                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.fluency_assessment.strengths}</p>
+                  <p className="text-black"><strong>Vocabulary:</strong> {messageContent.speaking_performance.fluency_assessment.improvement_areas}</p>
+                </div>
+              )}
+
+              {messageContent.speaking_performance && (
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
+                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.pronunciation_assessment.scroe}</p>
+                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.pronunciation_assessment.analysis}</p>
+                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.pronunciation_assessment.well_prnounced_words}</p>
+                  <p className="text-black"><strong>Vocabulary:</strong> {messageContent.speaking_performance.pronunciation_assessment.needs_work_words}</p>
+                </div>
+              )}
+
+
+              {messageContent.speaking_performance && (
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
+                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.grammar_assessment.scroe}</p>
+                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.grammar_assessment.analysis}</p>
+                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.grammar_assessment.error_examples}</p>
+                  <p className="text-black"><strong>Vocabulary:</strong> {messageContent.speaking_performance.grammar_assessment.complexity_level}</p>
+                </div>
+              )}
+
+
+              {messageContent.speaking_performance && (
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
+                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.vocabulary_usage.assessment}</p>
+                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.vocabulary_usage.effective_vocabulary}</p>
+                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.vocabulary_usage.vocabulary_opportunities}</p>
+                </div>
+              )}
+
+
+              {messageContent.speaking_performance && (
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
+                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.speaking_clarity.overall_rating}</p>
+                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.speaking_clarity.clarity_factors}</p>
                 </div>
               )}
 
@@ -1089,88 +1144,77 @@ const handleShowResult = async () => {
            
 
 
-                {/* {messageContent.strengths && (
-                <div className="bg-yellow-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
-                  <p className="text-black"> {messageContent.strengths[0]}</p>
-                  <p className="text-black"> {messageContent.strengths[1]}</p>
-                  <p className="text-black"> {messageContent.strengths[2]}</p>
-                  <p className="text-black"> {messageContent.strengths[3]}</p>
-
-                  
-                </div>
-              )} */}
+        
 
 
-
-              {messageContent.strengths && (
+              {/* {messageContent.detailed_suggestions && (
   <div className="bg-yellow-50 p-3 rounded-lg">
     <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
     <ul className="list-disc list-inside space-y-1">
-      {messageContent.strengths.map((strength: string, idx: number) => (
+      {messageContent.detailed_suggestions.map((strength: string, idx: number) => (
         <li key={idx} className="text-black">{strength}</li>
       ))}
     </ul>
+  </div>
+)} */}
+
+
+
+
+{messageContent?.strengths && messageContent.strengths.length > 0 && (
+
+  <div className="bg-yellow-50 p-3 rounded-lg">
+    <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
+    <div className="space-y-3">
+      {messageContent.strengths.map((item, idx) => (
+              <div key={idx} className="border-l-4 border-yellow-400 pl-3">
+                <h3 className="font-medium text-black">{item.strength}</h3>
+                {item.evidence && (
+                  <p className="text-sm text-gray-700 mt-1">
+                    <span className="font-semibold">Evidence:</span> {item.evidence}
+                  </p>
+                )}
+                {item.impact && (
+                  <p className="text-sm text-gray-700 mt-1">
+                    <span className="font-semibold">Impact:</span> {item.impact}
+                  </p>
+                )}
+              </div>
+            ))}
+    </div>
+  </div>
+)}
+
+
+
+{messageContent?.detailed_suggestions && messageContent.detailed_suggestions.length > 0 && (
+
+
+  <div className="bg-yellow-50 p-3 rounded-lg">
+    <h2 className="text-lg font-semibold mb-2 text-black">Detailed Suggestions</h2>
+    <div className="space-y-3">
+      {messageContent.detailed_suggestions.map((item, idx) => (
+              <div key={idx} className="border-l-4 border-yellow-400 pl-3">
+                <h3 className="font-medium text-black">{item.suggestion}</h3>
+                {item.evidence && (
+                  <p className="text-sm text-gray-700 mt-1">
+                    <span className="font-semibold">Evidence:</span> {item.example}
+                  </p>
+                )}
+                {item.impact && (
+                  <p className="text-sm text-gray-700 mt-1">
+                    <span className="font-semibold">Impact:</span> {item.improved_version}
+                  </p>
+                )}
+              </div>
+            ))}
+    </div>
   </div>
 )}
 
 
 
 
-
-   {/* {messageContent.strengths && (
-                <div className="bg-yellow-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Practice recommendations</h2>
-                  <p className="text-black"> {messageContent.practice_recommendations[0]}</p>
-                  <p className="text-black"> {messageContent.practice_recommendations[1]}</p>
-                  <p className="text-black"> {messageContent.practice_recommendations[2]}</p>
-                  <p className="text-black"> {messageContent.practice_recommendations[3]}</p>
-
-                  
-                </div>
-              )}  */}
-
-
-{messageContent.practice_recommendations && (
-  <div className="bg-yellow-50 p-3 rounded-lg">
-    <h2 className="text-lg font-semibold mb-2 text-black">Practice Recommendations</h2>
-    <ul className="list-disc list-inside space-y-1">
-      {messageContent.practice_recommendations.map(
-        (recommendation: string, idx: number) => (
-          <li key={idx} className="text-black">
-            {recommendation}
-          </li>
-        )
-      )}
-    </ul>
-  </div>
-)} 
-
-
-
-
-
-                {messageContent.improvement_priority && (
-                <div className="bg-yellow-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Improvement priority</h2>
-                  <p className="text-black"> {messageContent.improvement_priority}</p>
-                 
-
-                  
-                </div>
-              )}
-
-
-
-              {messageContent.encouragement && (
-                <div className="bg-yellow-50 p-3 rounded-lg">
-                  <h2 className="text-lg text-black font-semibold mb-2">Encouragement </h2>
-                  <p className="text-black"> {messageContent.encouragement}</p>
-                 
-
-                  
-                </div>
-              )}
 
 
 
@@ -1186,6 +1230,38 @@ const handleShowResult = async () => {
                   </ul>
                 </div>
               )}
+
+
+
+               {messageContent.improvement_priority && (
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Overall Scores</h2>
+                  <ul className="list-disc list-inside">
+                    <li className="text-black">Fluency: {messageContent.improvement_priority.area}</li>
+                    <li className="text-black">Pronunciation: {messageContent.improvement_priority.reason}</li>
+                    <li className="text-black">Grammar: {messageContent.improvement_priority.immediate_action}</li>
+                  </ul>
+                </div>
+              )}
+
+
+
+
+              {messageContent.encouragement && (
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <h2 className="text-lg font-semibold mb-2 text-black">Overall Scores</h2>
+                  <ul className="list-disc list-inside">
+                    <li className="text-black">Fluency: {messageContent.encouragement.progress_highlight}</li>
+                    <li className="text-black">Pronunciation: {messageContent.encouragement.motivational_message}</li>
+                    <li className="text-black">Grammar: {messageContent.encouragement.growth_potential}</li>
+                  </ul>
+                </div>
+              )}
+
+
+
+
+
 
 
             </div>

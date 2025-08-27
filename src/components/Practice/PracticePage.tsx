@@ -38,8 +38,9 @@ const PracticePage = () => {
 
 
   const [showTextToSpeech, setShowTextToSpeech] = useState(true);
-
-
+  
+  
+  const [transcriptionText, setTranscriptionText] = useState("");
 
   const essayId = searchParams.get("essay_id");
   const essay_id = searchParams.get("essay_id");
@@ -314,6 +315,9 @@ const PracticePage = () => {
     setDebugAudioUrl(null);
 
 
+    setTranscriptionText("");
+
+
     setShowTextToSpeech(false);
     rawAudioRef.current = [];
 
@@ -425,6 +429,12 @@ const PracticePage = () => {
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         console.log("Analysis received:", data);
+
+         if (data.type === 'transcription') {
+      setTranscriptionText(prev => prev + " " + data.data); // Append new transcription
+    }
+
+
         dispatch(setAnalysisResults(data));
       };
 
@@ -719,7 +729,7 @@ const PracticePage = () => {
                 </p>
 
                 {isRecording && (
-                  <div className="mt-4 flex space-x-2">
+                  <div className="mt-4 flex space-x-2 h-18">
                     {[...Array(5)].map((_, i) => (
                       <motion.div
                         key={i}
@@ -734,12 +744,34 @@ const PracticePage = () => {
                     ))}
                   </div>
                 )}
+
+
+
+                
+                    <h3 className="text-lg font-semibold text-indigo-800 mb-2">
+                Your Speech:
+              </h3>
+              <div className="bg-white p-4 rounded-lg shadow-inner min-h-[60px]">
+                <p className="text-gray-700 leading-relaxed">
+                  {transcriptionText}
+                </p>
+              </div>
+
+
+
+
                 {showResultButton && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-8 flex justify-center"
                   >
+
+
+
+
+
+
                     <button
                       onClick={handleSeeResults}
                       disabled={isAnalyzing}
@@ -769,9 +801,30 @@ const PracticePage = () => {
               </div>
             </>
           )}
+
+
+
+           
+
+
+
         </div>
+
+
+
+        
+
+
+
+
       </motion.div>
+
+          
+
+
     </div>
+
+    
   );
 };
 
