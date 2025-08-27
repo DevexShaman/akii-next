@@ -553,31 +553,66 @@ export default function VoiceAssistant() {
     }
   };
 
+// const handleShowResult = async () => {
+//   if (essayId) {
+//     try {
+//       setLoadingResult(true);
+//       setLoadingText("Preparing your results...");
+
+//       // 15-second text update
+//       const textTimeout = setTimeout(() => {
+//         if (loadingResult) {
+//           setLoadingText("Almost there, finalizing results...");
+//         }
+//       }, 15000);
+
+//       // ✅ Wait 10 seconds before calling the API
+//       // await new Promise((resolve) => setTimeout(resolve, 13000));
+
+//       await dispatch(fetchOverallScoring(essayId)).unwrap();
+
+//       clearTimeout(textTimeout);
+//       router.push(`/assistantresult?essay_id=${essayId}`);
+//     } catch (error) {
+//       toast.error(error);
+//       console.error("Failed to fetch scoring:", error);
+//       setLoadingResult(false);
+//     }
+//   }
+// };
+
+
 const handleShowResult = async () => {
-  if (essayId) {
-    try {
-      setLoadingResult(true);
-      setLoadingText("Preparing your results...");
+  if (!essayId) return;
 
-      // 15-second text update
-      const textTimeout = setTimeout(() => {
-        if (loadingResult) {
-          setLoadingText("Almost there, finalizing results...");
-        }
-      }, 15000);
+  try {
+    setLoadingResult(true);
+    setLoadingText("Preparing your results...");
 
-      // ✅ Wait 10 seconds before calling the API
-      await new Promise((resolve) => setTimeout(resolve, 13000));
+    // ✅ Dynamic loading text updates at intervals
+    const messages = [
+      "Preparing your results...",
+      "Analyzing your essay...",
+      "Almost there, finalizing results..."
+    ];
 
-      await dispatch(fetchOverallScoring(essayId)).unwrap();
+    let index = 0;
+    const textInterval = setInterval(() => {
+      index = (index + 1) % messages.length;
+      setLoadingText(messages[index]);
+    }, 5000); // every 5 seconds, update text
 
-      clearTimeout(textTimeout);
-      router.push(`/assistantresult?essay_id=${essayId}`);
-    } catch (error) {
-      toast.error(error);
-      console.error("Failed to fetch scoring:", error);
-      setLoadingResult(false);
-    }
+    // ✅ Call API immediately
+    await dispatch(fetchOverallScoring(essayId)).unwrap();
+
+    clearInterval(textInterval);
+
+    // ✅ Navigate immediately after report is ready
+    router.push(`/assistantresult?essay_id=${essayId}`);
+  } catch (error) {
+    toast.error(error);
+    console.error("Failed to fetch scoring:", error);
+    setLoadingResult(false);
   }
 };
 
