@@ -670,7 +670,7 @@ const PracticePage = () => {
                       ? "Loading..."
                       : isTextToSpeechPlaying
                       ? "Pause"
-                      : "Listen (TTS)"}
+                      : "Listen"}
                   </span>
                 </button>
 
