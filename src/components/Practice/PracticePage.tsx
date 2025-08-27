@@ -37,6 +37,8 @@ const PracticePage = () => {
   const [isTextToSpeechSupported, setIsTextToSpeechSupported] = useState(true);
 
 
+  const [showTextToSpeech, setShowTextToSpeech] = useState(true);
+
 
 
   const essayId = searchParams.get("essay_id");
@@ -310,6 +312,9 @@ const PracticePage = () => {
   const handleStartRecording = async () => {
     setShowInfoNotice(false);
     setDebugAudioUrl(null);
+
+
+    setShowTextToSpeech(false);
     rawAudioRef.current = [];
 
     const hasMicrophone = await checkMicrophoneAccess();
@@ -458,6 +463,11 @@ const PracticePage = () => {
 
   const handleStopRecording = () => {
     setShowInfoNotice(false);
+
+
+    setShowTextToSpeech(true);
+
+
 
     if (processorRef.current) {
       processorRef.current.disconnect();
@@ -620,75 +630,34 @@ const PracticePage = () => {
               )}
 
               <div className="mb-8 flex justify-center">
-                {/* <button
-                  onClick={toggleAudioPlayback}
-                  disabled={isAudioLoading || isRecording}
-                  className={`flex items-center justify-center ${
-                    isAudioLoading
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-indigo-100 hover:bg-indigo-200"
-                  } text-indigo-600 p-4 rounded-full transition-colors min-w-[180px]`}
-                >
-                  {isAudioLoading ? (
-                    <FaSpinner className="animate-spin text-xl" />
-                  ) : isAudioPlaying ? (
-                    <FaPause className="text-xl" />
-                  ) : (
-                    <FaPlay className="text-xl" />
-                  )}
-                  <span className="ml-2">
-                    {isAudioLoading
-                      ? "Loading..."
-                      : isAudioPlaying
-                      ? "Pause"
-                      : "Listen Again"}
-                  </span>
-                </button> */}
-
-
-
-
- {/* Text-to-Speech button */}
-                <button
-                  onClick={toggleTextToSpeech}
-                  disabled={isAudioLoading || isRecording || !isTextToSpeechSupported}
-                  className={`flex items-center justify-center ${
-                    isAudioLoading || !isTextToSpeechSupported
-                      ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-green-100 hover:bg-green-200"
-                  } text-green-600 p-4 rounded-full transition-colors min-w-[180px]`}
-                >
-                  {isAudioLoading ? (
-                    <FaSpinner className="animate-spin text-xl" />
-                  ) : isTextToSpeechPlaying ? (
-                    <FaPause className="text-xl" />
-                  ) : (
-                    <FaVolumeUp className="text-xl" />
-                  )}
-                  <span className="ml-2">
-                    {isAudioLoading
-                      ? "Loading..."
-                      : isTextToSpeechPlaying
-                      ? "Pause"
-                      : "Listen"}
-                  </span>
-                </button>
-
-
-
-
-                <audio
-                  ref={audioRef}
-                  src={audioUrl}
-                  onPlay={() => setIsAudioPlaying(true)}
-                  onPause={() => setIsAudioPlaying(false)}
-                  onEnded={() => setIsAudioPlaying(false)}
-                  onLoadedData={() => setIsAudioLoading(false)}
-                  onWaiting={() => setIsAudioLoading(true)}
-                  onCanPlay={() => setIsAudioLoading(false)}
-                  className="hidden"
-                />
-              </div>
+        {/* Conditionally render the TTS button */}
+        {showTextToSpeech && (
+          <button
+            onClick={toggleTextToSpeech}
+            disabled={isAudioLoading || isRecording || !isTextToSpeechSupported}
+            className={`flex items-center justify-center ${
+              isAudioLoading || !isTextToSpeechSupported
+                ? "bg-gray-300 cursor-not-allowed"
+                : "bg-green-100 hover:bg-green-200"
+            } text-green-600 p-4 rounded-full transition-colors min-w-[180px]`}
+          >
+            {isAudioLoading ? (
+              <FaSpinner className="animate-spin text-xl" />
+            ) : isTextToSpeechPlaying ? (
+              <FaPause className="text-xl" />
+            ) : (
+              <FaVolumeUp className="text-xl" />
+            )}
+            <span className="ml-2">
+              {isAudioLoading
+                ? "Loading..."
+                : isTextToSpeechPlaying
+                ? "Pause"
+                : "Listen"}
+            </span>
+          </button>
+        )}
+      </div>
 
               <div className="flex flex-col items-center justify-center my-8">
                 {showInfoNotice && !isRecording && (
@@ -722,26 +691,26 @@ const PracticePage = () => {
                   </motion.div>
                 )}
 
-                {!isRecording ? (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleStartRecording}
-                    className="bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-full p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-                    disabled={isAnalyzing}
-                  >
-                    <FaMicrophone className="text-3xl" />
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleStopRecording}
-                    className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <FaStop className="text-3xl" />
-                  </motion.button>
-                )}
+{!isRecording ? (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleStartRecording}
+            className="bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-full p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+            disabled={isAnalyzing}
+          >
+            <FaMicrophone className="text-3xl" />
+          </motion.button>
+        ) : (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleStopRecording}
+            className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            <FaStop className="text-3xl" />
+          </motion.button>
+        )}
 
                 <p className="mt-4 text-gray-600">
                   {isRecording
