@@ -31,6 +31,14 @@ const PracticePage = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [showResultButton, setShowResultButton] = useState(false);
+
+
+    const [isTextToSpeechPlaying, setIsTextToSpeechPlaying] = useState(false);
+  const [isTextToSpeechSupported, setIsTextToSpeechSupported] = useState(true);
+
+
+
+
   const essayId = searchParams.get("essay_id");
   const essay_id = searchParams.get("essay_id");
 
@@ -143,6 +151,52 @@ const PracticePage = () => {
       }
     }
   };
+  useEffect(() => {
+    if (typeof window !== "undefined" && !window.speechSynthesis) {
+      setIsTextToSpeechSupported(false);
+      console.warn("Text-to-speech not supported in this browser");
+    }
+  }, []);
+
+  const toggleTextToSpeech = () => {
+    if (!isTextToSpeechSupported) {
+      toast.error("Text-to-speech not supported in your browser");
+      return;
+    }
+
+    if (isTextToSpeechPlaying) {
+      // Stop speaking
+      window.speechSynthesis.cancel();
+      setIsTextToSpeechPlaying(false);
+    } else {
+      // Start speaking
+      setIsAudioLoading(true);
+      
+      const utterance = new SpeechSynthesisUtterance(paragraph);
+      
+      // Set up event listeners
+      utterance.onstart = () => {
+        setIsTextToSpeechPlaying(true);
+        setIsAudioLoading(false);
+      };
+      
+      utterance.onend = () => {
+        setIsTextToSpeechPlaying(false);
+      };
+      
+      utterance.onerror = (event) => {
+        console.error("Speech synthesis error:", event);
+        setIsTextToSpeechPlaying(false);
+        setIsAudioLoading(false);
+        // toast.error("Error with text-to-speech");
+      };
+      
+      // Speak the text
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+
 
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -566,7 +620,7 @@ const PracticePage = () => {
               )}
 
               <div className="mb-8 flex justify-center">
-                <button
+                {/* <button
                   onClick={toggleAudioPlayback}
                   disabled={isAudioLoading || isRecording}
                   className={`flex items-center justify-center ${
@@ -589,7 +643,39 @@ const PracticePage = () => {
                       ? "Pause"
                       : "Listen Again"}
                   </span>
+                </button> */}
+
+
+
+
+ {/* Text-to-Speech button */}
+                <button
+                  onClick={toggleTextToSpeech}
+                  disabled={isAudioLoading || isRecording || !isTextToSpeechSupported}
+                  className={`flex items-center justify-center ${
+                    isAudioLoading || !isTextToSpeechSupported
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-green-100 hover:bg-green-200"
+                  } text-green-600 p-4 rounded-full transition-colors min-w-[180px]`}
+                >
+                  {isAudioLoading ? (
+                    <FaSpinner className="animate-spin text-xl" />
+                  ) : isTextToSpeechPlaying ? (
+                    <FaPause className="text-xl" />
+                  ) : (
+                    <FaVolumeUp className="text-xl" />
+                  )}
+                  <span className="ml-2">
+                    {isAudioLoading
+                      ? "Loading..."
+                      : isTextToSpeechPlaying
+                      ? "Pause"
+                      : "Listen (TTS)"}
+                  </span>
                 </button>
+
+
+
 
                 <audio
                   ref={audioRef}
