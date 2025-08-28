@@ -5,6 +5,7 @@ import { fetchOverallScoring } from "@/store/slices/assistant/assistantSlice";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
+
 const getUsername = () => {
   return localStorage.getItem("username") || "unknown_user";
 };
@@ -34,6 +35,8 @@ const CLASS_OPTIONS = [
   "Class 8",
   "Class 9",
   "Class 10",
+  "Class 11",
+  "Class 12",
 ];
 
 const ACCENT_OPTIONS = [
@@ -43,6 +46,11 @@ const ACCENT_OPTIONS = [
   "Indian",
   "Canadian",
 ];
+
+const difficultyOptions = [
+ "Easy", "Medium", "Strong"
+];
+
 
 const MOOD_OPTIONS = [
   "Neutral",
@@ -64,14 +72,14 @@ function safeParseData(data) {
     // If it's a string, replace Python's None with null before parsing
     if (typeof data === "string") {
       let cleaned = data.replace(/\bNone\b/g, "null");
-     
+
       // First parse
       let parsed = JSON.parse(cleaned);
 
       // If parsed result is still a string (double-encoded), parse again
       if (typeof parsed === "string") {
         parsed = JSON.parse(parsed);
-       
+
       }
 
       return parsed;
@@ -84,6 +92,58 @@ function safeParseData(data) {
     return null;
   }
 }
+
+
+
+// function safeParseData(data) {
+//   try {
+//     // If already an object, return as is
+//     if (typeof data === "object" && data !== null) {
+//       return data;
+//     }
+
+//     // If it's a string, clean and parse it
+//     if (typeof data === "string") {
+//       let cleaned = data
+//         .replace(/\bNone\b/g, "null") // Replace Python's None with null
+//         .replace(/\\n/g, " ") // Replace escaped newlines with spaces
+//         .replace(/\s+/g, " ") // Collapse multiple whitespaces
+//         .trim();
+
+//       // Remove any trailing commas that might break JSON parsing
+//       cleaned = cleaned.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+
+//       // Try to parse the cleaned string
+//       let parsed = JSON.parse(cleaned);
+
+//       // If parsed result is still a string (double-encoded), parse again
+//       if (typeof parsed === "string") {
+//         try {
+//           parsed = JSON.parse(parsed);
+//         } catch (innerErr) {
+//           // If inner parsing fails, try to clean and parse again
+//           const innerCleaned = parsed
+//             .replace(/\\n/g, " ")
+//             .replace(/\s+/g, " ")
+//             .replace(/,\s*}/g, '}')
+//             .replace(/,\s*]/g, ']')
+//             .trim();
+//           parsed = JSON.parse(innerCleaned);
+//         }
+//       }
+
+//       return parsed;
+//     }
+
+//     // If data is neither object nor string, return null
+//     return null;
+//   } catch (err) {
+//     console.error("Failed to parse data:", err);
+//     console.error("Data that failed to parse:", data);
+//     return null;
+//   }
+// }
+
 
 
 export default function VoiceAssistant() {
@@ -113,6 +173,15 @@ export default function VoiceAssistant() {
   const [moodOption, setMoodOption] = useState("");
   const [showPreSpeechPrompt, setShowPreSpeechPrompt] = useState(true);
   const [messages, setMessages] = useState<string[]>([]);
+
+
+
+
+
+
+
+  // const [accentOption, setAccentOption] = useState("");
+
 
   const [errors, setErrors] = useState({
     class: false,
@@ -210,8 +279,8 @@ export default function VoiceAssistant() {
 
       playbackContextRef.current = new (window.AudioContext ||
         (window as any).webkitAudioContext)({
-        sampleRate: 16000,
-      });
+          sampleRate: 16000,
+        });
 
       const context = playbackContextRef.current;
       const audioBuffer = await context.decodeAudioData(arrayBuffer);
@@ -427,9 +496,9 @@ export default function VoiceAssistant() {
             const message = JSON.parse(event.data);
 
 
-           
-               setMessages((prev) => [...prev, event.data]); 
-            
+
+            setMessages((prev) => [...prev, event.data]);
+
             console.log("message!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", message);
             if (message.essay_id) {
               console.log("Received essay ID:", message.essay_id);
@@ -553,68 +622,68 @@ export default function VoiceAssistant() {
     }
   };
 
-// const handleShowResult = async () => {
-//   if (essayId) {
-//     try {
-//       setLoadingResult(true);
-//       setLoadingText("Preparing your results...");
+  // const handleShowResult = async () => {
+  //   if (essayId) {
+  //     try {
+  //       setLoadingResult(true);
+  //       setLoadingText("Preparing your results...");
 
-//       // 15-second text update
-//       const textTimeout = setTimeout(() => {
-//         if (loadingResult) {
-//           setLoadingText("Almost there, finalizing results...");
-//         }
-//       }, 15000);
+  //       // 15-second text update
+  //       const textTimeout = setTimeout(() => {
+  //         if (loadingResult) {
+  //           setLoadingText("Almost there, finalizing results...");
+  //         }
+  //       }, 15000);
 
-//       // ✅ Wait 10 seconds before calling the API
-//       // await new Promise((resolve) => setTimeout(resolve, 13000));
+  //       // ✅ Wait 10 seconds before calling the API
+  //       // await new Promise((resolve) => setTimeout(resolve, 13000));
 
-//       await dispatch(fetchOverallScoring(essayId)).unwrap();
+  //       await dispatch(fetchOverallScoring(essayId)).unwrap();
 
-//       clearTimeout(textTimeout);
-//       router.push(`/assistantresult?essay_id=${essayId}`);
-//     } catch (error) {
-//       toast.error(error);
-//       console.error("Failed to fetch scoring:", error);
-//       setLoadingResult(false);
-//     }
-//   }
-// };
+  //       clearTimeout(textTimeout);
+  //       router.push(`/assistantresult?essay_id=${essayId}`);
+  //     } catch (error) {
+  //       toast.error(error);
+  //       console.error("Failed to fetch scoring:", error);
+  //       setLoadingResult(false);
+  //     }
+  //   }
+  // };
 
 
-const handleShowResult = async () => {
-  if (!essayId) return;
+  const handleShowResult = async () => {
+    if (!essayId) return;
 
-  try {
-    setLoadingResult(true);
-    setLoadingText("Preparing your results...");
+    try {
+      setLoadingResult(true);
+      setLoadingText("Preparing your results...");
 
-    // ✅ Dynamic loading text updates at intervals
-    const messages = [
-      "Preparing your results...",
-      "Analyzing your essay...",
-      "Almost there, finalizing results..."
-    ];
+      // ✅ Dynamic loading text updates at intervals
+      const messages = [
+        "Preparing your results...",
+        "Analyzing your essay...",
+        "Almost there, finalizing results..."
+      ];
 
-    let index = 0;
-    const textInterval = setInterval(() => {
-      index = (index + 1) % messages.length;
-      setLoadingText(messages[index]);
-    }, 5000); // every 5 seconds, update text
+      let index = 0;
+      const textInterval = setInterval(() => {
+        index = (index + 1) % messages.length;
+        setLoadingText(messages[index]);
+      }, 5000); // every 5 seconds, update text
 
-    // ✅ Call API immediately
-    await dispatch(fetchOverallScoring(essayId)).unwrap();
+      // ✅ Call API immediately
+      await dispatch(fetchOverallScoring(essayId)).unwrap();
 
-    clearInterval(textInterval);
+      clearInterval(textInterval);
 
-    // ✅ Navigate immediately after report is ready
-    router.push(`/assistantresult?essay_id=${essayId}`);
-  } catch (error) {
-    toast.error(error);
-    console.error("Failed to fetch scoring:", error);
-    setLoadingResult(false);
-  }
-};
+      // ✅ Navigate immediately after report is ready
+      router.push(`/assistantresult?essay_id=${essayId}`);
+    } catch (error) {
+      toast.error(error);
+      console.error("Failed to fetch scoring:", error);
+      setLoadingResult(false);
+    }
+  };
 
 
   const statusColors = {
@@ -659,9 +728,8 @@ const handleShowResult = async () => {
                   setClassOption(e.target.value);
                   if (errors.class) setErrors({ ...errors, class: false });
                 }}
-                className={`w-full text-black rounded-lg border ${
-                  errors.class ? "border-red-500" : "border-gray-300"
-                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+                className={`w-full text-black rounded-lg border ${errors.class ? "border-red-500" : "border-gray-300"
+                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               >
                 <option value="" disabled>
                   Select class
@@ -690,9 +758,8 @@ const handleShowResult = async () => {
                   setAccentOption(e.target.value);
                   if (errors.accent) setErrors({ ...errors, accent: false });
                 }}
-                className={`w-full text-black rounded-lg border ${
-                  errors.accent ? "border-red-500" : "border-gray-300"
-                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+                className={`w-full text-black rounded-lg border ${errors.accent ? "border-red-500" : "border-gray-300"
+                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               >
                 <option value="" disabled>
                   Select accent
@@ -710,31 +777,13 @@ const handleShowResult = async () => {
               )}
             </div>
 
-            <div className="col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Topic <span className="text-red-600">*</span>
-                {/* Topic {errors.topic && <span className="text-red-600">*</span>} */}
-              </label>
-              <input
-                type="text"
-                value={topicInput}
-                onChange={(e) => {
-                  setTopicInput(e.target.value);
-                  if (errors.topic) setErrors({ ...errors, topic: false });
-                }}
-                placeholder="Enter discussion topic"
-                className={`w-full text-black rounded-lg border ${
-                  errors.topic ? "border-red-500" : "border-gray-300"
-                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
-              />
-              {errors.topic && (
-                <p className="mt-1 text-sm text-red-600">
-                  Please enter a topic
-                </p>
-              )}
-            </div>
+          </div>
 
-            <div className="col-span-2">
+
+          <div className=" flex flex-col sm:grid sm:grid-cols-2 sm:gap-4 gap-3 mt-2">
+             
+
+            <div className="">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Mood <span className="text-red-600">*</span>
                 {/* Mood {errors.mood && <span className="text-red-600">*</span>} */}
@@ -745,9 +794,8 @@ const handleShowResult = async () => {
                   setMoodOption(e.target.value);
                   if (errors.mood) setErrors({ ...errors, mood: false });
                 }}
-                className={`w-full text-black rounded-lg border ${
-                  errors.mood ? "border-red-500" : "border-gray-300"
-                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+                className={`w-full text-black rounded-lg border ${errors.mood ? "border-red-500" : "border-gray-300"
+                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
               >
                 <option value="" disabled>
                   Select mood
@@ -764,8 +812,88 @@ const handleShowResult = async () => {
                 </p>
               )}
             </div>
+
+
+
+             <div className="">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Topic <span className="text-red-600">*</span>
+                {/* Topic {errors.topic && <span className="text-red-600">*</span>} */}
+              </label>
+              <input
+                type="text"
+                value={topicInput}
+                onChange={(e) => {
+                  setTopicInput(e.target.value);
+                  if (errors.topic) setErrors({ ...errors, topic: false });
+                }}
+                placeholder="Enter discussion topic"
+                className={`w-full text-black rounded-lg border ${errors.topic ? "border-red-500" : "border-gray-300"
+                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+              />
+              {errors.topic && (
+                <p className="mt-1 text-sm text-red-600">
+                  Please enter a topic
+                </p>
+              )}
+            </div>
+
+
+
           </div>
+
+
+
+
+          
+  <div className="mt-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Difficulty Level <span className="text-red-600">*</span>
+                {/* {errors.accent && <span className="text-red-600">*</span>} */}
+              </label>
+              <select
+                // value={accentOption}
+                // onChange={(e) => {
+                //   setAccentOption(e.target.value);
+                //   if (errors.accent) setErrors({ ...errors, accent: false });
+                // }}
+                className={`w-full text-black rounded-lg border ${errors.accent ? "border-red-500" : "border-gray-300"
+                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+                  >
+                <option value="" disabled>
+                Select difficulty level 
+                </option>
+                {difficultyOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {errors.accent && (
+                <p className="mt-1 text-sm text-red-600">
+                  Select difficulty level 
+                </p>
+              )}
+            </div>
         </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         <div className="p-8 flex flex-col items-center">
           <AnimatePresence>
@@ -818,16 +946,15 @@ const handleShowResult = async () => {
                       status === "idle"
                         ? initWebRTC
                         : status !== "playing"
-                        ? stopAssistant
-                        : undefined
+                          ? stopAssistant
+                          : undefined
                     }
-                    className={`w-20 h-20 rounded-full flex items-center justify-center focus:outline-none ${
-                      status === "idle"
-                        ? "bg-indigo-100 hover:bg-indigo-200 text-indigo-600"
-                        : status === "playing"
+                    className={`w-20 h-20 rounded-full flex items-center justify-center focus:outline-none ${status === "idle"
+                      ? "bg-indigo-100 hover:bg-indigo-200 text-indigo-600"
+                      : status === "playing"
                         ? "bg-gray-400 text-white cursor-not-allowed"
                         : "bg-red-500 hover:bg-red-600 text-white"
-                    }`}
+                      }`}
                     whileHover={
                       status !== "playing" ? { scale: 1.05 } : undefined
                     }
@@ -877,9 +1004,8 @@ const handleShowResult = async () => {
                 {Array.from({ length: 15 }).map((_, i) => (
                   <motion.div
                     key={i}
-                    className={`w-2 rounded-t ${
-                      status === "playing" ? "bg-blue-500" : "bg-indigo-500"
-                    }`}
+                    className={`w-2 rounded-t ${status === "playing" ? "bg-blue-500" : "bg-indigo-500"
+                      }`}
                     animate={{
                       height: Math.max(
                         4,
@@ -925,10 +1051,10 @@ const handleShowResult = async () => {
                     status === "connecting"
                       ? "60%"
                       : status === "connected"
-                      ? "100%"
-                      : status === "playing"
-                      ? "100%"
-                      : "0%",
+                        ? "100%"
+                        : status === "playing"
+                          ? "100%"
+                          : "0%",
                 }}
                 transition={{
                   duration: status === "connecting" ? 2 : 0.5,
@@ -958,340 +1084,387 @@ const handleShowResult = async () => {
             Transcription:
           </p> */}
           <p className=" break-words">{transcription}</p>
-           {/* <div>
-      <h1 className="text-black
-">WebSocket Messages</h1>
-      {messages.map((msg, index) => (
-        <p className="text-black
-" key={index}>{msg}</p>
-
-      ))} 
-    </div>   */}
 
 
 
 
-<div className="max-w-full">
-  <h1 className="text-black text-xl font-bold mb-4">Conversation</h1>
-  
-  <div className="space-y-4">
-    {messages.slice(-2).map((msg, index) => {
-      let messageData;
-      let messageType;
-      let messageContent;
-      
 
-      try {
-        // Parse the message
-        messageData = typeof msg === "string" ? JSON.parse(msg) : msg;
+          <div className="max-w-full">
+            <h1 className="text-black text-xl font-bold mb-4">Conversation</h1>
+
+            <div className="space-y-4">
+              {messages.map((msg, index) => {
+                let messageData;
+                let messageType;
+                let messageContent;
 
 
+                try {
+                  // Parse the message
+                  messageData = typeof msg === "string" ? JSON.parse(msg) : msg;
 
 
-        messageType = messageData.type;
-        
-        // Handle different message types
-        if (messageType === "ai_response" || messageType === "transcribed_text") {
-          messageContent = messageData.text || messageData.message || msg;
-        } else if (messageType === "feedback") {
-          // Parse the data field for feedback messages
 
-          messageContent = messageData.data ? safeParseData(messageData.data) : null;
-          
-        } else {
-          messageContent = msg;
-        }
-      } catch (error) {
-        console.error("Error parsing message:", error);
-        return (
-          <div key={index} className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
-              <p className="text-red-500 text-sm">Error parsing message</p>
-              <p className="text-black text-sm mt-1">{msg}</p>
+
+                  messageType = messageData.type;
+
+                  // Handle different message types
+                  if (messageType === "ai_response" || messageType === "transcribed_text") {
+                    messageContent = messageData.text || messageData.message || msg;
+                  } else if (messageType === "feedback") {
+                    // Parse the data field for feedback messages
+
+                    messageContent = messageData.data ? safeParseData(messageData.data) : null;
+
+                  } else {
+                    messageContent = msg;
+                  }
+                } catch (error) {
+                  console.error("Error parsing message:", error);
+                  return (
+                    <div key={index} className="flex justify-start">
+                      <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
+                        <p className="text-red-500 text-sm">Error parsing message</p>
+                        <p className="text-black text-sm mt-1">{msg}</p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Render based on message type
+                if (messageType === "ai_response") {
+                  return (
+                    <div key={index} className="flex justify-start">
+                      <div className="bg-blue-100 rounded-lg p-3 max-w-xs md:max-w-md">
+                        <div className="flex items-center mb-1">
+                          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">AI</span>
+                          <span className="text-xs text-gray-500 ml-2">Assistant</span>
+                        </div>
+                        <p className="text-black">{JSON.parse(messageContent).data}</p>
+
+                      </div>
+                    </div>
+                  );
+                }
+                else if (messageType === "transcribed_text") {
+                  return (
+                    <div key={index} className="flex justify-end">
+                      <div className="bg-green-100 rounded-lg p-3 max-w-xs md:max-w-md">
+                        <div className="flex items-center mb-1 justify-end">
+                          <span className="text-xs text-gray-500 mr-2">You</span>
+                          <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Voice</span>
+                        </div>
+                        <p className="text-black">{JSON.parse(messageContent).data}</p>
+                      </div>
+                    </div>
+                  );
+                }
+                else if (messageType === "feedback" && messageContent) {
+
+                  console.log("FEEDBACK:", messageContent.feedback)
+                  return (
+                    <div key={index} className="flex justify-center my-6">
+                      <div className="bg-white shadow-md rounded-lg p-4 w-full max-w-2xl border border-gray-200 space-y-4">
+                        <div className="text-center mb-2">
+                          <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">Feedback</span>
+                        </div>
+
+                        {/*content_understanding */}
+                        {messageContent.feedback && (
+                          <div className="bg-blue-50 p-3 rounded-lg">
+                            <h2 className="text-lg text-black font-semibold mb-2">Content Understanding</h2>
+                            <p className="text-black"><strong>Score:</strong> {messageContent.feedback.content_understanding.score}</p>
+                            <p className="text-black"><strong>Explanation:</strong> {messageContent.feedback.content_understanding.explanation}</p>
+                            <p className="text-black"><strong>Evidence:</strong> {messageContent.feedback.content_understanding.evidence}</p>
+                            <div>
+
+                              <h2 className="text-lg text-black font-semibold mb-2">Detail Retention</h2>
+                              <p className="text-black"><strong>Score:</strong> {messageContent.feedback.detail_retention.score}</p>
+                              <p className="text-black"><strong>Explanation:</strong> {messageContent.feedback.detail_retention.explanation}</p>
+                              <p className="text-black"><strong>Specifics Mentioned:</strong> {messageContent.feedback.detail_retention.specifics_mentioned}</p>
+                              <p className="text-black"><strong>Approximations:</strong> {messageContent.feedback.detail_retention.approximations}</p>
+                            </div>
+                            <p className="text-black"><strong>Key points covered:</strong> {messageContent.feedback.key_points_covered}</p>
+                            <p className="text-black"><strong>Potential Missed Opportunities:</strong> {messageContent.feedback.potential_missed_opportunities}</p>
+
+
+                          </div>
+                        )}
+
+                        {/* fluency_assessment */}
+                        {messageContent.speaking_performance && (
+                          <div className="bg-green-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Fluency Assessment</h2>
+                            <p className="text-black"><strong>Score:</strong> {messageContent.speaking_performance.fluency_assessment.scroe}</p>
+                            <p className="text-black"><strong>Analysis:</strong> {messageContent.speaking_performance.fluency_assessment.analysis}</p>
+                            <p className="text-black"><strong>Strengths:</strong> {messageContent.speaking_performance.fluency_assessment.strengths}</p>
+                            <p className="text-black"><strong>Improvement Areas:</strong> {messageContent.speaking_performance.fluency_assessment.improvement_areas}</p>
+                          </div>
+                        )}
+
+                        {/* "pronunciation_assessment": */}
+                        {messageContent.speaking_performance && (
+                          <div className="bg-green-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Pronunciation Aassessment</h2>
+                            <p className="text-black"><strong>Score:</strong> {messageContent.speaking_performance.pronunciation_assessment.scroe}</p>
+                            <p className="text-black"><strong>Analysis:</strong> {messageContent.speaking_performance.pronunciation_assessment.analysis}</p>
+                            <p className="text-black"><strong>Well Prnounced Words:</strong> {messageContent.speaking_performance.pronunciation_assessment.well_prnounced_words}</p>
+                            <p className="text-black"><strong>Needs Work Words:</strong> {messageContent.speaking_performance.pronunciation_assessment.needs_work_words}</p>
+                          </div>
+                        )}
+
+
+                        {messageContent.speaking_performance && (
+                          <div className="bg-green-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Grammar Assessment</h2>
+                            <p className="text-black"><strong>Score:</strong> {messageContent.speaking_performance.grammar_assessment.score}</p>
+                            <p className="text-black"><strong>Analysis:</strong> {messageContent.speaking_performance.grammar_assessment.analysis}</p>
+                            <p className="text-black"><strong>Error Examples:</strong> {messageContent.speaking_performance.grammar_assessment.error_examples}</p>
+                            <p className="text-black"><strong>Complexity Level:</strong> {messageContent.speaking_performance.grammar_assessment.complexity_level}</p>
+                          </div>
+                        )}
+
+                        {/* vocabulary_usage */}
+
+
+                        {messageContent.speaking_performance && (
+                          <div className="bg-green-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Vocabulary Usage</h2>
+                            <p className="text-black"><strong>Assessment:</strong> {messageContent.speaking_performance.vocabulary_usage.assessment}</p>
+                            <p className="text-black"><strong>Effective Vocabulary:</strong> {messageContent.speaking_performance.vocabulary_usage.effective_vocabulary}</p>
+                            <p className="text-black"><strong>Vocabulary Opportunities:</strong> {messageContent.speaking_performance.vocabulary_usage.vocabulary_opportunities}</p>
+                          </div>
+                        )}
+
+                        {/* speaking_clarity */}
+
+
+                        {messageContent.speaking_performance && (
+                          <div className="bg-green-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Speaking Clarity</h2>
+                            <p className="text-black"><strong>Overall Rating:</strong> {messageContent.speaking_performance.speaking_clarity.overall_rating}</p>
+                            <p className="text-black"><strong>Clarity Factors:</strong></p>
+                            <ul className="list-disc list-inside text-black">
+                              {messageContent.speaking_performance.speaking_clarity.clarity_factors.map(
+                                (factor: string, index: number) => (
+                                  <li key={index}>{factor}</li>
+                                )
+                              )}
+                            </ul>
+                          </div>
+                        )}
+
+
+                        {messageContent?.technical_metrics &&
+                          (messageContent.technical_metrics.speaking_rate_analysis?.trim() ||
+                            messageContent.technical_metrics.pause_analysis?.trim() ||
+                            messageContent.technical_metrics.filler_word_usage?.trim() ||
+                            messageContent.technical_metrics.prosody_evaluation?.trim()) && (
+                            <div className="bg-yellow-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Technical Metrics</h2>
+
+                              {messageContent.technical_metrics.speaking_rate_analysis?.trim() && (
+                                <p className="text-black">
+                                  <strong>Speaking Rate Analysis:</strong>{" "}
+                                  {messageContent.technical_metrics.speaking_rate_analysis}
+                                </p>
+                              )}
+
+                              {messageContent.technical_metrics.pause_analysis?.trim() && (
+                                <p className="text-black">
+                                  <strong>Pause Analysis:</strong>{" "}
+                                  {messageContent.technical_metrics.pause_analysis}
+                                </p>
+                              )}
+
+                              {messageContent.technical_metrics.filler_word_usage?.trim() && (
+                                <p className="text-black">
+                                  <strong>Filler Words Usage:</strong>{" "}
+                                  {messageContent.technical_metrics.filler_word_usage}
+                                </p>
+                              )}
+
+                              {messageContent.technical_metrics.prosody_evaluation?.trim() && (
+                                <p className="text-black">
+                                  <strong>Prosody Evaluation:</strong>{" "}
+                                  {messageContent.technical_metrics.prosody_evaluation}
+                                </p>
+                              )}
+                            </div>
+                          )}
+
+
+
+                        {messageContent?.detailed_suggestions &&
+                          messageContent.detailed_suggestions.length > 0 && (
+                            <div className="">
+
+
+                              <div className="space-y-3">
+                                {messageContent.detailed_suggestions
+                                  .filter(
+                                    (item) =>
+                                      item.suggestion?.trim() &&
+                                      item.example?.trim() &&
+                                      item.improved_version?.trim()
+                                  )
+                                  .map((item, idx) => (
+                                    <div key={idx} className="bg-yellow-50 p-3 rounded-lgborder-l-4 border-yellow-400 pl-3">
+                                      <h2 className="text-lg font-semibold mb-2 text-black">{idx + 1} Detailed Suggestions </h2>
+
+                                      <p className="text-sm text-gray-700 mt-1">
+                                        <span className="font-semibold">Suggestion:</span> {item.suggestion}
+                                      </p>
+
+                                      <p className="text-sm text-gray-700 mt-1">
+                                        <span className="font-semibold">Evidence:</span> {item.example}
+                                      </p>
+                                      <p className="text-sm text-gray-700 mt-1">
+                                        <span className="font-semibold">Impact:</span> {item.improved_version}
+                                      </p>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+
+
+
+                        {messageContent?.strengths && messageContent.strengths.length > 0 && (
+
+                          <div className="bg-yellow-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
+                            <div className="space-y-3">
+                              {messageContent.strengths.map((item, idx) => (
+                                <div key={idx} className="border-l-4 border-yellow-400 pl-3">
+                                  {item.strength && (
+                                    <p className="text-sm text-gray-700 mt-1">
+                                      <span className="font-semibold">Strength:</span> {item.strength}
+                                    </p>
+                                  )}
+                                  {item.evidence && (
+                                    <p className="text-sm text-gray-700 mt-1">
+                                      <span className="font-semibold">Evidence:</span> {item.evidence}
+                                    </p>
+                                  )}
+                                  {item.impact && (
+                                    <p className="text-sm text-gray-700 mt-1">
+                                      <span className="font-semibold">Impact:</span> {item.impact}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+
+
+                        {messageContent?.practice_recommendations && messageContent.practice_recommendations.length > 0 && (
+
+                          <div className="bg-yellow-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Practice Recommendations</h2>
+                            <div className="space-y-3">
+                              {messageContent.practice_recommendations.map((item, idx) => (
+                                <div key={idx} className="border-l-4 border-yellow-400 pl-3">
+                                  {item.activity && (
+                                    <p className="text-sm text-gray-700 mt-1">
+                                      <span className="font-semibold">Activity:</span> {item.activity}
+                                    </p>
+                                  )}
+                                  {item.purpose && (
+                                    <p className="text-sm text-gray-700 mt-1">
+                                      <span className="font-semibold">Purpose:</span> {item.purpose}
+                                    </p>
+                                  )}
+
+
+
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+
+
+
+
+
+
+
+                        {/* Overall Scores Section */}
+                        {messageContent.overall_scores && (
+                          <div className="bg-purple-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Overall Scores</h2>
+                            <ul className="list-disc list-inside">
+                              <p
+                                className="text-black"><strong>Fluency:</strong> {messageContent.overall_scores.fluency}</p>
+                              <p
+                                className="text-black"><strong>Pronunciation:</strong> {messageContent.overall_scores.pronunciation}</p>
+                              <p
+                                className="text-black"><strong>Grammar:</strong> {messageContent.overall_scores.grammar}</p>
+                              <p
+                                className="text-black"><strong>Emotion:</strong> {messageContent.overall_scores.emotion}</p>
+                              <p
+                                className="text-black"><strong>Comprehension Quality:</strong> {messageContent.overall_scores.comprehension_quality}</p>
+                            </ul>
+                          </div>
+                        )}
+
+
+
+                        {messageContent.improvement_priority && (
+                          <div className="bg-purple-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Improvement Priority</h2>
+                            <ul className="list-disc list-inside">
+                              <p className="text-black"> <strong>Area: </strong>{messageContent.improvement_priority.area}</p>
+                              <p className="text-black"><strong>Reason:</strong> {messageContent.improvement_priority.reason}</p>
+                              <p className="text-black"><strong>Immediate Action:</strong> {messageContent.improvement_priority.immediate_action}</p>
+                            </ul>
+                          </div>
+                        )}
+
+
+
+
+                        {messageContent.encouragement && (
+                          <div className="bg-purple-50 p-3 rounded-lg">
+                            <h2 className="text-lg font-semibold mb-2 text-black">Encouragement</h2>
+                            <ul className="list-disc list-inside">
+                              <p
+                                className="text-black"><strong>Progress Highlight:</strong> {messageContent.encouragement.progress_highlight}</p>
+                              <p
+                                className="text-black"><strong>Motivational Message:</strong> {messageContent.encouragement.motivational_message}</p>
+                              <p
+                                className="text-black"><strong>Growth Potential:</strong> {messageContent.encouragement.growth_potential}</p>
+                            </ul>
+                          </div>
+                        )}
+
+
+
+
+
+
+
+                      </div>
+                    </div>
+                  );
+                }
+                else {
+                  // Fallback for unknown message types
+                  return (
+                    <div key={index} className="flex justify-start">
+                      <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
+                        <p className="text-black"></p>
+                      </div>
+                    </div>
+                  );
+                }
+              })}
             </div>
           </div>
-        );
-      }
-
-      // Render based on message type
-      if (messageType === "ai_response") {
-        return (
-          <div key={index} className="flex justify-start">
-            <div className="bg-blue-100 rounded-lg p-3 max-w-xs md:max-w-md">
-              <div className="flex items-center mb-1">
-                <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">AI</span>
-                <span className="text-xs text-gray-500 ml-2">Assistant</span>
-              </div>
-              <p className="text-black">{JSON.parse(messageContent).data}</p>
-              
-            </div>
-          </div>
-        );
-      } 
-      else if (messageType === "transcribed_text") {
-        return (
-          <div key={index} className="flex justify-end">
-            <div className="bg-green-100 rounded-lg p-3 max-w-xs md:max-w-md">
-              <div className="flex items-center mb-1 justify-end">
-                <span className="text-xs text-gray-500 mr-2">You</span>
-                <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Voice</span>
-              </div>
-              <p className="text-black">{JSON.parse(messageContent).data}</p>
-            </div>
-          </div>
-        );
-      } 
-      else if (messageType === "feedback" && messageContent) {
-        return (
-          <div key={index} className="flex justify-center my-6">
-            <div className="bg-white shadow-md rounded-lg p-4 w-full max-w-2xl border border-gray-200 space-y-4">
-              <div className="text-center mb-2">
-                <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">Feedback</span>
-              </div>
-              
-              {/* Feedback Section */}
-              {messageContent.feedback && (
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <h2 className="text-lg text-black font-semibold mb-2">Feedback</h2>
-                  <p className="text-black"><strong>Content Understanding:</strong> {messageContent.feedback.content_understanding.score}</p>
-                  <p className="text-black"><strong>Content Understanding:</strong> {messageContent.feedback.content_understanding.explanation}</p>
-                  <p className="text-black"><strong>Content Understanding:</strong> {messageContent.feedback.content_understanding.evidence}</p>
-                  <div>
-                    <h2 className="text-black"><strong>Detail Retention:</strong>lgukj</h2>
-                    <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention.score}</p>
-                    <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention.explanation}</p>
-                    <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention.specifices_metioned}</p>
-                    <p className="text-black"><strong>Detail Retention:</strong> {messageContent.feedback.detail_retention.axporiations}</p>
-                  </div>
-                  <p className="text-black"><strong>Key points covered:</strong> {messageContent.feedback.key_points_covered}</p>
-                  <p className="text-black"><strong>Missed points:</strong> {messageContent.feedback.potential_missed_opportunities}</p>
-                  
-
-                </div>
-              )}
-
-
-
-
-
-
-
-
-              {/* Speaking Performance Section */}
-              {messageContent.speaking_performance && (
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
-                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.fluency_assessment.scroe}</p>
-                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.fluency_assessment.analysis}</p>
-                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.fluency_assessment.strengths}</p>
-                  <p className="text-black"><strong>Vocabulary:</strong> {messageContent.speaking_performance.fluency_assessment.improvement_areas}</p>
-                </div>
-              )}
-
-              {messageContent.speaking_performance && (
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
-                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.pronunciation_assessment.scroe}</p>
-                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.pronunciation_assessment.analysis}</p>
-                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.pronunciation_assessment.well_prnounced_words}</p>
-                  <p className="text-black"><strong>Vocabulary:</strong> {messageContent.speaking_performance.pronunciation_assessment.needs_work_words}</p>
-                </div>
-              )}
-
-
-              {messageContent.speaking_performance && (
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
-                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.grammar_assessment.scroe}</p>
-                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.grammar_assessment.analysis}</p>
-                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.grammar_assessment.error_examples}</p>
-                  <p className="text-black"><strong>Vocabulary:</strong> {messageContent.speaking_performance.grammar_assessment.complexity_level}</p>
-                </div>
-              )}
-
-
-              {messageContent.speaking_performance && (
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
-                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.vocabulary_usage.assessment}</p>
-                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.vocabulary_usage.effective_vocabulary}</p>
-                  <p className="text-black"><strong>Grammar:</strong> {messageContent.speaking_performance.vocabulary_usage.vocabulary_opportunities}</p>
-                </div>
-              )}
-
-
-              {messageContent.speaking_performance && (
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Speaking Performance</h2>
-                  <p className="text-black"><strong>Fluency:</strong> {messageContent.speaking_performance.speaking_clarity.overall_rating}</p>
-                  <p className="text-black"><strong>Pronunciation:</strong> {messageContent.speaking_performance.speaking_clarity.clarity_factors}</p>
-                </div>
-              )}
-
-              {/* Technical Metrics Section */}
-              {messageContent.technical_metrics && (
-                <div className="bg-yellow-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Technical Metrics</h2>
-                  <p className="text-black"><strong>Speaking Rate:</strong> {messageContent.technical_metrics.speaking_rate_analysis}</p>
-                  <p className="text-black"><strong>Pause Analysis:</strong> {messageContent.technical_metrics.pause_analysis}</p>
-                  <p className="text-black"><strong>Filler Words:</strong> {messageContent.technical_metrics.filler_word_usage}</p>
-                  <p className="text-black"><strong>Prosody evaluation:</strong> {messageContent.technical_metrics.prosody_evaluation}</p>
-
-                  
-                </div>
-              )}
-
-           
-
-
-        
-
-
-              {/* {messageContent.detailed_suggestions && (
-  <div className="bg-yellow-50 p-3 rounded-lg">
-    <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
-    <ul className="list-disc list-inside space-y-1">
-      {messageContent.detailed_suggestions.map((strength: string, idx: number) => (
-        <li key={idx} className="text-black">{strength}</li>
-      ))}
-    </ul>
-  </div>
-)} */}
-
-
-
-
-{messageContent?.strengths && messageContent.strengths.length > 0 && (
-
-  <div className="bg-yellow-50 p-3 rounded-lg">
-    <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
-    <div className="space-y-3">
-      {messageContent.strengths.map((item, idx) => (
-              <div key={idx} className="border-l-4 border-yellow-400 pl-3">
-                <h3 className="font-medium text-black">{item.strength}</h3>
-                {item.evidence && (
-                  <p className="text-sm text-gray-700 mt-1">
-                    <span className="font-semibold">Evidence:</span> {item.evidence}
-                  </p>
-                )}
-                {item.impact && (
-                  <p className="text-sm text-gray-700 mt-1">
-                    <span className="font-semibold">Impact:</span> {item.impact}
-                  </p>
-                )}
-              </div>
-            ))}
-    </div>
-  </div>
-)}
-
-
-
-{messageContent?.detailed_suggestions && messageContent.detailed_suggestions.length > 0 && (
-
-
-  <div className="bg-yellow-50 p-3 rounded-lg">
-    <h2 className="text-lg font-semibold mb-2 text-black">Detailed Suggestions</h2>
-    <div className="space-y-3">
-      {messageContent.detailed_suggestions.map((item, idx) => (
-              <div key={idx} className="border-l-4 border-yellow-400 pl-3">
-                <h3 className="font-medium text-black">{item.suggestion}</h3>
-                {item.evidence && (
-                  <p className="text-sm text-gray-700 mt-1">
-                    <span className="font-semibold">Evidence:</span> {item.example}
-                  </p>
-                )}
-                {item.impact && (
-                  <p className="text-sm text-gray-700 mt-1">
-                    <span className="font-semibold">Impact:</span> {item.improved_version}
-                  </p>
-                )}
-              </div>
-            ))}
-    </div>
-  </div>
-)}
-
-
-
-
-
-
-
-                 {/* Overall Scores Section */}
-              {messageContent.overall_scores && (
-                <div className="bg-purple-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Overall Scores</h2>
-                  <ul className="list-disc list-inside">
-                    <li className="text-black">Fluency: {messageContent.overall_scores.fluency}</li>
-                    <li className="text-black">Pronunciation: {messageContent.overall_scores.pronunciation}</li>
-                    <li className="text-black">Grammar: {messageContent.overall_scores.grammar}</li>
-                    <li className="text-black">Emotion: {messageContent.overall_scores.emotion}</li>
-                  </ul>
-                </div>
-              )}
-
-
-
-               {messageContent.improvement_priority && (
-                <div className="bg-purple-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Overall Scores</h2>
-                  <ul className="list-disc list-inside">
-                    <li className="text-black">Fluency: {messageContent.improvement_priority.area}</li>
-                    <li className="text-black">Pronunciation: {messageContent.improvement_priority.reason}</li>
-                    <li className="text-black">Grammar: {messageContent.improvement_priority.immediate_action}</li>
-                  </ul>
-                </div>
-              )}
-
-
-
-
-              {messageContent.encouragement && (
-                <div className="bg-purple-50 p-3 rounded-lg">
-                  <h2 className="text-lg font-semibold mb-2 text-black">Overall Scores</h2>
-                  <ul className="list-disc list-inside">
-                    <li className="text-black">Fluency: {messageContent.encouragement.progress_highlight}</li>
-                    <li className="text-black">Pronunciation: {messageContent.encouragement.motivational_message}</li>
-                    <li className="text-black">Grammar: {messageContent.encouragement.growth_potential}</li>
-                  </ul>
-                </div>
-              )}
-
-
-
-
-
-
-
-            </div>
-          </div>
-        );
-      } 
-      else {
-        // Fallback for unknown message types
-        return (
-          <div key={index} className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
-              <p className="text-black"></p>
-            </div>
-          </div>
-        );
-      }
-    })}
-  </div>
-</div>
-
-
-
-
-
-
-
-
-
-
-
         </div>
       </div>
       <div className="mt-6 flex flex-col items-center">
@@ -1335,5 +1508,6 @@ const handleShowResult = async () => {
 
       <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
     </div>
+
   );
 }

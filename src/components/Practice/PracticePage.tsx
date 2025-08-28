@@ -748,11 +748,13 @@ const PracticePage = () => {
 
 
                 
-                    <h3 className="text-lg font-semibold text-indigo-800 mb-2">
+              <div className="bg-white p-4 rounded-lg shadow-inner min-h-[60px]">
+                
+                    
+                <p className="text-gray-700 leading-relaxed">
+                  <h3 className="text-lg font-semibold text-indigo-800 mb-2">
                 Your Speech:
               </h3>
-              <div className="bg-white p-4 rounded-lg shadow-inner min-h-[60px]">
-                <p className="text-gray-700 leading-relaxed">
                   {transcriptionText}
                 </p>
               </div>

@@ -32,7 +32,7 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const validateToken = async () => {
-      if (!token) return;
+      // if (!token) return;
 
       try {
         const response = await fetch(
