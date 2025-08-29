@@ -48,7 +48,7 @@ const ACCENT_OPTIONS = [
 ];
 
 const difficultyOptions = [
- "Easy", "Medium", "Strong"
+  "Easy", "Medium", "Strong"
 ];
 
 
@@ -781,7 +781,7 @@ export default function VoiceAssistant() {
 
 
           <div className=" flex flex-col sm:grid sm:grid-cols-2 sm:gap-4 gap-3 mt-2">
-             
+
 
             <div className="">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -815,7 +815,45 @@ export default function VoiceAssistant() {
 
 
 
-             <div className="">
+
+ <div className="">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Difficulty Level <span className="text-red-600">*</span>
+              {/* {errors.accent && <span className="text-red-600">*</span>} */}
+            </label>
+            <select
+              // value={accentOption}
+              // onChange={(e) => {
+              //   setAccentOption(e.target.value);
+              //   if (errors.accent) setErrors({ ...errors, accent: false });
+              // }}
+              className={`w-full text-black rounded-lg border ${errors.accent ? "border-red-500" : "border-gray-300"
+                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+            >
+              <option value="" disabled>
+                Select difficulty level
+              </option>
+              {difficultyOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+            {/* {errors.accent && (
+              <p className="mt-1 text-sm text-red-600">
+                Select difficulty level
+              </p>
+            )} */}
+            </div>
+            
+
+
+
+
+          </div>
+
+
+<div className="">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Topic <span className="text-red-600">*</span>
                 {/* Topic {errors.topic && <span className="text-red-600">*</span>} */}
@@ -840,41 +878,6 @@ export default function VoiceAssistant() {
 
 
 
-          </div>
-
-
-
-
-          
-  <div className="mt-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Difficulty Level <span className="text-red-600">*</span>
-                {/* {errors.accent && <span className="text-red-600">*</span>} */}
-              </label>
-              <select
-                // value={accentOption}
-                // onChange={(e) => {
-                //   setAccentOption(e.target.value);
-                //   if (errors.accent) setErrors({ ...errors, accent: false });
-                // }}
-                className={`w-full text-black rounded-lg border ${errors.accent ? "border-red-500" : "border-gray-300"
-                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
-                  >
-                <option value="" disabled>
-                Select difficulty level 
-                </option>
-                {difficultyOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              {errors.accent && (
-                <p className="mt-1 text-sm text-red-600">
-                  Select difficulty level 
-                </p>
-              )}
-            </div>
         </div>
 
 
@@ -1239,7 +1242,7 @@ export default function VoiceAssistant() {
                         {/* speaking_clarity */}
 
 
-                        {messageContent.speaking_performance && (
+                        {/* {messageContent.speaking_performance && (
                           <div className="bg-green-50 p-3 rounded-lg">
                             <h2 className="text-lg font-semibold mb-2 text-black">Speaking Clarity</h2>
                             <p className="text-black"><strong>Overall Rating:</strong> {messageContent.speaking_performance.speaking_clarity.overall_rating}</p>
@@ -1252,7 +1255,7 @@ export default function VoiceAssistant() {
                               )}
                             </ul>
                           </div>
-                        )}
+                        )} */}
 
 
                         {messageContent?.technical_metrics &&
