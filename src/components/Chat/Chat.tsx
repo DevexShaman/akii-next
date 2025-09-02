@@ -29,9 +29,11 @@ const selectedClass = searchParams.get("class");
   const [classInput, setClassInput] = useState("");
 
     
-
+  const {teacher} = useAppSelector(state=>state)
   
+  console.log('====================================');
 
+  console.log('====================================');
 
   const [messages, setMessages] = useState<
     Array<{
@@ -90,9 +92,9 @@ const selectedClass = searchParams.get("class");
       const result = await dispatch(
         sendChatMessage({
           question: currentInput,
-          curriculum: curriculum,
-          subject: subjectInput,
-          student_class: classInput,
+          curriculum: teacher.curriculum,
+          subject: teacher.subject,
+          student_class: teacher.class,
           username: username,
         })
       ).unwrap();
