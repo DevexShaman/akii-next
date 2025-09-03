@@ -92,6 +92,9 @@ const selectedClass = searchParams.get("class");
       const selectedClass  = params.get("class")
       const selectedCurriculum  = params.get("curriculum")
       const selectedSubject  = params.get("subject")
+      const filename  = params.get("files")
+      console.log("filename",filename)
+      
       const result = await dispatch(
         sendChatMessage({
           question: currentInput,
@@ -99,6 +102,7 @@ const selectedClass = searchParams.get("class");
           subject: selectedSubject,
           student_class: selectedClass,
           username: username,
+          filename:filename,
         })
       ).unwrap();
 

@@ -7,6 +7,7 @@ interface UserQuestion {
   subject: string;
   student_class: string;
   username: string;
+  filename:string;
 }
 
 interface ChatError {
@@ -23,6 +24,7 @@ export const sendChatMessage = createAsyncThunk(
         curriculum: userQuestion.curriculum || "",
         student_class: userQuestion.student_class || "",
         username: userQuestion.username || "",
+        filename:userQuestion.filename || "",
       };
 
       const backendUrl =

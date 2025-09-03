@@ -62,6 +62,8 @@ const Teacher = () => {
 
 
   const [localFiles, setLocalFiles] = useState<File[]>([]);
+
+  
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState({
     class: false,
@@ -151,11 +153,14 @@ const Teacher = () => {
 
 const handleChat = () => {
 
-
+  const fileNames = localFiles.map(file => file.name);
+  
   const params = new URLSearchParams({
     class: selectedClass,
     subject: selectedSubject,
     curriculum: selectedCurriculum,
+    files: (fileNames[0]),
+    
   });
 
   router.push(`/chat?${params.toString()}`);
