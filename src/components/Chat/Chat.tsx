@@ -29,7 +29,7 @@ const selectedClass = searchParams.get("class");
   const [classInput, setClassInput] = useState("");
 
     
-  const {teacher} = useAppSelector(state=>state)
+  
   
   console.log('====================================');
 
@@ -60,7 +60,7 @@ const selectedClass = searchParams.get("class");
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
+  const params  = useSearchParams()
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('---f-dsfg-dg-d-gg--')
@@ -88,13 +88,16 @@ const selectedClass = searchParams.get("class");
     setInputValue("");
 
     try {
-      // Send to API
+      // Send to API\
+      const selectedClass  = params.get("class")
+      const selectedCurriculum  = params.get("curriculum")
+      const selectedSubject  = params.get("subject")
       const result = await dispatch(
         sendChatMessage({
           question: currentInput,
-          curriculum: teacher.curriculum,
-          subject: teacher.subject,
-          student_class: teacher.class,
+          curriculum: selectedCurriculum,
+          subject: selectedSubject,
+          student_class: selectedClass,
           username: username,
         })
       ).unwrap();

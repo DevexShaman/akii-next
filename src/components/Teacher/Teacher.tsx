@@ -2,11 +2,11 @@
 
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState , useEffect } from "react";
 import { FileRejection, useDropzone } from "react-dropzone";
 import { useDispatch, useSelector } from "react-redux";
-import { RootState, AppDispatch } from "@/store/index";
-import { useRouter } from "next/navigation";
+import { RootState, AppDispatch, useAppSelector } from "@/store/index";
+import { useRouter ,useSearchParams } from "next/navigation";
 import {
   setClass,
   setSubject,
@@ -34,6 +34,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const Teacher = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const {
     class: className,
@@ -46,7 +47,20 @@ const Teacher = () => {
     uploadResults,
   } = useSelector((state: RootState) => state.teacher);
 
-  const [showResults, setShowResults] = useState(false);
+  const teacher  = useAppSelector(state=>state.teacher)
+
+  const selectedClass = teacher.class
+  const selectedSubject = teacher.subject;
+  const selectedCurriculum = teacher.curriculum;
+
+   useEffect(() => {
+    if (selectedClass) dispatch(setClass(selectedClass));
+    if (selectedSubject) dispatch(setSubject(selectedSubject));
+    if (selectedCurriculum) dispatch(setCurriculum(selectedCurriculum));
+  }, [selectedClass, selectedSubject, selectedCurriculum, dispatch]);
+
+
+
   const [localFiles, setLocalFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState({
@@ -131,15 +145,12 @@ const Teacher = () => {
     dispatch(resetUpload());
     dispatch(clearUploadResults());
   };
- const selectedClass = useSelector((state: RootState) => state.teacher.class);
-const selectedSubject = useSelector((state: RootState) => state.teacher.subject);
-const selectedCurriculum = useSelector((state: RootState) => state.teacher.curriculum);
+//  const selectedClass = useSelector((state: RootState) => state.teacher.class);
+// const selectedSubject = useSelector((state: RootState) => state.teacher.subject);
+// const selectedCurriculum = useSelector((state: RootState) => state.teacher.curriculum);
 
 const handleChat = () => {
-  if (!selectedClass || !selectedSubject || !selectedCurriculum) {
-    alert("Please select class, subject, and curriculum before chatting");
-    return;
-  }
+
 
   const params = new URLSearchParams({
     class: selectedClass,
@@ -246,6 +257,8 @@ const handleChat = () => {
                 <select
                   value={field.value || ""}
                   onChange={(e) => {
+                    // updateSearchParams(field.label ,e.target.value )
+
                     dispatch(field.action(e.target.value));
                     if (errors[field.errorKey as keyof typeof errors])
                       setErrors({ ...errors, [field.errorKey]: false });

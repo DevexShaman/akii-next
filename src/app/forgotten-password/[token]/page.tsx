@@ -23,6 +23,7 @@ const ResetPassword = () => {
   const router = useRouter();
   const params = useParams();
   const token = params.token as string;
+  
 
   //   useEffect(() => {
   //     if (token) {
@@ -32,13 +33,14 @@ const ResetPassword = () => {
 
   useEffect(() => {
     const validateToken = async () => {
-      // if (!token) return;
+      if (!token) return;
 
       try {
+
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/validate-reset-token/${token}`
         );
-
+        
         if (response.ok) {
           const data = await response.json();
           setValidToken(true);
@@ -58,6 +60,7 @@ const ResetPassword = () => {
     };
 
     validateToken();
+    
   }, [token, router]);
 
   const validationSchema = Yup.object({
