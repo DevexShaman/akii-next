@@ -137,21 +137,33 @@ export const logoutUser = createAsyncThunk(
 );
 
 export const verifyAuth = createAsyncThunk(
-  "/verifyAuth",
+  "auth/verifyAuth",
   async (_, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("access_token");
-      setTimeout(() => {
-        if (!token) return false;
-      }, 10000);
+      
+      if (!token) {
+        return rejectWithValue("No access token found");
+      }
 
       const response = await apiGet(`/validate-reset-token/${token}`);
-      return response.valid;
-    } catch (error) {
+      console.log(response, "=====verifyAuth response");
+      
+      if (response?.valid) {
+        return true;
+      } else {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("username");
+        return rejectWithValue("Invalid token");
+      }
+
+    } catch (error: any) {
+      console.error("verifyAuth error:", error);
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
       localStorage.removeItem("username");
-      return false;
+      return rejectWithValue(error.message || "Token validation failed");
     }
   }
 );
