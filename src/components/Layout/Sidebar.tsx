@@ -30,7 +30,7 @@ const Sidebar = ({
   const pathname = usePathname();
   const wasMobileRef = useRef(null);
   const name = localStorage.getItem("username") || "";
-  
+
   const navigationItems = [
     {
       name: "Student Form",
@@ -76,11 +76,10 @@ const Sidebar = ({
           />
         )}
       </AnimatePresence>
-      
+
       <motion.aside
-        className={`rounded-2xl mt-6 ml-2 fixed top-16 bottom-0 z-40 bg-gradient-to-b from-indigo-800 to-purple-900 shadow-2xl ${
-          collapsed ? "w-20" : "w-64"
-        }`}
+        className={`rounded-2xl mt-6 ml-2 fixed top-16 bottom-0 z-40 bg-gradient-to-b from-indigo-800 to-purple-900 shadow-2xl ${collapsed ? "w-20" : "w-64"
+          }`}
         initial={{ width: 256 }}
         animate={{ width: collapsed ? 80 : 256 }}
         transition={{ type: "spring", damping: 20 }}
@@ -126,8 +125,8 @@ const Sidebar = ({
                     >
                       <div className={clsx(
                         "p-2 rounded-lg transition-colors",
-                        isActive 
-                          ? "bg-white/20" 
+                        isActive
+                          ? "bg-white/20"
                           : "bg-white/10 group-hover:bg-white/20"
                       )}>
                         <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -161,8 +160,11 @@ const Sidebar = ({
           >
             <div className="flex items-center">
               <div className="bg-gradient-to-tr from-cyan-400 to-blue-500 w-10 h-10 rounded-full flex items-center justify-center shadow-md">
-                <Sparkles className="w-5 h-5 text-white" />
+                <span className="text-white font-semibold text-lg">
+                  {name?.charAt(0).toUpperCase()}
+                </span>
               </div>
+
               <AnimatePresence>
                 {!collapsed && (
                   <motion.div
@@ -178,6 +180,7 @@ const Sidebar = ({
                 )}
               </AnimatePresence>
             </div>
+
           </motion.div>
         </div>
       </motion.aside>

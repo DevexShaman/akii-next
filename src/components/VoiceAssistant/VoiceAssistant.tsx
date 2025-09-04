@@ -63,20 +63,13 @@ const MOOD_OPTIONS = [
 
 function safeParseData(data) {
   try {
-    // If already an object, return as is
     if (typeof data === "object" && data !== null) {
-
       return data;
     }
-
-    // If it's a string, replace Python's None with null before parsing
     if (typeof data === "string") {
       let cleaned = data.replace(/\bNone\b/g, "null");
 
-      // First parse
       let parsed = JSON.parse(cleaned);
-
-      // If parsed result is still a string (double-encoded), parse again
       if (typeof parsed === "string") {
         parsed = JSON.parse(parsed);
 
@@ -84,67 +77,12 @@ function safeParseData(data) {
 
       return parsed;
     }
-
-    // If data is neither object nor string, return null
     return null;
   } catch (err) {
     console.error("Failed to parse data:", err);
     return null;
   }
 }
-
-
-
-// function safeParseData(data) {
-//   try {
-//     // If already an object, return as is
-//     if (typeof data === "object" && data !== null) {
-//       return data;
-//     }
-
-//     // If it's a string, clean and parse it
-//     if (typeof data === "string") {
-//       let cleaned = data
-//         .replace(/\bNone\b/g, "null") // Replace Python's None with null
-//         .replace(/\\n/g, " ") // Replace escaped newlines with spaces
-//         .replace(/\s+/g, " ") // Collapse multiple whitespaces
-//         .trim();
-
-//       // Remove any trailing commas that might break JSON parsing
-//       cleaned = cleaned.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
-
-//       // Try to parse the cleaned string
-//       let parsed = JSON.parse(cleaned);
-
-//       // If parsed result is still a string (double-encoded), parse again
-//       if (typeof parsed === "string") {
-//         try {
-//           parsed = JSON.parse(parsed);
-//         } catch (innerErr) {
-//           // If inner parsing fails, try to clean and parse again
-//           const innerCleaned = parsed
-//             .replace(/\\n/g, " ")
-//             .replace(/\s+/g, " ")
-//             .replace(/,\s*}/g, '}')
-//             .replace(/,\s*]/g, ']')
-//             .trim();
-//           parsed = JSON.parse(innerCleaned);
-//         }
-//       }
-
-//       return parsed;
-//     }
-
-//     // If data is neither object nor string, return null
-//     return null;
-//   } catch (err) {
-//     console.error("Failed to parse data:", err);
-//     console.error("Data that failed to parse:", data);
-//     return null;
-//   }
-// }
-
-
 
 export default function VoiceAssistant() {
   const dispatch = useAppDispatch();
@@ -173,16 +111,6 @@ export default function VoiceAssistant() {
   const [moodOption, setMoodOption] = useState("");
   const [showPreSpeechPrompt, setShowPreSpeechPrompt] = useState(true);
   const [messages, setMessages] = useState<string[]>([]);
-
-
-
-
-
-
-
-  // const [accentOption, setAccentOption] = useState("");
-
-
   const [errors, setErrors] = useState({
     class: false,
     accent: false,
@@ -476,13 +404,9 @@ export default function VoiceAssistant() {
             : event.data);
           playAudioBuffer(arrayBuffer);
         }
-        // Handle text messages
         else if (typeof event.data === "string") {
           try {
             const message = JSON.parse(event.data);
-
-
-
             setMessages((prev) => [...prev, event.data]);
             if (message.essay_id) {
               setEssayId(message.essay_id);
@@ -601,34 +525,6 @@ export default function VoiceAssistant() {
     }
   };
 
-  // const handleShowResult = async () => {
-  //   if (essayId) {
-  //     try {
-  //       setLoadingResult(true);
-  //       setLoadingText("Preparing your results...");
-
-  //       // 15-second text update
-  //       const textTimeout = setTimeout(() => {
-  //         if (loadingResult) {
-  //           setLoadingText("Almost there, finalizing results...");
-  //         }
-  //       }, 15000);
-
-  //       // ✅ Wait 10 seconds before calling the API
-  //       // await new Promise((resolve) => setTimeout(resolve, 13000));
-
-  //       await dispatch(fetchOverallScoring(essayId)).unwrap();
-
-  //       clearTimeout(textTimeout);
-  //       router.push(`/assistantresult?essay_id=${essayId}`);
-  //     } catch (error) {
-  //       toast.error(error);
-  //       console.error("Failed to fetch scoring:", error);
-  //       setLoadingResult(false);
-  //     }
-  //   }
-  // };
-
 
   const handleShowResult = async () => {
     if (!essayId) return;
@@ -636,8 +532,6 @@ export default function VoiceAssistant() {
     try {
       setLoadingResult(true);
       setLoadingText("Preparing your results...");
-
-      // ✅ Dynamic loading text updates at intervals
       const messages = [
         "Preparing your results...",
         "Analyzing your essay...",
@@ -650,12 +544,9 @@ export default function VoiceAssistant() {
         setLoadingText(messages[index]);
       }, 5000); // every 5 seconds, update text
 
-      // ✅ Call API immediately
       await dispatch(fetchOverallScoring(essayId)).unwrap();
 
       clearInterval(textInterval);
-
-      // ✅ Navigate immediately after report is ready
       router.push(`/assistantresult?essay_id=${essayId}`);
     } catch (error) {
       toast.error(error);
@@ -695,11 +586,10 @@ export default function VoiceAssistant() {
             Assistant Settings
           </h2>
 
-          <div className="flex flex-col sm:grid sm:grid-cols-2 sm:gap-4 gap-3">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1 ">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 sm:gap-6 gap-4">
+            <div className="flex flex-col">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Class <span className="text-red-600">*</span>
-                {/* Class {errors.class && <span className="text-red-600">*</span>} */}
               </label>
               <select
                 value={classOption}
@@ -707,8 +597,8 @@ export default function VoiceAssistant() {
                   setClassOption(e.target.value);
                   if (errors.class) setErrors({ ...errors, class: false });
                 }}
-                className={`w-full text-black rounded-lg border ${errors.class ? "border-red-500" : "border-gray-300"
-                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+                className={`w-full text-gray-900 rounded-xl border ${errors.class ? "border-red-500" : "border-gray-300"
+                  } bg-white py-3 px-4 text-sm shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all`}
               >
                 <option value="" disabled>
                   Select class
@@ -720,16 +610,12 @@ export default function VoiceAssistant() {
                 ))}
               </select>
               {errors.class && (
-                <p className="mt-1 text-sm text-red-600">
-                  Please select a class
-                </p>
+                <p className="mt-1 text-sm text-red-600">Please select a class</p>
               )}
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <div className="flex flex-col">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Accent <span className="text-red-600">*</span>
-                {/* {errors.accent && <span className="text-red-600">*</span>} */}
               </label>
               <select
                 value={accentOption}
@@ -737,8 +623,8 @@ export default function VoiceAssistant() {
                   setAccentOption(e.target.value);
                   if (errors.accent) setErrors({ ...errors, accent: false });
                 }}
-                className={`w-full text-black rounded-lg border ${errors.accent ? "border-red-500" : "border-gray-300"
-                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+                className={`w-full text-gray-900 rounded-xl border ${errors.accent ? "border-red-500" : "border-gray-300"
+                  } bg-white py-3 px-4 text-sm shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all`}
               >
                 <option value="" disabled>
                   Select accent
@@ -750,20 +636,16 @@ export default function VoiceAssistant() {
                 ))}
               </select>
               {errors.accent && (
-                <p className="mt-1 text-sm text-red-600">
-                  Please select an accent
-                </p>
+                <p className="mt-1 text-sm text-red-600">Please select an accent</p>
               )}
             </div>
-
           </div>
 
-
-          <div className=" flex flex-col sm:grid sm:grid-cols-2 sm:gap-4 gap-3 mt-6">
-            <div className="">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 sm:gap-6 gap-4 mt-6">
+            {/* Mood Select */}
+            <div className="flex flex-col">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Mood <span className="text-red-600">*</span>
-                {/* Mood {errors.mood && <span className="text-red-600">*</span>} */}
               </label>
               <select
                 value={moodOption}
@@ -771,8 +653,8 @@ export default function VoiceAssistant() {
                   setMoodOption(e.target.value);
                   if (errors.mood) setErrors({ ...errors, mood: false });
                 }}
-                className={`w-full text-black rounded-lg border ${errors.mood ? "border-red-500" : "border-gray-300"
-                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+                className={`w-full text-gray-900 rounded-xl border ${errors.mood ? "border-red-500" : "border-gray-300"
+                  } bg-white py-3 px-4 text-sm shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all`}
               >
                 <option value="" disabled>
                   Select mood
@@ -784,28 +666,18 @@ export default function VoiceAssistant() {
                 ))}
               </select>
               {errors.mood && (
-                <p className="mt-1 text-sm text-red-600">
-                  Please select a mood
-                </p>
+                <p className="mt-1 text-sm text-red-600">Please select a mood</p>
               )}
             </div>
 
-
-
-
-            <div className="">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+            {/* Difficulty Level Select */}
+            <div className="flex flex-col">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Difficulty Level <span className="text-red-600">*</span>
-                {/* {errors.accent && <span className="text-red-600">*</span>} */}
               </label>
               <select
-                // value={accentOption}
-                // onChange={(e) => {
-                //   setAccentOption(e.target.value);
-                //   if (errors.accent) setErrors({ ...errors, accent: false });
-                // }}
-                className={`w-full text-black rounded-lg border ${errors.accent ? "border-red-500" : "border-gray-300"
-                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+                className={`w-full text-gray-900 rounded-xl border ${errors.accent ? "border-red-500" : "border-gray-300"
+                  } bg-white py-3 px-4 text-sm shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all`}
               >
                 <option value="" disabled>
                   Select difficulty level
@@ -816,19 +688,8 @@ export default function VoiceAssistant() {
                   </option>
                 ))}
               </select>
-              {/* {errors.accent && (
-              <p className="mt-1 text-sm text-red-600">
-                Select difficulty level
-              </p>
-            )} */}
             </div>
-
-
-
-
-
           </div>
-
 
           <div className="mt-6">
             <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -852,29 +713,7 @@ export default function VoiceAssistant() {
               </p>
             )}
           </div>
-
-
-
         </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         <div className="p-8 flex flex-col items-center">
           <AnimatePresence>
             {showPreSpeechPrompt && (
@@ -1060,15 +899,8 @@ export default function VoiceAssistant() {
           Powered by WebRTC & AI
         </div>
         <div className="mt-4 p-4 bg-gray-100 rounded-lg max-w-full">
-          {/* <p className="text-sm text-gray-700 font-semibold text-center">
-            Transcription:
-          </p> */}
+
           <p className=" break-words">{transcription}</p>
-
-
-
-
-
           <div className="max-w-full">
             <h1 className="text-black text-xl font-bold mb-4">Conversation</h1>
 
@@ -1082,12 +914,7 @@ export default function VoiceAssistant() {
                 try {
                   // Parse the message
                   messageData = typeof msg === "string" ? JSON.parse(msg) : msg;
-
-
-
-
                   messageType = messageData.type;
-
                   // Handle different message types
                   if (messageType === "ai_response" || messageType === "transcribed_text") {
                     messageContent = messageData.text || messageData.message || msg;
@@ -1202,9 +1029,6 @@ export default function VoiceAssistant() {
                           </div>
                         )}
 
-                        {/* vocabulary_usage */}
-
-
                         {messageContent.speaking_performance && (
                           <div className="bg-green-50 p-3 rounded-lg">
                             <h2 className="text-lg font-semibold mb-2 text-black">Vocabulary Usage</h2>
@@ -1213,24 +1037,6 @@ export default function VoiceAssistant() {
                             <p className="text-black"><strong>Vocabulary Opportunities:</strong> {messageContent.speaking_performance.vocabulary_usage.vocabulary_opportunities}</p>
                           </div>
                         )}
-
-                        {/* speaking_clarity */}
-
-
-                        {/* {messageContent.speaking_performance && (
-                          <div className="bg-green-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Speaking Clarity</h2>
-                            <p className="text-black"><strong>Overall Rating:</strong> {messageContent.speaking_performance.speaking_clarity.overall_rating}</p>
-                            <p className="text-black"><strong>Clarity Factors:</strong></p>
-                            <ul className="list-disc list-inside text-black">
-                              {messageContent.speaking_performance.speaking_clarity.clarity_factors.map(
-                                (factor: string, index: number) => (
-                                  <li key={index}>{factor}</li>
-                                )
-                              )}
-                            </ul>
-                          </div>
-                        )} */}
 
 
                         {messageContent?.technical_metrics &&
@@ -1271,13 +1077,9 @@ export default function VoiceAssistant() {
                             </div>
                           )}
 
-
-
                         {messageContent?.detailed_suggestions &&
                           messageContent.detailed_suggestions.length > 0 && (
                             <div className="">
-
-
                               <div className="space-y-3">
                                 {messageContent.detailed_suggestions
                                   .filter(
@@ -1305,9 +1107,6 @@ export default function VoiceAssistant() {
                               </div>
                             </div>
                           )}
-
-
-
                         {messageContent?.strengths && messageContent.strengths.length > 0 && (
 
                           <div className="bg-yellow-50 p-3 rounded-lg">
@@ -1335,9 +1134,6 @@ export default function VoiceAssistant() {
                             </div>
                           </div>
                         )}
-
-
-
                         {messageContent?.practice_recommendations && messageContent.practice_recommendations.length > 0 && (
 
                           <div className="bg-yellow-50 p-3 rounded-lg">
@@ -1355,22 +1151,11 @@ export default function VoiceAssistant() {
                                       <span className="font-semibold">Purpose:</span> {item.purpose}
                                     </p>
                                   )}
-
-
-
                                 </div>
                               ))}
                             </div>
                           </div>
                         )}
-
-
-
-
-
-
-
-
                         {/* Overall Scores Section */}
                         {messageContent.overall_scores && (
                           <div className="bg-purple-50 p-3 rounded-lg">
@@ -1389,9 +1174,6 @@ export default function VoiceAssistant() {
                             </ul>
                           </div>
                         )}
-
-
-
                         {messageContent.improvement_priority && (
                           <div className="bg-purple-50 p-3 rounded-lg">
                             <h2 className="text-lg font-semibold mb-2 text-black">Improvement Priority</h2>
@@ -1402,10 +1184,6 @@ export default function VoiceAssistant() {
                             </ul>
                           </div>
                         )}
-
-
-
-
                         {messageContent.encouragement && (
                           <div className="bg-purple-50 p-3 rounded-lg">
                             <h2 className="text-lg font-semibold mb-2 text-black">Encouragement</h2>
@@ -1419,13 +1197,6 @@ export default function VoiceAssistant() {
                             </ul>
                           </div>
                         )}
-
-
-
-
-
-
-
                       </div>
                     </div>
                   );

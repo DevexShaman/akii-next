@@ -1,4 +1,3 @@
-// app/forgotten-password/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -35,7 +34,7 @@ const ForgotPassword = () => {
 
       if (response.ok) {
         toast.success(
-          "If this email exists in our system, you'll receive a password reset link"
+          "If this email exists, you'll receive a password reset link"
         );
         setEmailSent(true);
       } else {
@@ -50,34 +49,38 @@ const ForgotPassword = () => {
 
   return (
     <AuthLayout>
-      <div className="w-[34%] mx-auto px-4">
-        {" "}
-        {/* Added container with max width */}
+      {/* Gradient Background */}
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-center mb-8"
+          className="max-w-md w-full backdrop-blur-sm bg-white/20 rounded-3xl shadow-2xl p-10 border border-white/30"
         >
-          <div className="flex justify-center mb-4">
-            <div className="bg-indigo-100 p-3 rounded-full">
-              <div className="bg-indigo-600 text-white p-3 rounded-full">
+          {/* Icon */}
+          <div className="flex justify-center mb-6">
+            <motion.div
+              whileHover={{ scale: 1.2 }}
+              className="bg-white/30 p-4 rounded-full shadow-lg"
+            >
+              <div className="bg-indigo-600 p-4 rounded-full text-white shadow-md">
                 <FiMail size={28} />
               </div>
-            </div>
+            </motion.div>
           </div>
 
+          {/* Heading */}
           {emailSent ? (
             <>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-white mb-3 text-center drop-shadow-lg">
                 Check Your Email
               </h2>
-              <p className="text-gray-600 mb-6">
-                We've sent a password reset link to your email address
+              <p className="text-white/80 mb-6 text-center text-sm drop-shadow-sm">
+                We've sent a password reset link to your email address.
               </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
-                <p className="text-blue-800">
-                  <span className="font-medium">Didn't receive the email?</span>
+              <div className="bg-white/20 border border-white/30 rounded-lg p-4 text-left">
+                <p className="text-white/90 text-sm">
+                  <span className="font-medium">Didn't receive the email?</span>{" "}
                   <br />
                   Check your spam folder or resend the link
                 </p>
@@ -85,46 +88,45 @@ const ForgotPassword = () => {
             </>
           ) : (
             <>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-white mb-2 text-center drop-shadow-lg">
                 Forgot Password
               </h2>
-              <p className="text-gray-600">
+              <p className="text-white/80 mb-6 text-center text-sm drop-shadow-sm">
                 Enter your email to reset your password
               </p>
             </>
           )}
-        </motion.div>
-        {!emailSent ? (
-          <Formik
-            initialValues={{ email: "" }}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-          >
-            {({ values, errors, touched, handleChange }) => (
-              <Form className="form-sec">
-                <AuthInput
-                  icon={<FiMail />}
-                  name="email"
-                  type="email"
-                  placeholder="Email address"
-                  value={values.email}
-                  onChange={handleChange}
-                  error={touched.email && errors.email}
-                />
 
-                <motion.div
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  className="mb-6"
-                >
-                  <button
+          {/* Form */}
+          {!emailSent && (
+            <Formik
+              initialValues={{ email: "" }}
+              validationSchema={validationSchema}
+              onSubmit={handleSubmit}
+            >
+              {({ values, errors, touched, handleChange }) => (
+                <Form className="space-y-5">
+                  <AuthInput
+                    icon={<FiMail className="text-white/80" />}
+                    name="email"
+                    type="email"
+                    placeholder="Email address"
+                    value={values.email}
+                    onChange={handleChange}
+                    error={touched.email && errors.email}
+                    className="bg-white/20 placeholder-white/70 text-white"
+                  />
+
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     type="submit"
                     disabled={loading}
-                    className={`bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl ${
+                    className={`w-full py-3.5 rounded-xl font-semibold text-white shadow-lg transition-all duration-300 ${
                       loading
-                        ? "opacity-80 cursor-not-allowed"
-                        : "hover:from-indigo-700 hover:to-purple-800"
-                    } w-full block`}
+                        ? "bg-indigo-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:via-indigo-700 hover:to-blue-700"
+                    }`}
                   >
                     {loading ? (
                       <div className="flex items-center justify-center">
@@ -153,30 +155,29 @@ const ForgotPassword = () => {
                     ) : (
                       "Send Reset Link"
                     )}
-                  </button>
-                </motion.div>
-              </Form>
-            )}
-          </Formik>
-        ) : (
-          " "
-        )}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-center"
-        >
-          <Link
-            href="/auth/signin"
-            className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                  </motion.button>
+                </Form>
+              )}
+            </Formik>
+          )}
+
+          {/* Back Link */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-center mt-6"
           >
-            <FiArrowLeft className="mr-2" />
-            Back to Sign In
-          </Link>
+            <Link
+              href="/auth/signin"
+              className="inline-flex items-center text-white/90 hover:text-white font-medium transition-colors"
+            >
+              <FiArrowLeft className="mr-2" />
+              Back to Sign In
+            </Link>
+          </motion.div>
         </motion.div>
-      </div>{" "}
-      {/* End of container */}
+      </div>
     </AuthLayout>
   );
 };
