@@ -177,11 +177,13 @@ const Teacher = () => {
       return <Bookmark className="text-green-500" />;
     return <FileText className="text-blue-500" />;
   };
-  const isChatDisabled =
-    !selectedClass ||
-    !selectedSubject ||
-    !selectedCurriculum ||
-    localFiles.length === 0;
+
+const isChatDisabled =
+  !selectedClass ||
+  !selectedSubject ||
+  !selectedCurriculum ||
+  localFiles.length === 0 ||
+  Object.keys(uploadResults).length === 0; // Add this condition
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
@@ -534,75 +536,75 @@ const Teacher = () => {
         )}
       </AnimatePresence>
 
-      <div className="flex gap-4 justify-center pt-4 mob-block">
-        <Button
-          onClick={handleSubmit}
-          disabled={isProcessing || localFiles.length === 0}
-          className="cursor-pointer px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
-        >
-          {isProcessing ? (
-            <span className="flex items-center ">
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Processing...
-            </span>
-          ) : (
-            "Upload & Process"
-          )}
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={handleReset}
-          className="cursor-pointer px-8 py-3 text-base text-black font-medium border-gray-300 hover:bg-gray-50"
-        >
-          Reset
-        </Button>
-    <div className="relative group inline-block">
+   <div className="flex gap-4 justify-center pt-4 mob-block">
   <Button
-    variant="outline"
-    onClick={handleChat}
-    disabled={isChatDisabled}
-    className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
-      ${isChatDisabled
-        ? "opacity-50 cursor-not-allowed"
-        : "hover:bg-blue-400"}
-    `}
+    onClick={handleSubmit}
+    disabled={isProcessing || localFiles.length === 0}
+    className="cursor-pointer px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
   >
-    Chat with us
+    {isProcessing ? (
+      <span className="flex items-center ">
+        <svg
+          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        Processing...
+      </span>
+    ) : (
+      "Upload & Process"
+    )}
   </Button>
 
-  {/* Tooltip only shows if disabled */}
-  {isChatDisabled && (
-    <div
-      className="absolute left-1/2 -translate-x-1/2 -top-10 
-                 hidden group-hover:block 
-                 bg-black text-white text-sm px-3 py-1 rounded-md shadow-lg whitespace-nowrap"
+  <Button
+    variant="outline"
+    onClick={handleReset}
+    className="cursor-pointer px-8 py-3 text-base text-black font-medium border-gray-300 hover:bg-gray-50"
+  >
+    Reset
+  </Button>
+  
+  <div className="relative group inline-block">
+    <Button
+      variant="outline"
+      onClick={handleChat}
+      disabled={isChatDisabled}
+      className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
+        ${isChatDisabled
+          ? "opacity-50 cursor-not-allowed"
+          : "hover:bg-blue-400"}
+      `}
     >
-      Please add information first, then you will be able to chat with us.
-    </div>
-  )}
-</div>
+      Chat with us
+    </Button>
 
+    {/* Tooltip only shows if disabled */}
+    {isChatDisabled && (
+      <div
+        className="absolute left-1/2 -translate-x-1/2 -top-10 
+                   hidden group-hover:block 
+                   bg-black text-white text-sm px-3 py-1 rounded-md shadow-lg whitespace-nowrap"
+      >
+        Please add information and complete the upload process first, then you will be able to chat with us.
       </div>
+    )}
+  </div>
+</div>
     </div>
   );
 };

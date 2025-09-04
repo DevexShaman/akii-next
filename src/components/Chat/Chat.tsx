@@ -4,17 +4,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { resetError, sendChatMessage } from "@/store/slices/chatSlice";
 import { FiArrowUp, FiRefreshCw, FiX } from "react-icons/fi";
-import { FaRobot, FaUser, FaBook, FaGraduationCap } from "react-icons/fa";
+import { FaRobot, FaUser, FaBook, FaGraduationCap, FaArrowAltCircleLeft } from "react-icons/fa";
 import Markdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaChalkboardTeacher } from "react-icons/fa";
-import { useSearchParams } from "next/navigation";
-
+import { useRouter, useSearchParams } from "next/navigation";
 const Chat = () => {
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { status, error } = useAppSelector((state) => state.chat);
 
   const searchParams = useSearchParams();
+  const params = useSearchParams()
+
   const selectedClass = searchParams.get("class");
   const selectedSubject = searchParams.get("subject");
   const selectedCurriculum = searchParams.get("curriculum");
@@ -33,9 +35,11 @@ const Chat = () => {
       diagramUrls?: string[];
     }>
   >([]);
+  const isLoading = status === "loading";
 
-  const [isCurriculumVisible, setIsCurriculumVisible] = useState(true);
+
   const [username, setUsername] = useState("");
+  const [isCurriculumVisible, setIsCurriculumVisible] = useState(true);
 
   useEffect(() => {
     const storedUsername = localStorage.getItem("username");
@@ -44,13 +48,34 @@ const Chat = () => {
     }
   }, []);
 
-  const isLoading = status === "loading";
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const params = useSearchParams()
+  const messageVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  };
+
+  const formVariants = {
+    hidden: { height: 0, opacity: 0 },
+    visible: { height: "auto", opacity: 1, transition: { duration: 0.3 } },
+  };
+
+  const getImageUrl = (path: string) => {
+    // Extract the diagrams path if the backend returns extra text
+    const pathRegex = /(\/diagrams\/[^\s]+\.(png|jpg|jpeg|gif))/i;
+    const match = path.match(pathRegex);
+    const cleanPath = match ? match[0] : path;
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_URL || "https://llm.edusmartai.com";
+    const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+    const finalPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
+    const encodedPath = encodeURI(finalPath);
+    return `${cleanBaseUrl}/view-image${encodedPath}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,29 +134,6 @@ const Chat = () => {
     }
   };
 
-  const messageVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
-
-  const formVariants = {
-    hidden: { height: 0, opacity: 0 },
-    visible: { height: "auto", opacity: 1, transition: { duration: 0.3 } },
-  };
-
-  const getImageUrl = (path: string) => {
-    // Extract the diagrams path if the backend returns extra text
-    const pathRegex = /(\/diagrams\/[^\s]+\.(png|jpg|jpeg|gif))/i;
-    const match = path.match(pathRegex);
-    const cleanPath = match ? match[0] : path;
-
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_URL || "https://llm.edusmartai.com";
-    const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-    const finalPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
-    const encodedPath = encodeURI(finalPath);
-    return `${cleanBaseUrl}/view-image${encodedPath}`;
-  };
 
 
   return (
@@ -150,6 +152,17 @@ const Chat = () => {
             </div>
           </div>
 
+          <div className="justify-between flex gap-2 ">
+                <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.back()}
+            className="cursor-pointer bg-white/10 hover:bg-white/20 rounded-full px-4 py-2 text-sm flex items-center transition-all"
+          >
+            <FaArrowAltCircleLeft className="mr-2" />
+            BACK
+          </motion.button>
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -159,6 +172,7 @@ const Chat = () => {
             <FaBook className="mr-2" />
             {isCurriculumVisible ? "Hide Details" : "Show Details"}
           </motion.button>
+      </div>
         </div>
       </div>
 
@@ -494,36 +508,36 @@ const Chat = () => {
             </div>
           </div>
 
-       <div className="relative group inline-block">
-  <motion.button
-    type="submit"
-    disabled={inputValue.trim() === ""}
-    whileHover={inputValue.trim() !== "" ? { scale: 1.05 } : {}}
-    whileTap={inputValue.trim() !== "" ? { scale: 0.95 } : {}}
-    className={`z-1 flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg
+          <div className="relative group inline-block">
+            <motion.button
+              type="submit"
+              disabled={inputValue.trim() === ""}
+              whileHover={inputValue.trim() !== "" ? { scale: 1.05 } : {}}
+              whileTap={inputValue.trim() !== "" ? { scale: 0.95 } : {}}
+              className={`z-1 flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg
       ${isLoading ? "bg-purple-700" : "bg-purple-700"}
       ${inputValue.trim() === "" ? "cursor-not-allowed bg-gray-400" : "cursor-pointer"}
     `}
-  >
-    {isLoading ? (
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-      >
-        <FiRefreshCw className="text-white text-xl" />
-      </motion.div>
-    ) : (
-      <FiArrowUp className="text-white text-xl" />
-    )}
-  </motion.button>
+            >
+              {isLoading ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                >
+                  <FiRefreshCw className="text-white text-xl" />
+                </motion.div>
+              ) : (
+                <FiArrowUp className="text-white text-xl" />
+              )}
+            </motion.button>
 
-  {/* Tooltip only on hover */}
-  {inputValue.trim() === "" && (
-    <div className="absolute bottom-16 left-[-30] -translate-x-1/2 whitespace-nowrap px-3 py-1 text-sm text-white bg-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
-      Please add Question first
-    </div>
-  )}
-</div>
+            {/* Tooltip only on hover */}
+            {inputValue.trim() === "" && (
+              <div className="absolute bottom-16 left-[-30] -translate-x-1/2 whitespace-nowrap px-3 py-1 text-sm text-white bg-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                Please add Question first
+              </div>
+            )}
+          </div>
 
 
         </div>

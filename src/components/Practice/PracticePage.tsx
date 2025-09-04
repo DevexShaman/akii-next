@@ -31,15 +31,9 @@ const PracticePage = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [showResultButton, setShowResultButton] = useState(false);
-
-
   const [isTextToSpeechPlaying, setIsTextToSpeechPlaying] = useState(false);
   const [isTextToSpeechSupported, setIsTextToSpeechSupported] = useState(true);
-
-
   const [showTextToSpeech, setShowTextToSpeech] = useState(true);
-
-
   const [transcriptionText, setTranscriptionText] = useState("");
 
   const essayId = searchParams.get("essay_id");
@@ -50,8 +44,7 @@ const PracticePage = () => {
     : null;
 
   const [debugAudioUrl, setDebugAudioUrl] = useState(null);
-  const [isMonitoring, setIsMonitoring] = useState(false);
-  const monitorRef = useRef(null);
+
 
   const audioContextRef = useRef(null);
   const processorRef = useRef(null);
@@ -66,6 +59,7 @@ const PracticePage = () => {
   const mediaStreamRef = useRef(null);
 
   const socketRef = useRef(null);
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
   const { isRecording, isAnalyzing, analysisResults, error } = useAppSelector(
     (state) => state.practice
@@ -86,80 +80,96 @@ const PracticePage = () => {
     }
   };
 
-  const fetchAndPlayAudio = async () => {
-    const token = getAuthToken();
-    const username = getUsername();
+  useEffect(() => {
+    const audioEl = audioRef.current;
+    return () => {
+      if (audioEl) {
+        audioEl.pause();
+      }
 
-    if (!username || !token) {
-      toast.error("Authentication required");
-      return;
-    }
+      if (socketRef.current) socketRef.current.close();
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [dispatch]);
 
-    setIsAudioLoading(true);
+  useEffect(() => {
+    return () => {
+      if (debugAudioUrl) URL.revokeObjectURL(debugAudioUrl);
+    };
+  }, [debugAudioUrl]);
 
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "api/";
-      const response = await fetch(
-        `${baseUrl}/get-tts-audio?username=${username}`,
-        {
-          headers: {
-            Authorization: `${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error("Audio fetch failed");
-
-      const audioBlob = await response.blob();
-      const url = URL.createObjectURL(audioBlob);
-
+  useEffect(() => {
+    return () => {
       if (audioUrl) {
         URL.revokeObjectURL(audioUrl);
       }
+    };
+  }, [audioUrl]);
 
-      setAudioUrl(url);
-      return url;
-    } catch (error) {
-      toast.error("Failed to load audio: " + error.message);
-      return null;
-    } finally {
-      setIsAudioLoading(false);
-    }
-  };
-
-  const toggleAudioPlayback = async () => {
-    if (!audioRef.current) return;
-
-    if (isAudioPlaying) {
-      audioRef.current.pause();
-      setIsAudioPlaying(false);
-    } else {
-      try {
-        let url = audioUrl;
-        if (!url) {
-          url = await fetchAndPlayAudio();
-        }
-
-        if (url && audioRef.current) {
-          if (audioRef.current.src !== url) {
-            audioRef.current.src = url;
-          }
-
-          await audioRef.current.play();
-          setIsAudioPlaying(true);
-        }
-      } catch (error) {
-        console.error("Audio playback failed:", error);
-        toast.error("Failed to play audio");
-      }
-    }
-  };
   useEffect(() => {
     if (typeof window !== "undefined" && !window.speechSynthesis) {
       setIsTextToSpeechSupported(false);
       console.warn("Text-to-speech not supported in this browser");
     }
   }, []);
+
+    const testWebSocketConnection = useCallback(async () => {
+    const username = getUsername();
+    if (typeof window === "undefined") return;
+    const token = getAuthToken();
+    if (!token) {
+      toast.error("Authentication token missing");
+      return;
+    }
+
+    const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+
+    const params = new URLSearchParams({
+      username: encodeURIComponent(username),
+      token: encodeURIComponent(token),
+    });
+    if (essayId) {
+      params.append("essay_id", essayId);
+    }
+
+    const testSocket = new WebSocket(
+      `${protocol}//${cleanBaseUrl}/ws/audio?${params.toString()}`
+    );
+    testSocket.onopen = () => {
+      testSocket.send(
+        JSON.stringify({ type: "test", data: "Connection test" })
+      );
+      testSocket.close();
+    };
+
+    testSocket.onerror = (error) => {
+      console.error("[TEST] WebSocket error:", error);
+    };
+
+    testSocket.onmessage = (e) => {
+      console.log("[TEST] Received:", e.data);
+    };
+    }, [BASE_URL, essayId]);
+  
+    useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (paragraph) {
+      dispatch(initializePractice(paragraph));
+      testWebSocketConnection();
+    } else {
+      toast.error("No paragraph found for practice");
+      router.push("/dashboard");
+    }
+  }, [dispatch, paragraph, router, testWebSocketConnection]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   const toggleTextToSpeech = () => {
     if (!isTextToSpeechSupported) {
@@ -199,78 +209,11 @@ const PracticePage = () => {
     }
   };
 
-
-
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
   if (!BASE_URL) {
     console.error("❌ NEXT_PUBLIC_API_URL is not defined");
     toast.error("Configuration error: API URL missing");
     return;
   }
-
-  const testWebSocketConnection = useCallback(async () => {
-    const username = getUsername();
-    if (typeof window === "undefined") return;
-    const token = getAuthToken();
-    if (!token) {
-      toast.error("Authentication token missing");
-      return;
-    }
-
-    const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-
-    const params = new URLSearchParams({
-      username: encodeURIComponent(username),
-      token: encodeURIComponent(token),
-    });
-    if (essayId) {
-      params.append("essay_id", essayId);
-    }
-
-    const testSocket = new WebSocket(
-      `${protocol}//${cleanBaseUrl}/ws/audio?${params.toString()}`
-    );
-    testSocket.onopen = () => {
-      testSocket.send(
-        JSON.stringify({ type: "test", data: "Connection test" })
-      );
-      testSocket.close();
-    };
-
-    testSocket.onerror = (error) => {
-      console.error("[TEST] WebSocket error:", error);
-    };
-
-    testSocket.onmessage = (e) => {
-      console.log("[TEST] Received:", e.data);
-    };
-  }, [BASE_URL, essayId]);
-
-  const startMicrophoneMonitoring = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      if (monitorRef.current) {
-        monitorRef.current.srcObject = stream;
-        monitorRef.current
-          .play()
-          .catch((e) => console.error("Monitoring play error:", e));
-        setIsMonitoring(true);
-      }
-    } catch (error) {
-      console.error("Monitoring error:", error);
-      toast.error("Microphone access failed during monitoring");
-    }
-  };
-
-  const stopMicrophoneMonitoring = () => {
-    if (monitorRef.current && monitorRef.current.srcObject) {
-      monitorRef.current.srcObject.getTracks().forEach((track) => track.stop());
-      monitorRef.current.srcObject = null;
-      setIsMonitoring(false);
-    }
-  };
 
   const checkMicrophoneAccess = async () => {
     try {
@@ -290,31 +233,10 @@ const PracticePage = () => {
     }
   };
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (paragraph) {
-      dispatch(initializePractice(paragraph));
-      testWebSocketConnection();
-    } else {
-      toast.error("No paragraph found for practice");
-      router.push("/dashboard");
-    }
-  }, [dispatch, paragraph, router, testWebSocketConnection]);
-
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
-
   const handleStartRecording = async () => {
     setShowInfoNotice(false);
     setDebugAudioUrl(null);
-
-
     setTranscriptionText("");
-
-
     setShowTextToSpeech(false);
     rawAudioRef.current = [];
 
@@ -460,12 +382,7 @@ const PracticePage = () => {
 
   const handleStopRecording = () => {
     setShowInfoNotice(false);
-
-
     setShowTextToSpeech(true);
-
-
-
     if (processorRef.current) {
       processorRef.current.disconnect();
       processorRef.current = null;
@@ -534,14 +451,11 @@ const PracticePage = () => {
       toast.error("Essay ID is missing");
       return;
     }
-
-    // Set loading state
     dispatch(setAnalysisResults({ isAnalyzing: true })); // Update to accept object
 
     dispatch(fetchOverallScoring(essayId))
       .unwrap()
       .then((response) => {
-        // Store results before navigation
         dispatch(
           setAnalysisResults({
             results: response,
@@ -556,33 +470,7 @@ const PracticePage = () => {
       });
   };
 
-  useEffect(() => {
-    const audioEl = audioRef.current;
-    return () => {
-      if (audioEl) {
-        audioEl.pause();
-      }
 
-      if (socketRef.current) socketRef.current.close();
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [dispatch]);
-
-  useEffect(() => {
-    return () => {
-      if (debugAudioUrl) URL.revokeObjectURL(debugAudioUrl);
-    };
-  }, [debugAudioUrl]);
-
-  useEffect(() => {
-    return () => {
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
-    };
-  }, [audioUrl]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4 py-8">
@@ -633,8 +521,8 @@ const PracticePage = () => {
                     onClick={toggleTextToSpeech}
                     disabled={isAudioLoading || isRecording || !isTextToSpeechSupported}
                     className={`flex items-center justify-center ${isAudioLoading || !isTextToSpeechSupported
-                        ? "bg-gray-300 cursor-not-allowed"
-                        : "bg-green-100 hover:bg-green-200"
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-green-100 hover:bg-green-200"
                       } text-green-600 p-4 rounded-full transition-colors min-w-[180px]`}
                   >
                     {isAudioLoading ? (
@@ -731,35 +619,20 @@ const PracticePage = () => {
                   </div>
                 )}
 
-
-
-
                 <div className="bg-white p-4 rounded-lg shadow-inner min-h-[60px]">
-
-
+                  <h3 className="text-lg font-semibold text-indigo-800 mb-2">
+                    Your Speech:
+                  </h3>
                   <p className="text-gray-700 leading-relaxed">
-                    <h3 className="text-lg font-semibold text-indigo-800 mb-2">
-                      Your Speech:
-                    </h3>
                     {transcriptionText}
                   </p>
                 </div>
-
-
-
-
                 {showResultButton && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-8 flex justify-center"
                   >
-
-
-
-
-
-
                     <button
                       onClick={handleSeeResults}
                       disabled={isAnalyzing}
@@ -789,30 +662,9 @@ const PracticePage = () => {
               </div>
             </>
           )}
-
-
-
-
-
-
-
         </div>
-
-
-
-
-
-
-
-
       </motion.div>
-
-
-
-
     </div>
-
-
   );
 };
 

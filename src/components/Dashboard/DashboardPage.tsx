@@ -19,7 +19,6 @@ import { toast } from "react-hot-toast";
 import { IoIosArrowDown } from "react-icons/io";
 
 const Dashboard = () => {
-  
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { generatedParagraph, isLoading, essayId } = useAppSelector(
@@ -28,16 +27,11 @@ const Dashboard = () => {
 
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isAudioLoading, setIsAudioLoading] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [activeTab, setActiveTab] = useState("form"); // "form" or "paragraph"
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
@@ -161,6 +155,19 @@ const Dashboard = () => {
 
     window.speechSynthesis.speak(utterance);
   };
+
+  // Don't render anything until we're on the client to prevent hydration mismatch
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-4">
+        <div className="w-full max-w-3xl bg-white shadow-2xl rounded-2xl overflow-hidden border border-gray-200">
+          <div className="p-6 flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-4">

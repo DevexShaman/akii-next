@@ -85,11 +85,9 @@ export const processFiles = createAsyncThunk(
               message: "File uploaded successfully and is being processed.",
             };
           } else {
-            // Re-throw other errors
             throw error;
           }
         } finally {
-          // Update progress after processing each file
           const progress = Math.floor(((i + 1) / files.length) * 100);
           dispatch(setProgress(progress));
         }
@@ -166,6 +164,4 @@ export const {
 } = teacherSlice.actions;
 
 export default teacherSlice.reducer;
-// function dispatch(arg0: { payload: number; type: "teacher/setProgress" }) {
-//   throw new Error("Function not implemented.");
-// }
+

@@ -436,7 +436,7 @@ const AuthComponent = () => {
                           value={values.username}
                           onChange={handleChange}
                           onBlur={handleBlur}
-                          className="block w-full pl-10 pr-4 py-3.5 text-white placeholder-gray-400 bg-gray-700/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 group-hover:border-gray-500"
+                          className="block w-full pl-10 pr-4 py-3.5 text-gray-200 placeholder-gray-400 bg-gray-700/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 group-hover:border-gray-500"
                         />
                       </div>
                       {touched.username && errors.username && (
@@ -467,7 +467,7 @@ const AuthComponent = () => {
                             value={values.email}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            className="block w-full pl-10 pr-4 py-3.5 text-white placeholder-gray-400 bg-gray-700/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 group-hover:border-gray-500"
+                            className="block w-full pl-10 pr-4 py-3.5 text-gray-200 placeholder-gray-400 bg-gray-700/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 group-hover:border-gray-500"
                           />
                         </div>
                         {touched.email && errors.email && (
@@ -498,7 +498,7 @@ const AuthComponent = () => {
                           value={values.password}
                           onChange={(e) => handlePasswordChange(e, handleChange)}
                           onBlur={handleBlur}
-                          className="block w-full pl-10 pr-12 py-3.5 text-white placeholder-gray-400 bg-gray-700/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 group-hover:border-gray-500"
+                          className="block w-full pl-10 pr-12 py-3.5 text-gray-200 placeholder-gray-400 bg-gray-700/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 group-hover:border-gray-500"
                         />
                         <motion.button
                           type="button"
@@ -562,7 +562,7 @@ const AuthComponent = () => {
                             value={values.confirmPassword}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            className="block w-full pl-10 pr-12 py-3.5 text-white placeholder-gray-400 bg-gray-700/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 group-hover:border-gray-500"
+                            className="block w-full pl-10 pr-12 py-3.5 text-gray-200 placeholder-gray-400 bg-gray-700/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 group-hover:border-gray-500"
                           />
                           <motion.button
                             type="button"
@@ -727,7 +727,7 @@ const AuthComponent = () => {
                     className="cursor-pointer font-medium text-blue-400 hover:text-blue-300 transition-colors"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                  >
+                    >
                     Sign up
                   </motion.button>
                 </p>
