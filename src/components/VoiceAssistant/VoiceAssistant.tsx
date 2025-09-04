@@ -343,7 +343,6 @@ export default function VoiceAssistant() {
     }
     try {
       setStatus("connecting");
-      console.log("Getting user media...");
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
@@ -365,14 +364,11 @@ export default function VoiceAssistant() {
         iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
       });
       pcRef.current = pc;
-      console.log("PeerConnection created");
-
       stream.getTracks().forEach((track) => {
         pc.addTrack(track, stream);
       });
 
       pc.onconnectionstatechange = () => {
-        console.log("Connection state:", pc.connectionState);
         if (
           pc.connectionState === "disconnected" ||
           pc.connectionState === "failed"
@@ -386,7 +382,6 @@ export default function VoiceAssistant() {
           const ws = wsRef.current;
 
           if (ws && ws.readyState === WebSocket.OPEN) {
-            console.log("Sending ICE candidate", event.candidate);
             ws.send(
               JSON.stringify({
                 type: "candidate",
@@ -398,7 +393,6 @@ export default function VoiceAssistant() {
       };
 
       pc.ontrack = (event) => {
-        console.log("Received remote tracks");
         if (remoteAudioRef.current && !remoteAudioRef.current.srcObject) {
           remoteAudioRef.current.srcObject = event.streams[0];
           remoteAudioRef.current
@@ -423,8 +417,6 @@ export default function VoiceAssistant() {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("WebSocket connected");
-
         (ws as any).pingInterval = setInterval(() => {
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: "ping" }));
@@ -461,11 +453,9 @@ export default function VoiceAssistant() {
           offerToReceiveVideo: false,
         })
           .then((offer) => {
-            console.log("Created offer:", offer);
             return pc.setLocalDescription(offer);
           })
           .then(() => {
-            console.log("Sending offer:", pc.localDescription);
             ws.send(
               JSON.stringify({
                 type: "offer",
@@ -480,10 +470,7 @@ export default function VoiceAssistant() {
       };
 
       ws.onmessage = async (event) => {
-        console.log("WebSocket message:", event.data);
-
         if (event.data instanceof Blob || event.data instanceof ArrayBuffer) {
-          console.log("Received audio data");
           const arrayBuffer = await (event.data instanceof Blob
             ? event.data.arrayBuffer()
             : event.data);
@@ -491,28 +478,21 @@ export default function VoiceAssistant() {
         }
         // Handle text messages
         else if (typeof event.data === "string") {
-          console.log("111111111111111111111111");
           try {
             const message = JSON.parse(event.data);
 
 
 
             setMessages((prev) => [...prev, event.data]);
-
-            console.log("message!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", message);
             if (message.essay_id) {
-              console.log("Received essay ID:", message.essay_id);
               setEssayId(message.essay_id);
             }
             if (message.type === "answer") {
-              console.log("Received answer");
               await pc.setRemoteDescription(new RTCSessionDescription(message));
               setStatus("connected");
             } else if (message.type === "candidate") {
-              console.log("Received ICE candidate");
               await pc.addIceCandidate(new RTCIceCandidate(message.candidate));
             } else if (message.type === "transcript") {
-              console.log("Received transcription:", message.text);
               setTranscription(message.text);
             }
           } catch (error) {
@@ -527,7 +507,6 @@ export default function VoiceAssistant() {
       };
 
       ws.onclose = () => {
-        console.log("WebSocket closed");
         setStatus("idle");
         cleanup();
       };
@@ -780,9 +759,7 @@ export default function VoiceAssistant() {
           </div>
 
 
-          <div className=" flex flex-col sm:grid sm:grid-cols-2 sm:gap-4 gap-3 mt-2">
-
-
+          <div className=" flex flex-col sm:grid sm:grid-cols-2 sm:gap-4 gap-3 mt-6">
             <div className="">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 Mood <span className="text-red-600">*</span>
@@ -816,36 +793,36 @@ export default function VoiceAssistant() {
 
 
 
- <div className="">
+            <div className="">
               <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Difficulty Level <span className="text-red-600">*</span>
-              {/* {errors.accent && <span className="text-red-600">*</span>} */}
-            </label>
-            <select
-              // value={accentOption}
-              // onChange={(e) => {
-              //   setAccentOption(e.target.value);
-              //   if (errors.accent) setErrors({ ...errors, accent: false });
-              // }}
-              className={`w-full text-black rounded-lg border ${errors.accent ? "border-red-500" : "border-gray-300"
-                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
-            >
-              <option value="" disabled>
-                Select difficulty level
-              </option>
-              {difficultyOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
+                Difficulty Level <span className="text-red-600">*</span>
+                {/* {errors.accent && <span className="text-red-600">*</span>} */}
+              </label>
+              <select
+                // value={accentOption}
+                // onChange={(e) => {
+                //   setAccentOption(e.target.value);
+                //   if (errors.accent) setErrors({ ...errors, accent: false });
+                // }}
+                className={`w-full text-black rounded-lg border ${errors.accent ? "border-red-500" : "border-gray-300"
+                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+              >
+                <option value="" disabled>
+                  Select difficulty level
                 </option>
-              ))}
-            </select>
-            {/* {errors.accent && (
+                {difficultyOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {/* {errors.accent && (
               <p className="mt-1 text-sm text-red-600">
                 Select difficulty level
               </p>
             )} */}
             </div>
-            
+
 
 
 
@@ -853,28 +830,28 @@ export default function VoiceAssistant() {
           </div>
 
 
-<div className="">
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Topic <span className="text-red-600">*</span>
-                {/* Topic {errors.topic && <span className="text-red-600">*</span>} */}
-              </label>
-              <input
-                type="text"
-                value={topicInput}
-                onChange={(e) => {
-                  setTopicInput(e.target.value);
-                  if (errors.topic) setErrors({ ...errors, topic: false });
-                }}
-                placeholder="Enter discussion topic"
-                className={`w-full text-black rounded-lg border ${errors.topic ? "border-red-500" : "border-gray-300"
-                  } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
-              />
-              {errors.topic && (
-                <p className="mt-1 text-sm text-red-600">
-                  Please enter a topic
-                </p>
-              )}
-            </div>
+          <div className="mt-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Topic <span className="text-red-600">*</span>
+              {/* Topic {errors.topic && <span className="text-red-600">*</span>} */}
+            </label>
+            <input
+              type="text"
+              value={topicInput}
+              onChange={(e) => {
+                setTopicInput(e.target.value);
+                if (errors.topic) setErrors({ ...errors, topic: false });
+              }}
+              placeholder="Enter discussion topic"
+              className={`w-full text-black rounded-lg border ${errors.topic ? "border-red-500" : "border-gray-300"
+                } bg-white py-2 px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
+            />
+            {errors.topic && (
+              <p className="mt-1 text-sm text-red-600">
+                Please enter a topic
+              </p>
+            )}
+          </div>
 
 
 
@@ -930,20 +907,20 @@ export default function VoiceAssistant() {
               </motion.div>
             )}
           </AnimatePresence>
-          <div className="relative mb-8">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center shadow-inner">
+          <div className="relative mb-8 cursor-pointer">
+            <div className="cursor-pointer w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center shadow-inner">
               <AnimatePresence>
                 {status === "connected" && (
                   <motion.div
-                    className="absolute inset-0 rounded-full bg-indigo-200 opacity-20"
+                    className="cursor-pointer absolute inset-0 rounded-full bg-indigo-200 opacity-20"
                     animate={{ scale: [1, 1.3, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   />
                 )}
               </AnimatePresence>
 
-              <div className="relative z-10">
-                <div className="w-32 h-32 rounded-full bg-white shadow-lg flex items-center justify-center">
+              <div className="cursor-pointer relative z-10">
+                <div className="cursor-pointer w-32 h-32 rounded-full bg-white shadow-lg flex items-center justify-center">
                   <motion.button
                     onClick={
                       status === "idle"
@@ -952,7 +929,7 @@ export default function VoiceAssistant() {
                           ? stopAssistant
                           : undefined
                     }
-                    className={`w-20 h-20 rounded-full flex items-center justify-center focus:outline-none ${status === "idle"
+                    className={`cursor-pointer w-20 h-20 rounded-full flex items-center justify-center focus:outline-none ${status === "idle"
                       ? "bg-indigo-100 hover:bg-indigo-200 text-indigo-600"
                       : status === "playing"
                         ? "bg-gray-400 text-white cursor-not-allowed"
@@ -1163,8 +1140,6 @@ export default function VoiceAssistant() {
                   );
                 }
                 else if (messageType === "feedback" && messageContent) {
-
-                  console.log("FEEDBACK:", messageContent.feedback)
                   return (
                     <div key={index} className="flex justify-center my-6">
                       <div className="bg-white shadow-md rounded-lg p-4 w-full max-w-2xl border border-gray-200 space-y-4">
@@ -1484,7 +1459,7 @@ export default function VoiceAssistant() {
         {showResultButton && !loadingResult && (
           <motion.button
             onClick={handleShowResult}
-            className="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium py-3 px-8 rounded-full shadow-lg"
+            className="cursor-pointer mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium py-3 px-8 rounded-full shadow-lg"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, y: 20 }}

@@ -19,6 +19,7 @@ import { toast } from "react-hot-toast";
 import { IoIosArrowDown } from "react-icons/io";
 
 const Dashboard = () => {
+  
   const dispatch = useAppDispatch();
   const router = useRouter();
   const { generatedParagraph, isLoading, essayId } = useAppSelector(
@@ -30,27 +31,37 @@ const Dashboard = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [activeTab, setActiveTab] = useState("form"); // "form" or "paragraph"
 
-  const getUsername = () => {
-    return localStorage.getItem("username") || "unknown_user";
-  };
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
 
-  const getAuthToken = () => {
-    try {
-      const rawToken =
-        localStorage.getItem("access_token") ||
-        sessionStorage.getItem("access_token") ||
-        "";
+  useEffect(() => {
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
-      return rawToken ? `Bearer ${rawToken}` : "";
-    } catch (error) {
-      console.error("Error retrieving auth token:", error);
-      return "";
-    }
-  };
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
 
-  const user = getUsername();
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
-  // Options for dropdowns
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
   const classOptions = [
     "1",
     "2",
@@ -127,111 +138,29 @@ const Dashboard = () => {
     router.push(`/practice?paragraph=${encodedParagraph}&essay_id=${essayId}`);
   };
 
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, []);
-
-  const token = getAuthToken();
-
-  const fetchAndPlayAudio = async () => {
-    if (!user || !token) {
-      toast.error("Authentication required");
+  const handleSpeakButtonClick = () => {
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
       return;
     }
 
-    setIsAudioLoading(true);
-
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || "api/";
-      const username = user;
-      const response = await fetch(
-        `${baseUrl}/get-tts-audio?username=${username}`,
-        {
-          headers: {
-            Authorization: `${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error("Audio fetch failed");
-
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
-
-      // Clean up previous audio if exists
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-
-      // Create new audio instance
-      audioRef.current = new Audio(audioUrl);
-      audioRef.current.onended = () => setIsSpeaking(false);
-      audioRef.current.onpause = () => setIsSpeaking(false);
-
-      await audioRef.current.play();
-      setIsSpeaking(true);
-    } catch (error) {
-      toast.error("Failed to play audio: " + error.message);
-    } finally {
-      setIsAudioLoading(false);
+    if (!generatedParagraph) {
+      toast.error("No paragraph available to speak");
+      return;
     }
+
+    const utterance = new SpeechSynthesisUtterance(generatedParagraph);
+    utterance.lang = "en-US";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    window.speechSynthesis.speak(utterance);
   };
-
-const handleSpeakButtonClick = () => {
-  if (isSpeaking) {
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
-    return;
-  }
-
-  if (!generatedParagraph) {
-    toast.error("No paragraph available to speak");
-    return;
-  }
-
-  const utterance = new SpeechSynthesisUtterance(generatedParagraph);
-  utterance.lang = "en-US";
-  utterance.rate = 1;
-  utterance.pitch = 1;
-
-  utterance.onstart = () => setIsSpeaking(true);
-  utterance.onend = () => setIsSpeaking(false);
-  utterance.onerror = () => setIsSpeaking(false);
-
-  window.speechSynthesis.speak(utterance);
-};
-
-// Add this useEffect to cancel speech on page refresh/unload
-useEffect(() => {
-  // Cancel speech when component unmounts (page refresh/close)
-  return () => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-  };
-}, []);
-
-// Optional: Also cancel speech when page is about to refresh
-useEffect(() => {
-  const handleBeforeUnload = () => {
-    if (window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-    }
-  };
-
-  window.addEventListener('beforeunload', handleBeforeUnload);
-  
-  return () => {
-    window.removeEventListener('beforeunload', handleBeforeUnload);
-  };
-}, []);
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4 py-4">
@@ -264,28 +193,26 @@ useEffect(() => {
         <div className="flex border-b border-gray-200 mob-block">
           <button
             onClick={() => setActiveTab("form")}
-            className={`flex-1 py-4 font-medium text-center transition-all duration-300 ${
-              activeTab === "form"
+            className={`flex-1 py-4 font-medium text-center transition-all duration-300 ${activeTab === "form"
                 ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-            }`}
+              }`}
           >
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2 cursor-pointer">
               <FaMagic className="text-sm" />
               <span>Create Practice</span>
             </div>
           </button>
           <button
             onClick={() => generatedParagraph && setActiveTab("paragraph")}
-            className={`flex-1 py-4 font-medium text-center transition-all duration-300 ${
-              activeTab === "paragraph"
+            className={`flex-1 py-4 font-medium text-center transition-all duration-300 ${activeTab === "paragraph"
                 ? "text-indigo-600 border-b-2 border-indigo-600 bg-indigo-50/50"
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50" +
-                  (generatedParagraph ? "" : " opacity-50 cursor-not-allowed")
-            }`}
+                (generatedParagraph ? "" : " opacity-50 cursor-not-allowed")
+              }`}
             disabled={!generatedParagraph}
           >
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2 cursor-pointer">
               <FaPlay className="text-sm" />
               <span>Your Practice</span>
             </div>
@@ -451,18 +378,17 @@ useEffect(() => {
                         <motion.button
                           type="submit"
                           disabled={isLoading || !(isValid && dirty)}
-                          className={`px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300/50 ${
-                            isLoading || !(isValid && dirty)
+                          className={`px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-300/50 ${isLoading || !(isValid && dirty)
                               ? "bg-gray-400 cursor-not-allowed"
                               : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                          }`}
+                            }`}
                           whileHover={
                             !(isLoading || !(isValid && dirty))
                               ? {
-                                  scale: 1.03,
-                                  boxShadow:
-                                    "0 10px 25px -5px rgba(99, 102, 241, 0.4)",
-                                }
+                                scale: 1.03,
+                                boxShadow:
+                                  "0 10px 25px -5px rgba(99, 102, 241, 0.4)",
+                              }
                               : {}
                           }
                           whileTap={
@@ -487,8 +413,8 @@ useEffect(() => {
                               Generating...
                             </span>
                           ) : (
-                            <span className="flex items-center">
-                              <FaMagic className="mr-2" />
+                            <span className="flex items-center cursor-pointer">
+                              <FaMagic className="mr-2 " />
                               Generate Paragraph
                             </span>
                           )}
@@ -519,15 +445,14 @@ useEffect(() => {
                     </h3>
 
                     <motion.button
-                      onClick={handleSpeakButtonClick} 
+                      onClick={handleSpeakButtonClick}
                       disabled={isAudioLoading}
-                      className={`p-3 rounded-xl relative overflow-hidden ${
-                        isAudioLoading
+                      className={`cursor-pointer p-3 rounded-xl relative overflow-hidden ${isAudioLoading
                           ? "text-indigo-300 cursor-not-allowed"
                           : isSpeaking
-                          ? "bg-indigo-100 text-indigo-700"
-                          : "bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200"
-                      } transition-all duration-300 shadow-sm`}
+                            ? "bg-indigo-100 text-indigo-700"
+                            : "bg-white text-indigo-600 hover:bg-indigo-50 border border-indigo-200"
+                        } transition-all duration-300 shadow-sm`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       aria-label={
@@ -584,14 +509,6 @@ useEffect(() => {
                   </motion.div>
 
                   <div className="mt-6 flex justify-between">
-                    <motion.button
-                      onClick={() => setActiveTab("form")}
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-5 py-2.5 text-indigo-600 bg-white border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors font-medium shadow-sm"
-                    >
-                      Create New
-                    </motion.button>
 
                     <motion.button
                       onClick={handlePractice}
@@ -600,7 +517,7 @@ useEffect(() => {
                         boxShadow: "0 5px 15px -3px rgba(99, 102, 241, 0.3)",
                       }}
                       whileTap={{ scale: 0.98 }}
-                      className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all font-bold shadow-md"
+                      className="cursor-pointer px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all font-bold shadow-md"
                     >
                       Start Practice Now
                     </motion.button>

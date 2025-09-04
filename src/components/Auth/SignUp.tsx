@@ -57,10 +57,8 @@ const SignUp = () => {
       const result = await dispatch(registerUser(params));
       if (registerUser.fulfilled.match(result)) {
         toast.success("Account created successfully!");
-        router.push("/signin");
+        router.push("/auth/signin");
       } else if (registerUser.rejected.match(result)) {
-        // Extract error message from payload
-        console.log("123456782345678923456789", result);
         const errorMessage =
           result.payload?.message || "Error creating account";
         setApiError(errorMessage);
@@ -181,11 +179,10 @@ const SignUp = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl ${
-                  loading
-                    ? "opacity-80 cursor-not-allowed"
-                    : "hover:from-indigo-700 hover:to-purple-800"
-                }`}
+                className={`w-full bg-gradient-to-r from-indigo-600 to-purple-700 text-white font-semibold py-3.5 px-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl ${loading
+                  ? "opacity-80 cursor-not-allowed"
+                  : "hover:from-indigo-700 hover:to-purple-800"
+                  }`}
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
@@ -242,7 +239,7 @@ const SignUp = () => {
               <p>
                 Already have an account?{" "}
                 <Link
-                  href="/signin"
+                  href="/auth/signin"
                   className="font-medium text-indigo-600 hover:text-indigo-800"
                 >
                   Sign In

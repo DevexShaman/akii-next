@@ -1,16 +1,16 @@
 // app/forgotten-password/[token]/page.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { FiLock, FiCheckCircle } from "react-icons/fi";
-import { Formik, Form } from "formik";
 import * as Yup from "yup";
-import { toast } from "react-hot-toast";
-import AuthInput from "@/components/Auth/AuthInput";
 import Link from "next/link";
+import { Formik, Form } from "formik";
 import { motion } from "framer-motion";
-import { useParams, useSearchParams } from "next/navigation";
+import { toast } from "react-hot-toast";
+import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import AuthInput from "@/components/Auth/AuthInput";
+import { FiLock, FiCheckCircle } from "react-icons/fi";
 import AuthLayout from "@/components/Auth/AuthLayout";
 
 const ResetPassword = () => {
@@ -18,25 +18,15 @@ const ResetPassword = () => {
   const [validToken, setValidToken] = useState(false);
   const [email, setEmail] = useState("");
   const [success, setSuccess] = useState(false);
-  const searchParams = useSearchParams();
 
   const router = useRouter();
   const params = useParams();
   const token = params.token as string;
   
-
-  //   useEffect(() => {
-  //     if (token) {
-  //       router.replace(`/forgotten-password/${token}`);
-  //     }
-  //   }, [token]);
-
   useEffect(() => {
     const validateToken = async () => {
       if (!token) return;
-
       try {
-
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/validate-reset-token/${token}`
         );
@@ -49,8 +39,6 @@ const ResetPassword = () => {
           const errorData = await response.json();
           toast.error(errorData.detail || "Invalid or expired token");
           setValidToken(false);
-
-          // Redirect after 3 seconds to let user see the message
           setTimeout(() => router.push("/forgetpassword"), 3000);
         }
       } catch (error) {
@@ -172,7 +160,7 @@ const ResetPassword = () => {
             Your password has been updated successfully.
           </p>
           <Link
-            href="/signin"
+            href="/auth/signin"
             className="inline-flex items-center justify-center w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-indigo-700 transition-colors"
           >
             Sign In Now

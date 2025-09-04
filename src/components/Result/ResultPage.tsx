@@ -7,40 +7,12 @@ import {
   FaArrowLeft,
   FaSpinner,
   FaChartLine,
-  FaVolumeUp,
-  FaLightbulb,
   FaRegSmile,
-  FaBook, // Added for vocabulary section
-  FaCommentAlt, // Added for feedback section
+  FaCommentAlt, 
   FaQuoteLeft,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { json } from "stream/consumers";
 import { FeedbackData } from "./resultpageTypes";
-
-type ResultAPI = {
-  understanding: string;
-  topic_grip: string;
-  suggestions: string[];
-  pronunciation: number | string;
-  grammar: number | string;
-  fluency: number | string;
-  emotion: string;
-  feedback: string;
-  examples: string[];
-  "vocabulary error": string;
-};
-
-
-type APIResponse = {
-  status: string;
-  data: {
-    status_code: number;
-    body: string; // This contains the JSON string with actual data
-  };
-};
-
-
 
 
 const ResultPage = () => {
@@ -71,9 +43,6 @@ const ResultPage = () => {
       return null;
     }
   }
-
-
-
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -155,14 +124,7 @@ const ResultPage = () => {
 
       // Check the nested status_code in the response data
       if (data.data && data.data.status_code === 200) {
-        console.log('====================================');
         const parsedRes = JSON.parse(data.data.body)
-
-        console.log((parsedRes.overall_scoring));
-
-        // const overparseded = json.parsedRes
-
-        // Success - clear timeout and set data
         clearCurrentTimeout();
         setResultData(parsedRes.overall_scoring);
         setLoading(false);
@@ -418,15 +380,6 @@ const ResultPage = () => {
               </div>
             </div>
 
-
-
-            {/* <div className="bg-white p-6 rounded-2xl shadow-lg">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <FaBook className="text-indigo-500 mr-2" />
-                Vocabulary Feedback
-              </h3>
-              <p className="text-gray-700">{resultData["vocabulary error"]}</p>
-            </div> */}
           </div>
         </motion.div>
 
@@ -437,8 +390,6 @@ const ResultPage = () => {
           transition={{ delay: 0.2 }}
           className="grid grid-cols-1  gap-6 mb-8"
         >
-
-
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaQuoteLeft className="text-green-500 mr-2" />
@@ -454,16 +405,6 @@ const ResultPage = () => {
                 <p key={index}><strong>{theme}</strong></p>
               ))}
             </div>
-
-
-
-
-
-
-
-
-
-
 
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaQuoteLeft className="text-green-500 mr-2" />
@@ -491,23 +432,13 @@ const ResultPage = () => {
                 <p key={index}>{detail}</p>
               ))}
             </div>
-
-
             <div>
               <strong>important details missed: </strong>
               {resultData.content_analysis.detail_retention.important_details_missed.map((detail: string, index: number) => (
                 <p key={index}>{detail}</p>
               ))}
             </div>
-
-
-
-
-
           </div>
-
-
-
 
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -525,22 +456,9 @@ const ResultPage = () => {
                 <p key={index}>{theme}</p>
               ))}
             </div>
-
-
-
-
-
-
-
-
-            {/* <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaQuoteLeft className="text-green-500 mr-2" />
-              Understandigfc gh cfyh ctgfng Depth
-            </h3> */}
             <h4><strong>Pronounciation Assessment</strong></h4>
             <p><strong>Score : </strong>{resultData.linguistic_performance.pronunciation_assessment.score}</p>
             <p><strong>impact_onlarity : </strong>{resultData.linguistic_performance.pronunciation_assessment.impact_on_clarity}</p>
-            {/* <p><strong>Semantic accuracy : </strong>{resultData.linguistic_performance.pronunciation_assessment.strengths}</p> */}
 
             <div>
               <strong>Semantic accuracy: </strong>
@@ -548,47 +466,19 @@ const ResultPage = () => {
                 <p key={index}>{item}</p>
               ))}
             </div>
-
-
-            {/* <p><strong>Conceptual gaps : </strong>{resultData.linguistic_performance.pronunciation_assessment.improvement_areas}</p> */}
-
-
-            {/* <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaQuoteLeft className="text-green-500 mr-2" />
-              Detail Retention
-            </h3> */}
             <h4><strong>Coverage metrics</strong></h4>
             <p><strong>Score : </strong>{resultData.linguistic_performance.grammar_assessment.score}</p>
             <p><strong>Complexity level : </strong>{resultData.linguistic_performance.grammar_assessment.complexity_level}</p>
             <p><strong>Error patterns : </strong>{resultData.linguistic_performance.grammar_assessment.error_patterns}</p>
             <p><strong>Accuracy analysis : </strong>{resultData.linguistic_performance.grammar_assessment.accuracy_analysis}</p>
 
-
-
-
-
-
-            {/* <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaQuoteLeft className="text-green-500 mr-2" />
-              Detail Retention
-            </h3> */}
+           
             <h4><strong>Coverage metrics</strong></h4>
             <p><strong>Score : </strong>{resultData.linguistic_performance.vocabulary_usage.appropriateness}</p>
             <p><strong>Explanation : </strong>{resultData.linguistic_performance.vocabulary_usage.precision}</p>
             <p><strong>Semantic accuracy : </strong>{resultData.linguistic_performance.vocabulary_usage.synonym_usage}</p>
 
-
-
-
           </div>
-
-
-
-
-
-
-
-
 
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -599,19 +489,13 @@ const ResultPage = () => {
             <p><strong>Score : </strong>{resultData.technical_delivery.clarity_coherence}</p>
             <p><strong>Detailed Analysis : </strong>{resultData.technical_delivery.comprehensibility_score}</p>
             <p><strong>Pace Appropriateness : </strong>{resultData.technical_delivery.emotion_appropriateness}</p>
-            {/* <p>{resultData.content_analysis.coverage_metrics.main_themes_captured}</p> */}
             <div>
               <strong>Main Themes Captured:</strong>
               {resultData.content_analysis.coverage_metrics.main_themes_captured.map((theme: string, index: number) => (
                 <p key={index}>{theme}</p>
               ))}
             </div>
-
-
-
           </div>
-
-
 
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -622,30 +506,12 @@ const ResultPage = () => {
             <p><strong>Original word count : </strong>{resultData.content_analysis.coverage_metrics.original_word_count}</p>
             <p><strong>Response word count : </strong>{resultData.content_analysis.coverage_metrics.response_word_count}</p>
             <p><strong>Coverage percentage : </strong>{resultData.content_analysis.coverage_metrics.coverage_percentage}</p>
-            {/* <p>{resultData.content_analysis.coverage_metrics.main_themes_captured}</p> */}
             <div className="flex gap-2"> <strong>Main themes captured : </strong>
               {resultData.content_analysis.coverage_metrics.main_themes_captured.map((theme: string, index: number) => (
                 <p key={index}><strong>{theme}</strong></p>
               ))}
             </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
           </div>
-
-
-
-      
 
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -667,13 +533,7 @@ const ResultPage = () => {
                 <p key={index}>{rec}</p>
               ))}
             </div>
-
-
-
-
-
           </div>
-
 
                <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -684,21 +544,9 @@ const ResultPage = () => {
             <p><strong>Overall comprehension : </strong>{resultData.adaptive_scoring.content_adjusted_scores.overall_comprehension}</p>
             <p><strong>Retention score : </strong>{resultData.adaptive_scoring.content_adjusted_scores.retention_score}</p>
             <p><strong>Understanding score : </strong>{resultData.adaptive_scoring.content_adjusted_scores.understanding_score}</p>
-
             <p><strong>Scoring rationale : </strong>{resultData.adaptive_scoring.scoring_rationale}</p>
-           
-
-            
-
-
-
-
 
           </div>
-
-
-
-
 
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -708,13 +556,9 @@ const ResultPage = () => {
 
             <p><strong>Encouragement message : </strong>{resultData.encouragement_message}</p>
 
-
-
           </div>
 
         </motion.div>
-
-        {/* Detailed Feedback */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -729,12 +573,6 @@ const ResultPage = () => {
           </div>
 
           <div className="space-y-4">
-            {/* <div className="p-4 rounded-xl bg-indigo-50 border-l-4 border-l-indigo-500">
-              <h4 className="font-semibold text-gray-800 mb-2">
-                Overall Feedback
-              </h4>
-              <p className="text-gray-700">{resultData.feedback}</p>
-            </div> */}
 
             <div className="p-4 rounded-xl bg-blue-50 border-l-4 border-l-blue-500">
               <h4 className="font-semibold text-gray-800 mb-2">
@@ -742,11 +580,6 @@ const ResultPage = () => {
               </h4>
               <p className="text-gray-700">{resultData.content_analysis.understanding_depth.explanation}</p>
             </div>
-
-            {/* <div className="p-4 rounded-xl bg-purple-50 border-l-4 border-l-purple-500">
-              <h4 className="font-semibold text-gray-800 mb-2">Topic Grip</h4>
-              <p className="text-gray-700">{resultData.topic_grip}</p>
-            </div> */}
           </div>
         </motion.div>
 

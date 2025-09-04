@@ -156,28 +156,18 @@ const pollOverallScoring = async (essay_id: string) => {
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      console.log(`Polling attempt ${attempt}...`);
-
       const response = await axios.get(
         `https://llm.edusmartai.com/api/overall-scoring-by-id-speech-module?essay_id=${essay_id}`
       );
 
       const { status_code, body } = response.data.data;
-      console.log("API Response:", response.data);
-
-      // ✅ Stop polling when status_code = 200
       if (status_code === 200) {
-        console.log("✅ Received status_code: 200 - Parsing data...");
-
-        // Parse body JSON
         let parsedBody;
         try {
           parsedBody = JSON.parse(body);
         } catch (error) {
           throw new Error("Failed to parse body JSON");
         }
-
-        console.log("Parsed Body:", parsedBody);
 
         // ✅ Parse raw_feedback if it contains embedded JSON
         const rawText = parsedBody?.overall_scoring?.raw_feedback;
@@ -196,11 +186,6 @@ const pollOverallScoring = async (essay_id: string) => {
         // ✅ Return final parsed data and exit
         return parsedBody;
       }
-
-      // If not 200, wait before next attempt
-      console.log(
-        `Status code is ${status_code}. Retrying in ${pollInterval / 1000}s...`
-      );
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     } catch (error) {
       console.error(`Error on attempt ${attempt}:`, error);
@@ -234,8 +219,6 @@ export default function ResultsPage() {
   useEffect(() => {
     const fetchData = async () => {
       if (!essayId) return;
-
-      console.log("Calling effect: in essay id");
       setLoading(true);
       setError(null);
 
@@ -289,9 +272,6 @@ export default function ResultsPage() {
   }
 
   const rawFeedback = data ? data.overall_scoring : null
-
-  console.log("first", rawFeedback)
-
 
   if (!rawFeedback) {
     return <div className="text-gray-500 text-center py-6">No feedback available.</div>;

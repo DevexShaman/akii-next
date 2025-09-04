@@ -8,32 +8,21 @@ import { FaRobot, FaUser, FaBook, FaGraduationCap } from "react-icons/fa";
 import Markdown from "react-markdown";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaChalkboardTeacher } from "react-icons/fa";
-import { FaUser as FaUserIcon } from "react-icons/fa";
 import { useSearchParams } from "next/navigation";
 
 const Chat = () => {
   const dispatch = useAppDispatch();
   const { status, error } = useAppSelector((state) => state.chat);
-  
-const searchParams = useSearchParams();
-  
-const selectedClass = searchParams.get("class");
+
+  const searchParams = useSearchParams();
+  const selectedClass = searchParams.get("class");
   const selectedSubject = searchParams.get("subject");
   const selectedCurriculum = searchParams.get("curriculum");
-
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState("");
   const [curriculum, setCurriculum] = useState("");
   const [subjectInput, setSubjectInput] = useState("");
   const [classInput, setClassInput] = useState("");
-
-    
-  
-  
-  console.log('====================================');
-
-  console.log('====================================');
 
   const [messages, setMessages] = useState<
     Array<{
@@ -60,21 +49,11 @@ const selectedClass = searchParams.get("class");
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-  const params  = useSearchParams()
+
+  const params = useSearchParams()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('---f-dsfg-dg-d-gg--')
-
-    // if (
-    //   !inputValue.trim() ||
-    //   !curriculum ||
-    //   !subjectInput ||
-    //   !classInput ||
-    //   isLoading ||
-    //   !username
-    // )
-      // return;
-    console.log("11111111111", classInput);
 
     const userMessage = {
       id: Date.now().toString(),
@@ -88,13 +67,11 @@ const selectedClass = searchParams.get("class");
     setInputValue("");
 
     try {
-      // Send to API\
-      const selectedClass  = params.get("class")
-      const selectedCurriculum  = params.get("curriculum")
-      const selectedSubject  = params.get("subject")
-      const filename  = params.get("files")
-      console.log("filename",filename)
-      
+      const selectedClass = params.get("class")
+      const selectedCurriculum = params.get("curriculum")
+      const selectedSubject = params.get("subject")
+      const filename = params.get("files")
+
       const result = await dispatch(
         sendChatMessage({
           question: currentInput,
@@ -102,13 +79,9 @@ const selectedClass = searchParams.get("class");
           subject: selectedSubject,
           student_class: selectedClass,
           username: username,
-          filename:filename,
+          filename: filename,
         })
       ).unwrap();
-
-      console.log("result0000000000000", result);
-
-      // Add AI response
       setMessages((prev) => [
         ...prev,
         {
@@ -154,30 +127,15 @@ const selectedClass = searchParams.get("class");
 
     const baseUrl =
       process.env.NEXT_PUBLIC_API_URL || "https://llm.edusmartai.com";
-
-    // Ensure no trailing slash on baseUrl
     const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-
-    // ensure the diagram path *does* start with a slash
     const finalPath = cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`;
-
-    // encode the path to avoid issues with spaces etc.
     const encodedPath = encodeURI(finalPath);
-
-    // NOTE: add the missing slash between endpoint and path
     return `${cleanBaseUrl}/view-image${encodedPath}`;
   };
 
-  const cleanDiagramPath = (path: string): string => {
-    // Extract the actual file path from the response
-    const pathRegex = /(\/diagrams\/[^\s]+\.(png|jpg|jpeg|gif))/i;
-    const match = path.match(pathRegex);
-    return match ? match[0] : path;
-  };
 
   return (
     <div className="flex flex-col h-full max-w-4xl mx-auto bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
-      {/* Header with subtle gradient */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-5 text-white shadow-md">
         <div className="flex items-center justify-between mob-block ">
           <div className="flex items-center mob-block  ">
@@ -196,7 +154,7 @@ const selectedClass = searchParams.get("class");
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsCurriculumVisible(!isCurriculumVisible)}
-            className="bg-white/10 hover:bg-white/20 rounded-full px-4 py-2 text-sm flex items-center transition-all"
+            className="cursor-pointer bg-white/10 hover:bg-white/20 rounded-full px-4 py-2 text-sm flex items-center transition-all"
           >
             <FaBook className="mr-2" />
             {isCurriculumVisible ? "Hide Details" : "Show Details"}
@@ -204,7 +162,6 @@ const selectedClass = searchParams.get("class");
         </div>
       </div>
 
-      {/* Curriculum and Subject Inputs */}
       <AnimatePresence>
         {isCurriculumVisible && (
           <motion.div
@@ -267,24 +224,6 @@ const selectedClass = searchParams.get("class");
                   </div>
                 </div>
               </div>
-              {/* <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
-                  <FaUserIcon className="mr-2 text-green-600" />
-                  Your Name
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g., John Doe"
-                    className="w-full text-black px-4 py-3 pl-10 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
-                    required
-                  />
-                  <FaUserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                </div>
-              </div> */}
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
                   <FaBook className="mr-2 text-purple-600" />
@@ -307,7 +246,6 @@ const selectedClass = searchParams.get("class");
         )}
       </AnimatePresence>
 
-      {/* Chat Messages Area */}
       <div className="flex-1 overflow-y-auto p-0 md:p-5 bg-gradient-to-b from-white to-gray-50">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-5 md:p-8">
@@ -374,16 +312,14 @@ const selectedClass = searchParams.get("class");
                   initial="hidden"
                   animate="visible"
                   exit={{ opacity: 0, x: message.sender === "user" ? 50 : -50 }}
-                  className={`flex ${
-                    message.sender === "user" ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"
+                    }`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-3xl px-5 py-4 shadow-sm ${
-                      message.sender === "user"
-                        ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-br-none"
-                        : "bg-white border border-gray-200 rounded-bl-none"
-                    }`}
+                    className={`max-w-[85%] rounded-3xl px-5 py-4 shadow-sm ${message.sender === "user"
+                      ? "bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-br-none"
+                      : "bg-white border border-gray-200 rounded-bl-none"
+                      }`}
                   >
                     <div className="flex items-center mb-2">
                       {message.sender === "ai" ? (
@@ -399,11 +335,10 @@ const selectedClass = searchParams.get("class");
                         {message.sender === "ai" ? "Study Assistant" : "You"}
                       </span>
                       <span
-                        className={`ml-auto text-xs ${
-                          message.sender === "user"
-                            ? "text-indigo-200"
-                            : "text-gray-500"
-                        }`}
+                        className={`ml-auto text-xs ${message.sender === "user"
+                          ? "text-indigo-200"
+                          : "text-gray-500"
+                          }`}
                       >
                         {message.timestamp.toLocaleTimeString([], {
                           hour: "2-digit",
@@ -412,11 +347,10 @@ const selectedClass = searchParams.get("class");
                       </span>
                     </div>
                     <div
-                      className={`prose prose-sm max-w-none ${
-                        message.sender === "user"
-                          ? "text-indigo-50"
-                          : "text-gray-700"
-                      }`}
+                      className={`prose prose-sm max-w-none ${message.sender === "user"
+                        ? "text-indigo-50"
+                        : "text-gray-700"
+                        }`}
                     >
                       <Markdown>{message.text}</Markdown>
                       {message.diagramUrls &&
@@ -518,7 +452,6 @@ const selectedClass = searchParams.get("class");
         )}
       </div>
 
-      {/* Input Area */}
       <form
         onSubmit={handleSubmit}
         className="border-t border-gray-200 p-5 bg-white"
@@ -549,9 +482,6 @@ const selectedClass = searchParams.get("class");
               className="w-full text-sm sm:text-base text-black px-3 sm:px-5 py-3 sm:py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none pr-10 sm:pr-12 shadow-sm"
               rows={1}
               style={{ minHeight: "56px", maxHeight: "150px" }}
-              // disabled={
-              //   isLoading || !curriculum || !subjectInput || !classInput
-              // }
               onInput={(e) => {
                 const target = e.target as HTMLTextAreaElement;
                 target.style.height = "auto";
@@ -564,40 +494,38 @@ const selectedClass = searchParams.get("class");
             </div>
           </div>
 
-          <motion.button
-            type="submit"
-            // disabled={isLoading || !inputValue || !curriculum || !subjectInput}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
-              isLoading
-                ? "bg-purple-700"
-                // :" bg-gradient-to-r"
-                :"bg-purple-700"
-            }`}
-          >
-            {isLoading ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              >
-                <FiRefreshCw className="text-white text-xl" />
-              </motion.div>
-            ) : (
-              <FiArrowUp className="text-white text-xl" />
-            )}
-          </motion.button>
+       <div className="relative group inline-block">
+  <motion.button
+    type="submit"
+    disabled={inputValue.trim() === ""}
+    whileHover={inputValue.trim() !== "" ? { scale: 1.05 } : {}}
+    whileTap={inputValue.trim() !== "" ? { scale: 0.95 } : {}}
+    className={`z-1 flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-lg
+      ${isLoading ? "bg-purple-700" : "bg-purple-700"}
+      ${inputValue.trim() === "" ? "cursor-not-allowed bg-gray-400" : "cursor-pointer"}
+    `}
+  >
+    {isLoading ? (
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      >
+        <FiRefreshCw className="text-white text-xl" />
+      </motion.div>
+    ) : (
+      <FiArrowUp className="text-white text-xl" />
+    )}
+  </motion.button>
+
+  {/* Tooltip only on hover */}
+  {inputValue.trim() === "" && (
+    <div className="absolute bottom-16 left-[-30] -translate-x-1/2 whitespace-nowrap px-3 py-1 text-sm text-white bg-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+      Please add Question first
+    </div>
+  )}
+</div>
 
 
-
-
-
-          
-
-
-
-
-          
         </div>
 
         <div className="mt-3 text-xs text-gray-500 flex justify-between mob-block">

@@ -19,9 +19,6 @@ const PasswordStrength: React.FC<PasswordStrengthProps> = ({ password }) => {
   };
 
   const strength = calculateStrength(password);
-  const strengthText =
-    ["Very Weak", "Weak", "Medium", "Strong", "Very Strong"][strength] ||
-    "Very Weak";
 
   const colors = [
     "bg-red-500",

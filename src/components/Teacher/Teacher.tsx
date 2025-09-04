@@ -2,11 +2,11 @@
 
 "use client";
 
-import React, { useCallback, useState , useEffect } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { FileRejection, useDropzone } from "react-dropzone";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch, useAppSelector } from "@/store/index";
-import { useRouter ,useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   setClass,
   setSubject,
@@ -34,7 +34,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const Teacher = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const {
     class: className,
@@ -43,27 +42,15 @@ const Teacher = () => {
     isLoading,
     error,
     progress,
-    ocrResults,
     uploadResults,
   } = useSelector((state: RootState) => state.teacher);
 
-  const teacher  = useAppSelector(state=>state.teacher)
+  const teacher = useAppSelector(state => state.teacher)
 
   const selectedClass = teacher.class
   const selectedSubject = teacher.subject;
   const selectedCurriculum = teacher.curriculum;
-
-   useEffect(() => {
-    if (selectedClass) dispatch(setClass(selectedClass));
-    if (selectedSubject) dispatch(setSubject(selectedSubject));
-    if (selectedCurriculum) dispatch(setCurriculum(selectedCurriculum));
-  }, [selectedClass, selectedSubject, selectedCurriculum, dispatch]);
-
-
-
   const [localFiles, setLocalFiles] = useState<File[]>([]);
-
-  
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState({
     class: false,
@@ -71,16 +58,20 @@ const Teacher = () => {
     curriculum: false,
     files: false,
   });
+  useEffect(() => {
+    if (selectedClass) dispatch(setClass(selectedClass));
+    if (selectedSubject) dispatch(setSubject(selectedSubject));
+    if (selectedCurriculum) dispatch(setCurriculum(selectedCurriculum));
+  }, [selectedClass, selectedSubject, selectedCurriculum, dispatch]);
+
 
   const [fileErrors, setFileErrors] = useState<
     { fileName: string; error: string }[]
   >([]);
+
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-      // Replace existing files with the new file
       setLocalFiles(acceptedFiles.slice(0, 1)); // Only take the first file
-
-      // Handle rejected files
       const newFileErrors = fileRejections.map((rejection) => ({
         fileName: rejection.file.name,
         error: rejection.errors[0].message,
@@ -147,24 +138,19 @@ const Teacher = () => {
     dispatch(resetUpload());
     dispatch(clearUploadResults());
   };
-//  const selectedClass = useSelector((state: RootState) => state.teacher.class);
-// const selectedSubject = useSelector((state: RootState) => state.teacher.subject);
-// const selectedCurriculum = useSelector((state: RootState) => state.teacher.curriculum);
 
-const handleChat = () => {
+  const handleChat = () => {
+    const fileNames = localFiles.map(file => file.name);
+    const params = new URLSearchParams({
+      class: selectedClass,
+      subject: selectedSubject,
+      curriculum: selectedCurriculum,
+      files: (fileNames[0]),
 
-  const fileNames = localFiles.map(file => file.name);
-  
-  const params = new URLSearchParams({
-    class: selectedClass,
-    subject: selectedSubject,
-    curriculum: selectedCurriculum,
-    files: (fileNames[0]),
-    
-  });
+    });
 
-  router.push(`/chat?${params.toString()}`);
-};
+    router.push(`/chat?${params.toString()}`);
+  };
   const classOptions = [
     "Grade 1",
     "Grade 2",
@@ -191,6 +177,11 @@ const handleChat = () => {
       return <Bookmark className="text-green-500" />;
     return <FileText className="text-blue-500" />;
   };
+  const isChatDisabled =
+    !selectedClass ||
+    !selectedSubject ||
+    !selectedCurriculum ||
+    localFiles.length === 0;
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
@@ -209,7 +200,6 @@ const handleChat = () => {
         </p>
       </motion.div>
 
-      {/* Context Selection */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -262,15 +252,12 @@ const handleChat = () => {
                 <select
                   value={field.value || ""}
                   onChange={(e) => {
-                    // updateSearchParams(field.label ,e.target.value )
-
                     dispatch(field.action(e.target.value));
                     if (errors[field.errorKey as keyof typeof errors])
                       setErrors({ ...errors, [field.errorKey]: false });
                   }}
-                  className={`w-full text-black pl-8 pr-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border ${
-                    field.error ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none`}
+                  className={`w-full text-black pl-8 pr-4 py-2 sm:py-3 text-sm sm:text-base bg-gray-50 border ${field.error ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none`}
                 >
                   <option value="">Select {field.label}</option>
                   {field.options.map((option) => (
@@ -296,7 +283,6 @@ const handleChat = () => {
         </div>
       </motion.div>
 
-      {/* File Dropzone */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -306,13 +292,11 @@ const handleChat = () => {
         <div
           {...getRootProps()}
           className={`rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 text-center cursor-pointer transition-all duration-300
-           ${
-             isDragActive
-               ? "border-2 border-dashed border-blue-500 bg-blue-50 shadow-lg"
-               : `border-2 border-dashed ${
-                   errors.files ? "border-red-500" : "border-gray-300"
-                 } hover:border-blue-400 bg-white hover:bg-blue-50 shadow-sm`
-           }`}
+           ${isDragActive
+              ? "border-2 border-dashed border-blue-500 bg-blue-50 shadow-lg"
+              : `border-2 border-dashed ${errors.files ? "border-red-500" : "border-gray-300"
+              } hover:border-blue-400 bg-white hover:bg-blue-50 shadow-sm`
+            }`}
         >
           <input {...getInputProps()} />
           <motion.div
@@ -360,7 +344,6 @@ const handleChat = () => {
         </motion.div>
       )}
 
-      {/* Uploaded Files Preview */}
       <AnimatePresence>
         {localFiles.length > 0 && (
           <motion.div
@@ -388,9 +371,8 @@ const handleChat = () => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    className={`flex items-center justify-between p-4 bg-white rounded-lg border ${
-                      fileError ? "border-red-200 bg-red-50" : "border-gray-100"
-                    } shadow-sm hover:shadow transition-shadow`}
+                    className={`flex items-center justify-between p-4 bg-white rounded-lg border ${fileError ? "border-red-200 bg-red-50" : "border-gray-100"
+                      } shadow-sm hover:shadow transition-shadow`}
                   >
                     <div className="flex items-center flex-1 min-w-0">
                       <div className="p-2 bg-blue-50 rounded-lg  mr-2 sm:mr-3">
@@ -427,7 +409,6 @@ const handleChat = () => {
         )}
       </AnimatePresence>
 
-      {/* Progress and Results */}
       {isLoading && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -498,13 +479,12 @@ const handleChat = () => {
                 {Object.entries(uploadResults).map(([fileName, result]) => (
                   <div
                     key={fileName}
-                    className={`p-4 rounded-lg border ${
-                      result.status === "success"
-                        ? "bg-green-50 border-green-200"
-                        : result.status === "duplicate"
+                    className={`p-4 rounded-lg border ${result.status === "success"
+                      ? "bg-green-50 border-green-200"
+                      : result.status === "duplicate"
                         ? "bg-yellow-50 border-yellow-200"
                         : "bg-red-50 border-red-200"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-start">
                       {result.status === "success" ? (
@@ -520,20 +500,18 @@ const handleChat = () => {
                             {fileName}
                           </h3>
                           <span
-                            className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
-                              result.status === "success"
-                                ? "bg-green-100 text-green-800"
-                                : result.status === "duplicate"
+                            className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${result.status === "success"
+                              ? "bg-green-100 text-green-800"
+                              : result.status === "duplicate"
                                 ? "bg-yellow-100 text-yellow-800"
                                 : "bg-red-100 text-red-800"
-                            }`}
+                              }`}
                           >
                             {result.status}
                           </span>
                         </div>
                         <p className="mt-1 text-gray-700">{result.message}</p>
 
-                        {/* Show additional details based on status */}
                         {result.status === "duplicate" &&
                           result.existing_id && (
                             <div className="mt-2 text-sm">
@@ -546,17 +524,6 @@ const handleChat = () => {
                             </div>
                           )}
 
-                        {/* {result.status === "success" && (
-                          <div className="mt-2 text-sm">
-                            <p className="text-gray-600">
-                              Chunk Count: {result.chunk_count || "N/A"}
-                            </p>
-                            <p className="text-gray-600">
-                              Namespace: {result.namespace || "N/A"}
-                            </p>
- 
-                          </div>
-                        )} */}
                       </div>
                     </div>
                   </div>
@@ -571,10 +538,10 @@ const handleChat = () => {
         <Button
           onClick={handleSubmit}
           disabled={isProcessing || localFiles.length === 0}
-          className="px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
+          className="cursor-pointer px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
         >
           {isProcessing ? (
-            <span className="flex items-center">
+            <span className="flex items-center ">
               <svg
                 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                 xmlns="http://www.w3.org/2000/svg"
@@ -605,17 +572,36 @@ const handleChat = () => {
         <Button
           variant="outline"
           onClick={handleReset}
-          className="px-8 py-3 text-base text-black font-medium border-gray-300 hover:bg-gray-50"
+          className="cursor-pointer px-8 py-3 text-base text-black font-medium border-gray-300 hover:bg-gray-50"
         >
           Reset
         </Button>
-        <Button
-          variant="outline"
-          onClick={handleChat}
-          className="px-8 py-3 text-base font-medium hover:bg-blue-400 shadow-2xl border-blue-200 border-1 rounded-md"
-        >
-          Chat with us
-        </Button>
+    <div className="relative group inline-block">
+  <Button
+    variant="outline"
+    onClick={handleChat}
+    disabled={isChatDisabled}
+    className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
+      ${isChatDisabled
+        ? "opacity-50 cursor-not-allowed"
+        : "hover:bg-blue-400"}
+    `}
+  >
+    Chat with us
+  </Button>
+
+  {/* Tooltip only shows if disabled */}
+  {isChatDisabled && (
+    <div
+      className="absolute left-1/2 -translate-x-1/2 -top-10 
+                 hidden group-hover:block 
+                 bg-black text-white text-sm px-3 py-1 rounded-md shadow-lg whitespace-nowrap"
+    >
+      Please add information first, then you will be able to chat with us.
+    </div>
+  )}
+</div>
+
       </div>
     </div>
   );

@@ -15,7 +15,7 @@ const ProtectedRoute = ({ children }) => {
     if (isPasswordResetRoute) return;
 
     if (!loading && !isAuthenticated) {
-      router.replace("/signin");
+      router.replace("/auth/signin");
     }
   }, [isAuthenticated, loading, router, pathname]);
 

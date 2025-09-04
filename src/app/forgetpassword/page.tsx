@@ -168,7 +168,7 @@ const ForgotPassword = () => {
         className="text-center shadow-2xl"
       >
         <Link
-          href="/signin"
+          href="/auth/signin"
           className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
         >
           <FiArrowLeft className="mr-2 " />

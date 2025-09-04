@@ -6,13 +6,12 @@ import { motion } from "framer-motion";
 
 interface AuthLayoutProps {
   children: ReactNode;
-  title?: string; // Add this line
+  title?: string; 
 }
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title }) => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Gradient Sidebar */}
       <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}

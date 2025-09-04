@@ -20,23 +20,13 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
 
   const handleLogout = async () => {
     await dispatch(logoutUser());
-    router.push("/signin");
+    router.push("/auth/signin");
   };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg">
       <div className=" mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center h-16">
-          {/* <div className="mr-2 md:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarOpen(true)}
-              className="text-white p-2"
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
-          </div> */}
           <div className="flex items-center">
             <motion.div
               initial={{ scale: 0.8 }}
@@ -68,7 +58,7 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
                   variant="ghost"
                   size="sm"
                   onClick={() => router.push("/profile")}
-                  className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-300"
+                  className="cursor-pointer text-white hover:bg-white/20 rounded-full p-2 transition-all duration-300"
                 >
                   <Settings className="w-5 h-5" />
                 </Button>
@@ -84,7 +74,7 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
                   size="sm"
                   onClick={handleLogout}
                 >
-                  <LogOut className="w-5 h-5" />
+                  <LogOut className="w-5 h-5 cursor-pointer" />
                 </Button>
               </motion.div>
             </div>

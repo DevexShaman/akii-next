@@ -4,10 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
   User,
   UserPlus,
-  MessageCircle,
   Mic,
   ChevronLeft,
   ChevronRight,
@@ -30,6 +28,7 @@ const Sidebar = ({
 }: SidebarProps) => {
   const pathname = usePathname();
   const wasMobileRef = useRef(null);
+  const name=localStorage.getItem("username") ||""
   const navigationItems = [
     {
       name: "Student Form",
@@ -41,11 +40,6 @@ const Sidebar = ({
       href: "/teacher",
       icon: UserPlus,
     },
-    // {
-    //   name: "Chat with us",
-    //   href: "/chat",
-    //   icon: MessageCircle,
-    // },
     {
       name: "Speech Practice",
       href: "/voiceassistant",
@@ -56,12 +50,9 @@ const Sidebar = ({
   useEffect(() => {
     const handleResize = () => {
       const isMobile = window.innerWidth <= 768;
-
-      // If first run or crossing from desktop to mobile
       if (
-        // wasMobileRef.current === null || // first run
         !wasMobileRef.current &&
-        isMobile // transition from desktop to mobile
+        isMobile
       ) {
         setCollapsed(true);
       }
@@ -69,7 +60,7 @@ const Sidebar = ({
       wasMobileRef.current = isMobile;
     };
 
-    handleResize(); // Run on mount
+    handleResize(); 
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -97,17 +88,17 @@ const Sidebar = ({
         transition={{ type: "spring", damping: 20 }}
       >
         <div className="flex flex-col h-full">
-          <div className="p-4 flex justify-end text-white">
+          <div className="cursor-pointer p-4 flex justify-end text-white">
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setCollapsed(!collapsed)}
-              className="p-2 rounded-full bg-gray-700 text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors"
+              className="cursor-pointer p-2 rounded-full bg-gray-700 text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors"
             >
               {collapsed ? (
-                <ChevronRight size={18} />
+                <ChevronRight size={18} className="cursor-pointer"/>
               ) : (
-                <ChevronLeft size={18} />
+                <ChevronLeft size={18} className="cursor-pointer"/>
               )}
             </motion.button>
           </div>
@@ -173,8 +164,8 @@ const Sidebar = ({
                     exit={{ opacity: 0, x: -10 }}
                     className="ml-3"
                   >
-                    <p className="text-white text-sm font-medium">John Doe</p>
-                    <p className="text-gray-400 text-xs">Administrator</p>
+                    <p className="text-white text-sm font-medium">{name }</p>
+                    {/* <p className="text-gray-400 text-xs">Administrator</p> */}
                   </motion.div>
                 )}
               </AnimatePresence>

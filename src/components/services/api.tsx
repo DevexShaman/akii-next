@@ -38,7 +38,7 @@ async function handleResponse(response: Response): Promise<any> {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
       localStorage.removeItem("username");
-      window.location.href = "/signin";
+      window.location.href = "/auth/signin";
     }
     return Promise.reject(new ApiError("Session expired", 401));
   }

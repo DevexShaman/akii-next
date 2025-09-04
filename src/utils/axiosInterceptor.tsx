@@ -11,7 +11,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       store.dispatch(logoutUser());
-      window.location.href = "/signin";
+      window.location.href = "/auth/signin";
     }
     return Promise.reject(error);
   }

@@ -147,7 +147,6 @@ export const verifyAuth = createAsyncThunk(
       }
 
       const response = await apiGet(`/validate-reset-token/${token}`);
-      console.log(response, "=====verifyAuth response");
       
       if (response?.valid) {
         return true;

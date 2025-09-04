@@ -33,13 +33,13 @@ const PracticePage = () => {
   const [showResultButton, setShowResultButton] = useState(false);
 
 
-    const [isTextToSpeechPlaying, setIsTextToSpeechPlaying] = useState(false);
+  const [isTextToSpeechPlaying, setIsTextToSpeechPlaying] = useState(false);
   const [isTextToSpeechSupported, setIsTextToSpeechSupported] = useState(true);
 
 
   const [showTextToSpeech, setShowTextToSpeech] = useState(true);
-  
-  
+
+
   const [transcriptionText, setTranscriptionText] = useState("");
 
   const essayId = searchParams.get("essay_id");
@@ -174,26 +174,26 @@ const PracticePage = () => {
     } else {
       // Start speaking
       setIsAudioLoading(true);
-      
+
       const utterance = new SpeechSynthesisUtterance(paragraph);
-      
+
       // Set up event listeners
       utterance.onstart = () => {
         setIsTextToSpeechPlaying(true);
         setIsAudioLoading(false);
       };
-      
+
       utterance.onend = () => {
         setIsTextToSpeechPlaying(false);
       };
-      
+
       utterance.onerror = (event) => {
         console.error("Speech synthesis error:", event);
         setIsTextToSpeechPlaying(false);
         setIsAudioLoading(false);
         // toast.error("Error with text-to-speech");
       };
-      
+
       // Speak the text
       window.speechSynthesis.speak(utterance);
     }
@@ -213,7 +213,6 @@ const PracticePage = () => {
     const username = getUsername();
     if (typeof window === "undefined") return;
     const token = getAuthToken();
-    console.log("Testing WebSocket connection with token:", token);
     if (!token) {
       toast.error("Authentication token missing");
       return;
@@ -234,7 +233,6 @@ const PracticePage = () => {
       `${protocol}//${cleanBaseUrl}/ws/audio?${params.toString()}`
     );
     testSocket.onopen = () => {
-      console.log("[TEST] WebSocket connected");
       testSocket.send(
         JSON.stringify({ type: "test", data: "Connection test" })
       );
@@ -284,7 +282,6 @@ const PracticePage = () => {
         return false;
       }
 
-      console.log("Available microphones:", mics);
       return true;
     } catch (error) {
       console.error("Device enumeration error:", error);
@@ -333,7 +330,6 @@ const PracticePage = () => {
         },
       });
       const audioTracks = stream.getAudioTracks();
-      console.log("Active audio tracks:", audioTracks);
 
       audioTracks.forEach((track) => {
         console.log("Track settings:", track.getSettings());
@@ -372,8 +368,6 @@ const PracticePage = () => {
         return;
       }
       const username = getUsername();
-      console.log("Using username:", username);
-
       const cleanBaseUrl = BASE_URL.replace(/^https?:\/\//, "");
 
       const protocol = window.location.protocol === "https:" ? "wss:" : "wss:";
@@ -388,14 +382,10 @@ const PracticePage = () => {
       const socket = new WebSocket(
         `${protocol}//${cleanBaseUrl}/ws/audio?${params.toString()}`
       );
-      console.log("Connecting to:", socket.url);
       socketRef.current = socket;
 
       // Handle socket events
       socket.onopen = () => {
-        console.log("WebSocket connected");
-        console.log("Protocol:", socket.protocol);
-        console.log("Extensions:", socket.extensions);
 
         dispatch(startRecording());
         let sendInterval: NodeJS.Timeout;
@@ -428,11 +418,9 @@ const PracticePage = () => {
 
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        console.log("Analysis received:", data);
-
-         if (data.type === 'transcription') {
-      setTranscriptionText(prev => prev + " " + data.data); // Append new transcription
-    }
+        if (data.type === 'transcription') {
+          setTranscriptionText(prev => prev + " " + data.data); // Append new transcription
+        }
 
 
         dispatch(setAnalysisResults(data));
@@ -457,7 +445,6 @@ const PracticePage = () => {
       // Send to WebSocket
       reader.onload = () => {
         if (socket.readyState === WebSocket.OPEN) {
-          console.log("Sending audio chunk as ArrayBuffer");
           socket.send(reader.result);
         }
       };
@@ -607,7 +594,7 @@ const PracticePage = () => {
         <div className="bg-indigo-600 py-4 px-6 flex items-center">
           <button
             onClick={handleBackToDashboard}
-            className="text-white mr-4 p-2 rounded-full hover:bg-indigo-700 transition-colors"
+            className="text-white mr-4 p-2 cursor-pointer rounded-full hover:bg-indigo-700 transition-colors"
           >
             <FaArrowLeft />
           </button>
@@ -640,34 +627,33 @@ const PracticePage = () => {
               )}
 
               <div className="mb-8 flex justify-center">
-        {/* Conditionally render the TTS button */}
-        {showTextToSpeech && (
-          <button
-            onClick={toggleTextToSpeech}
-            disabled={isAudioLoading || isRecording || !isTextToSpeechSupported}
-            className={`flex items-center justify-center ${
-              isAudioLoading || !isTextToSpeechSupported
-                ? "bg-gray-300 cursor-not-allowed"
-                : "bg-green-100 hover:bg-green-200"
-            } text-green-600 p-4 rounded-full transition-colors min-w-[180px]`}
-          >
-            {isAudioLoading ? (
-              <FaSpinner className="animate-spin text-xl" />
-            ) : isTextToSpeechPlaying ? (
-              <FaPause className="text-xl" />
-            ) : (
-              <FaVolumeUp className="text-xl" />
-            )}
-            <span className="ml-2">
-              {isAudioLoading
-                ? "Loading..."
-                : isTextToSpeechPlaying
-                ? "Pause"
-                : "Listen"}
-            </span>
-          </button>
-        )}
-      </div>
+                {/* Conditionally render the TTS button */}
+                {showTextToSpeech && (
+                  <button
+                    onClick={toggleTextToSpeech}
+                    disabled={isAudioLoading || isRecording || !isTextToSpeechSupported}
+                    className={`flex items-center justify-center ${isAudioLoading || !isTextToSpeechSupported
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-green-100 hover:bg-green-200"
+                      } text-green-600 p-4 rounded-full transition-colors min-w-[180px]`}
+                  >
+                    {isAudioLoading ? (
+                      <FaSpinner className="animate-spin text-xl" />
+                    ) : isTextToSpeechPlaying ? (
+                      <FaPause className="text-xl" />
+                    ) : (
+                      <FaVolumeUp className="text-xl" />
+                    )}
+                    <span className="ml-2">
+                      {isAudioLoading
+                        ? "Loading..."
+                        : isTextToSpeechPlaying
+                          ? "Pause"
+                          : "Listen"}
+                    </span>
+                  </button>
+                )}
+              </div>
 
               <div className="flex flex-col items-center justify-center my-8">
                 {showInfoNotice && !isRecording && (
@@ -701,28 +687,28 @@ const PracticePage = () => {
                   </motion.div>
                 )}
 
-{!isRecording ? (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleStartRecording}
-            className="bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-full p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-            disabled={isAnalyzing}
-          >
-            <FaMicrophone className="text-3xl" />
-          </motion.button>
-        ) : (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleStopRecording}
-            className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            <FaStop className="text-3xl" />
-          </motion.button>
-        )}
+                {!isRecording ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleStartRecording}
+                    className="bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-full p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+                    disabled={isAnalyzing}
+                  >
+                    <FaMicrophone className="text-3xl cursor-pointer " />
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleStopRecording}
+                    className="cursor-pointer bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+                  >
+                    <FaStop className="text-3xl" />
+                  </motion.button>
+                )}
 
-                <p className="mt-4 text-gray-600">
+                <p className="mt-4 cursor-pointer text-gray-600">
                   {isRecording
                     ? "Recording... Click to stop."
                     : "Click the microphone to start recording."}
@@ -747,17 +733,17 @@ const PracticePage = () => {
 
 
 
-                
-              <div className="bg-white p-4 rounded-lg shadow-inner min-h-[60px]">
-                
-                    
-                <p className="text-gray-700 leading-relaxed">
-                  <h3 className="text-lg font-semibold text-indigo-800 mb-2">
-                Your Speech:
-              </h3>
-                  {transcriptionText}
-                </p>
-              </div>
+
+                <div className="bg-white p-4 rounded-lg shadow-inner min-h-[60px]">
+
+
+                  <p className="text-gray-700 leading-relaxed">
+                    <h3 className="text-lg font-semibold text-indigo-800 mb-2">
+                      Your Speech:
+                    </h3>
+                    {transcriptionText}
+                  </p>
+                </div>
 
 
 
@@ -806,7 +792,7 @@ const PracticePage = () => {
 
 
 
-           
+
 
 
 
@@ -814,19 +800,19 @@ const PracticePage = () => {
 
 
 
-        
+
 
 
 
 
       </motion.div>
 
-          
+
 
 
     </div>
 
-    
+
   );
 };
 

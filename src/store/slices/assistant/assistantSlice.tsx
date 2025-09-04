@@ -249,17 +249,13 @@ export const fetchOverallScoring = createAsyncThunk(
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           try {
-            console.log(`Polling attempt ${attempt}...`);
 
             const response = await axios.get(
               `https://llm.edusmartai.com/api/overall-scoring-by-id-speech-module?essay_id=${essay_id}`
             );
 
-            console.log("API Response:", response.data);
-
-            // ✅ Stop polling when status_code = 200
+           
             if (response.data.data.status_code === 200) {
-              console.log("✅ Received status_code: 200 - Processing data...");
 
               const bodyDataString = response.data.data.body;
               let parsedBody;
@@ -271,9 +267,6 @@ export const fetchOverallScoring = createAsyncThunk(
                 throw new Error("Invalid JSON response from server");
               }
 
-              console.log("Parsed body data:", parsedBody);
-
-              // ✅ Parse raw_feedback if needed
               const rawText = parsedBody?.overall_scoring?.raw_feedback;
               if (rawText) {
                 const match = rawText.match(/\{[\s\S]*\}/);
@@ -319,7 +312,6 @@ export const fetchOverallScoring = createAsyncThunk(
 
       return await pollApi();
     } catch (error: any) {
-      console.log("Results API Error:", error);
       return rejectWithValue(error.response?.data?.error || error.message);
     }
   }
@@ -348,7 +340,6 @@ const assistantSlice = createSlice({
       .addCase(fetchOverallScoring.fulfilled, (state, action) => {
         state.loading = false;
         state.data = action.payload;
-        console.log(state.data,"--------sssssss--1")
       })
       .addCase(fetchOverallScoring.rejected, (state, action) => {
         state.loading = false;

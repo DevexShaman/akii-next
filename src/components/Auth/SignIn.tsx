@@ -3,9 +3,6 @@
 import React, { useState } from "react";
 import {
   FiLock,
-  FiGithub,
-  FiTwitter,
-  FiFacebook,
   FiUser,
 } from "react-icons/fi";
 import { Formik, Form } from "formik";
@@ -26,7 +23,6 @@ interface LoginFormValues {
 const SignIn = () => {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
   const dispatch = useAppDispatch();
 
   const router = useRouter();
@@ -48,7 +44,6 @@ const SignIn = () => {
           router.push("/dashboard");
         }
       } else if (loginUser.rejected.match(result)) {
-        // Handle specific error cases
         const errorPayload = result.payload as {
           message?: string;
           code?: number;
@@ -68,25 +63,7 @@ const SignIn = () => {
       setLoading(false);
     }
   };
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 },
-    },
-  };
 
   return (
     <AuthLayout>
@@ -230,49 +207,6 @@ const SignIn = () => {
                 )}
               </button>
             </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="relative my-8"
-            >
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center">
-                <span className="px-3 bg-gray-50 text-gray-500 text-sm">
-                  Or continue with
-                </span>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.9 }}
-              className="flex justify-center space-x-4 mb-6"
-            >
-              <button
-                type="button"
-                className="p-3 border border-gray-300 rounded-xl hover:bg-gray-100 transition-colors duration-300 hover:border-indigo-300"
-              >
-                <FiGithub className="text-gray-700" size={20} />
-              </button>
-              <button
-                type="button"
-                className="p-3 border border-gray-300 rounded-xl hover:bg-blue-50 transition-colors duration-300 hover:border-blue-300"
-              >
-                <FiTwitter className="text-blue-400" size={20} />
-              </button>
-              <button
-                type="button"
-                className="p-3 border border-gray-300 rounded-xl hover:bg-blue-50 transition-colors duration-300 hover:border-blue-300"
-              >
-                <FiFacebook className="text-blue-600" size={20} />
-              </button>
-            </motion.div>
-
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -282,7 +216,7 @@ const SignIn = () => {
               <p>
                 Don't have an account?{" "}
                 <Link
-                  href="/signup"
+                  href="/auth/signup"
                   className="font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
                 >
                   Sign up

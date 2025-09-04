@@ -153,7 +153,7 @@ const ResetPassword = () => {
             Your password has been updated successfully.
           </p>
           <Link
-            href="/signin"
+            href="/auth/signin"
             className="inline-flex items-center justify-center w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-indigo-700 transition-colors"
           >
             Sign In Now
