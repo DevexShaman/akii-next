@@ -153,26 +153,26 @@ const Chat = () => {
           </div>
 
           <div className="justify-between flex gap-2 ">
-                <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => router.back()}
-            className="cursor-pointer bg-white/10 hover:bg-white/20 rounded-full px-4 py-2 text-sm flex items-center transition-all"
-          >
-            <FaArrowAltCircleLeft className="mr-2" />
-            BACK
-          </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.back()}
+              className="cursor-pointer bg-white/10 hover:bg-white/20 rounded-full px-4 py-2 text-sm flex items-center transition-all"
+            >
+              <FaArrowAltCircleLeft className="mr-2" />
+              BACK
+            </motion.button>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setIsCurriculumVisible(!isCurriculumVisible)}
-            className="cursor-pointer bg-white/10 hover:bg-white/20 rounded-full px-4 py-2 text-sm flex items-center transition-all"
-          >
-            <FaBook className="mr-2" />
-            {isCurriculumVisible ? "Hide Details" : "Show Details"}
-          </motion.button>
-      </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsCurriculumVisible(!isCurriculumVisible)}
+              className="cursor-pointer bg-white/10 hover:bg-white/20 rounded-full px-4 py-2 text-sm flex items-center transition-all"
+            >
+              <FaBook className="mr-2" />
+              {isCurriculumVisible ? "Hide Details" : "Show Details"}
+            </motion.button>
+          </div>
         </div>
       </div>
 
@@ -533,7 +533,7 @@ const Chat = () => {
 
             {/* Tooltip only on hover */}
             {inputValue.trim() === "" && (
-              <div className="absolute bottom-16 left-[-30] -translate-x-1/2 whitespace-nowrap px-3 py-1 text-sm text-white bg-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-16 left-[-50] -translate-x-1/2 whitespace-nowrap px-3 py-1 text-sm text-white bg-red-500 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
                 Please add Question first
               </div>
             )}

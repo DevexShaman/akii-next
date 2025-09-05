@@ -1,4 +1,3 @@
-// app/forgotten-password/[token]/page.tsx
 "use client";
 
 import * as Yup from "yup";

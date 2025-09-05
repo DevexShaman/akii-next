@@ -14,7 +14,6 @@ import {
 import { motion } from "framer-motion";
 import { FeedbackData } from "./resultpageTypes";
 
-
 const ResultPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,7 +26,6 @@ const ResultPage = () => {
   const maxRetries = 10;
   const retryDelay = 3000;
   const maxDuration = 30000;
-
 
   function safeDeepParse(str: string) {
     try {
@@ -168,7 +166,6 @@ const ResultPage = () => {
     }
   }, [essayId, retryCount, maxRetries, maxDuration, getAuthToken, clearCurrentTimeout]);
 
-
   useEffect(() => {
     if (essayId) {
       fetchResults();
@@ -210,27 +207,63 @@ const ResultPage = () => {
     ).toFixed(1);
   };
 
-  const result = resultData
-    ? {
-      overallScore: calculateOverallScore(),
-      pronunciation: parseScore(resultData.overall_scores.pronunciation),
-      fluency: parseScore(resultData.overall_scores.fluency),
-      grammar: parseScore(resultData.overall_scores.grammar),
-      emotion: resultData.overall_scores.emotion,
-      understanding: resultData.content_analysis.understanding_depth.score,
-      // topicGrip: resultData.content_analysis.topic_grip,
-      // suggestions: resultData.overall_scores. || [],
+  // Helper function to render object data recursively
+  const renderData = (data: any, depth = 0) => {
+    if (typeof data === 'object' && data !== null) {
+      return (
+        <div className={`pl-${depth * 2}`}>
+          {Object.entries(data).map(([key, value]) => (
+            <div key={key} className="mb-2">
+              <strong className="capitalize">{key.replace(/_/g, ' ')}: </strong>
+              {renderData(value, depth + 1)}
+            </div>
+          ))}
+        </div>
+      );
+    } else if (Array.isArray(data)) {
+      return (
+        <ul className="list-disc list-inside">
+          {data.map((item, index) => (
+            <li key={index}>{renderData(item, depth + 1)}</li>
+          ))}
+        </ul>
+      );
+    } else {
+      return <span>{data}</span>;
     }
-    : {
-      overallScore: 0,
-      pronunciation: 0,
-      fluency: 0,
-      grammar: 0,
-      emotion: "",
-      understanding: "",
-      // topicGrip: "",
-      // suggestions: [],
-    };
+  };
+
+  // Helper function to render scores with progress bars
+  const renderScoreWithProgress = (label: string, score: number | string, maxScore = 100) => {
+    const numericScore = typeof score === 'string' ? parseFloat(score) : score;
+    const percentage = (numericScore / maxScore) * 100;
+    
+    return (
+      <div>
+        <div className="flex justify-between mb-1 text-black">
+          <span className="text-gray-700 capitalize">{label.replace(/_/g, ' ')}</span>
+          <span className="font-semibold">{numericScore}/{maxScore}</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2.5">
+          <div
+            className="bg-gradient-to-r from-indigo-400 to-indigo-600 h-2.5 rounded-full"
+            style={{ width: `${percentage}%` }}
+          ></div>
+        </div>
+      </div>
+    );
+  };
+
+  // Emotion emoji mapping
+  const emotionEmojiMap: Record<string, string> = {
+    surprised: "😲",
+    happy: "😊",
+    neutral: "😐",
+    sad: "😔",
+    angry: "😠",
+    fearful: "😨",
+    disgusted: "🤢",
+  };
 
   if (loading) {
     return (
@@ -276,21 +309,9 @@ const ResultPage = () => {
   const grammarScore = parseScore(resultData.overall_scores.grammar);
   const overallScore = calculateOverallScore();
 
-
-
-  const emotionEmojiMap: Record<string, string> = {
-    surprised: "😲",
-    happy: "😊",
-    neutral: "😐",
-    sad: "😔",
-    angry: "😠",
-    fearful: "😨",
-    disgusted: "🤢",
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <button
@@ -306,8 +327,6 @@ const ResultPage = () => {
           <div className="w-10"></div> {/* Spacer for alignment */}
         </div>
 
-
-        
         {/* Overall Score */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -330,8 +349,7 @@ const ResultPage = () => {
             </div>
           </div>
         </motion.div>
-        {/* <h1>dfcscfdsf{parsedRes.content_analysis.coverage_metrics.original_word_count}</h1> */}
-        {/* Score Breakdown */}
+      
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -344,24 +362,9 @@ const ResultPage = () => {
               Score Breakdown
             </h3>
             <div className="space-y-4">
-              {[
-                { label: "Pronunciation", score: pronunciationScore },
-                { label: "Fluency", score: fluencyScore },
-                { label: "Grammar", score: grammarScore },
-              ].map((item, index) => (
-                <div key={index}>
-                  <div className="flex justify-between mb-1 text-black">
-                    <span className="text-gray-700">{item.label}</span>
-                    <span className="font-semibold">{item.score}/10</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className="bg-gradient-to-r from-indigo-400 to-indigo-600 h-2.5 rounded-full"
-                      style={{ width: `${item.score * 10}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+              {renderScoreWithProgress("Pronunciation", pronunciationScore)}
+              {renderScoreWithProgress("Fluency", fluencyScore)}
+              {renderScoreWithProgress("Grammar", grammarScore)}
             </div>
           </div>
 
@@ -379,207 +382,68 @@ const ResultPage = () => {
                 </span>
               </div>
             </div>
-
           </div>
         </motion.div>
 
-        {/* Detailed Feedback */}
+        {/* Detailed Feedback Sections */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="grid grid-cols-1  gap-6 mb-8"
+          className="grid grid-cols-1 gap-6 mb-8"
         >
+          {/* Content Analysis */}
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaQuoteLeft className="text-green-500 mr-2" />
               Content Analysis
             </h3>
-            <h4><strong>Coverage metrics</strong></h4>
-            <p><strong>Original word count : </strong>{resultData.content_analysis.coverage_metrics.original_word_count}</p>
-            <p><strong>Response word count : </strong>{resultData.content_analysis.coverage_metrics.response_word_count}</p>
-            <p><strong>Coverage percentage : </strong>{resultData.content_analysis.coverage_metrics.coverage_percentage}</p>
-            {/* <p>{resultData.content_analysis.coverage_metrics.main_themes_captured}</p> */}
-            <div>
-              {resultData.content_analysis.coverage_metrics.main_themes_captured.map((theme: string, index: number) => (
-                <p key={index}><strong>{theme}</strong></p>
-              ))}
-            </div>
-
-            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaQuoteLeft className="text-green-500 mr-2" />
-              Understanding Depth
-            </h3>
-            <h4><strong>Coverage metrics</strong></h4>
-            <p><strong>Score : </strong>{resultData.content_analysis.understanding_depth.score}</p>
-            <p><strong>Explanation : </strong>{resultData.content_analysis.understanding_depth.explanation}</p>
-            <p><strong>Semantic accuracy : </strong>{resultData.content_analysis.understanding_depth.semantic_accuracy}</p>
-            <p><strong>Conceptual gaps : </strong>{resultData.content_analysis.understanding_depth.conceptual_gaps}</p>
-
-
-            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaQuoteLeft className="text-green-500 mr-2" />
-              Detail Retention
-            </h3>
-            <h4><strong>Coverage metrics</strong></h4>
-            <p><strong>Score : </strong>{resultData.content_analysis.detail_retention.score}</p>
-            <p><strong>Explanation : </strong>{resultData.content_analysis.detail_retention.explanation}</p>
-            {/* <p><strong>Semantic accuracy : </strong>{resultData.content_analysis.detail_retention.key_details_captured}</p> */}
-
-            <div>
-              <strong>key details Captured : </strong>
-              {resultData.content_analysis.detail_retention.key_details_captured.map((detail: string, index: number) => (
-                <p key={index}>{detail}</p>
-              ))}
-            </div>
-            <div>
-              <strong>important details missed: </strong>
-              {resultData.content_analysis.detail_retention.important_details_missed.map((detail: string, index: number) => (
-                <p key={index}>{detail}</p>
-              ))}
-            </div>
+            {renderData(resultData.content_analysis)}
           </div>
 
+          {/* Linguistic Performance */}
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaQuoteLeft className="text-green-500 mr-2" />
               Linguistic Performance
             </h3>
-            <h4><strong>Fluency Assessment</strong></h4>
-            <p><strong>Score : </strong>{resultData.linguistic_performance.fluency_assessment.score}</p>
-            <p><strong>Detailed Analysis : </strong>{resultData.linguistic_performance.fluency_assessment.detailed_analysis}</p>
-            <p><strong>Pace Appropriateness : </strong>{resultData.linguistic_performance.fluency_assessment.pace_appropriateness}</p>
-            {/* <p>{resultData.content_analysis.coverage_metrics.main_themes_captured}</p> */}
-            <div>
-              <strong>Main Themes Captured:</strong>
-              {resultData.content_analysis.coverage_metrics.main_themes_captured.map((theme: string, index: number) => (
-                <p key={index}>{theme}</p>
-              ))}
-            </div>
-            <h4><strong>Pronounciation Assessment</strong></h4>
-            <p><strong>Score : </strong>{resultData.linguistic_performance.pronunciation_assessment.score}</p>
-            <p><strong>impact_onlarity : </strong>{resultData.linguistic_performance.pronunciation_assessment.impact_on_clarity}</p>
-
-            <div>
-              <strong>Semantic accuracy: </strong>
-              {resultData.linguistic_performance.pronunciation_assessment.strengths.map((item: string, index: number) => (
-                <p key={index}>{item}</p>
-              ))}
-            </div>
-            <h4><strong>Coverage metrics</strong></h4>
-            <p><strong>Score : </strong>{resultData.linguistic_performance.grammar_assessment.score}</p>
-            <p><strong>Complexity level : </strong>{resultData.linguistic_performance.grammar_assessment.complexity_level}</p>
-            <p><strong>Error patterns : </strong>{resultData.linguistic_performance.grammar_assessment.error_patterns}</p>
-            <p><strong>Accuracy analysis : </strong>{resultData.linguistic_performance.grammar_assessment.accuracy_analysis}</p>
-
-           
-            <h4><strong>Coverage metrics</strong></h4>
-            <p><strong>Score : </strong>{resultData.linguistic_performance.vocabulary_usage.appropriateness}</p>
-            <p><strong>Explanation : </strong>{resultData.linguistic_performance.vocabulary_usage.precision}</p>
-            <p><strong>Semantic accuracy : </strong>{resultData.linguistic_performance.vocabulary_usage.synonym_usage}</p>
-
+            {renderData(resultData.linguistic_performance)}
           </div>
 
+          {/* Technical Delivery */}
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaQuoteLeft className="text-green-500 mr-2" />
-              Technical delivery
+              Technical Delivery
             </h3>
-            <h4><strong>Fluency Assessment</strong></h4>
-            <p><strong>Score : </strong>{resultData.technical_delivery.clarity_coherence}</p>
-            <p><strong>Detailed Analysis : </strong>{resultData.technical_delivery.comprehensibility_score}</p>
-            <p><strong>Pace Appropriateness : </strong>{resultData.technical_delivery.emotion_appropriateness}</p>
-            <div>
-              <strong>Main Themes Captured:</strong>
-              {resultData.content_analysis.coverage_metrics.main_themes_captured.map((theme: string, index: number) => (
-                <p key={index}>{theme}</p>
-              ))}
-            </div>
+            {renderData(resultData.technical_delivery)}
           </div>
 
+          {/* Improvement Strategy */}
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaQuoteLeft className="text-green-500 mr-2" />
-              Content Analysis
+              Improvement Strategy
             </h3>
-            <h4><strong>Coverage metrics</strong></h4>
-            <p><strong>Original word count : </strong>{resultData.content_analysis.coverage_metrics.original_word_count}</p>
-            <p><strong>Response word count : </strong>{resultData.content_analysis.coverage_metrics.response_word_count}</p>
-            <p><strong>Coverage percentage : </strong>{resultData.content_analysis.coverage_metrics.coverage_percentage}</p>
-            <div className="flex gap-2"> <strong>Main themes captured : </strong>
-              {resultData.content_analysis.coverage_metrics.main_themes_captured.map((theme: string, index: number) => (
-                <p key={index}><strong>{theme}</strong></p>
-              ))}
-            </div>
+            {renderData(resultData.improvement_strategy)}
           </div>
 
+          {/* Adaptive Scoring */}
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaQuoteLeft className="text-green-500 mr-2" />
-              Improvement strategy
+              Adaptive Scoring
             </h3>
-            <h4><strong>Fluency Assessment</strong></h4>
-            <p><strong>Score : </strong>{resultData.improvement_strategy.immediate_priority}</p>
-            <div>
-              <strong>Detailed Analysis: </strong>
-              {resultData.improvement_strategy.content_handling_tips.map((tip: string, index: number) => (
-                <p key={index}>{tip}</p>
-              ))}
-            </div>
-
-            <div>
-              <strong>Pace Appropriateness: </strong>
-              {resultData.improvement_strategy.practice_recommendations.map((rec: string, index: number) => (
-                <p key={index}>{rec}</p>
-              ))}
-            </div>
+            {renderData(resultData.adaptive_scoring)}
           </div>
 
-               <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-              <FaQuoteLeft className="text-green-500 mr-2" />
-              Improvement strategy
-            </h3>
-            
-            <p><strong>Overall comprehension : </strong>{resultData.adaptive_scoring.content_adjusted_scores.overall_comprehension}</p>
-            <p><strong>Retention score : </strong>{resultData.adaptive_scoring.content_adjusted_scores.retention_score}</p>
-            <p><strong>Understanding score : </strong>{resultData.adaptive_scoring.content_adjusted_scores.understanding_score}</p>
-            <p><strong>Scoring rationale : </strong>{resultData.adaptive_scoring.scoring_rationale}</p>
-
-          </div>
-
+          {/* Encouragement Message */}
           <div className="bg-white p-6 rounded-2xl shadow-lg text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
               <FaQuoteLeft className="text-green-500 mr-2" />
-              Encouragement message
+              Encouragement Message
             </h3>
-
-            <p><strong>Encouragement message : </strong>{resultData.encouragement_message}</p>
-
-          </div>
-
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white p-6 rounded-2xl shadow-lg mb-8"
-        >
-          <div className="flex items-center mb-4">
-            <FaCommentAlt className="text-indigo-500 mr-2 text-xl" />
-            <h3 className="text-xl font-semibold text-gray-800">
-              Detailed Feedback
-            </h3>
-          </div>
-
-          <div className="space-y-4">
-
-            <div className="p-4 rounded-xl bg-blue-50 border-l-4 border-l-blue-500">
-              <h4 className="font-semibold text-gray-800 mb-2">
-                Understanding
-              </h4>
-              <p className="text-gray-700">{resultData.content_analysis.understanding_depth.explanation}</p>
-            </div>
+            <p>{resultData.encouragement_message}</p>
           </div>
         </motion.div>
 
