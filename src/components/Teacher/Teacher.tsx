@@ -175,6 +175,7 @@ const handleSubmit = async () => {
 
     socket.onerror = (err) => {
       console.error("⚠️ WebSocket error:", err);
+      setIsProcessing(true);
     };
 
     socket.onclose = () => {
@@ -265,6 +266,9 @@ const handleSubmit = async () => {
 };
 
 
+if(progressData){
+  setIsProcessing(false)
+}
 
 
   const handleReset = () => {
