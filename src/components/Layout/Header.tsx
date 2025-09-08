@@ -67,7 +67,7 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
                 </Button>
               </motion.div>
 
-              <motion.div
+              {/* <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -79,7 +79,7 @@ const Header = ({ setSidebarOpen }: HeaderProps) => {
                 >
                   <Settings className="w-5 h-5" />
                 </Button>
-              </motion.div>
+              </motion.div> */}
 
               <motion.div
                 whileHover={{ scale: 1.05 }}

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import { FileRejection, useDropzone } from "react-dropzone";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch, useAppSelector } from "@/store/index";
@@ -57,6 +57,9 @@ const Teacher = () => {
     curriculum: false,
     files: false,
   });
+// Progress update
+// const [progressData, setProgressData] = useState(null);
+const progressData = useRef(null)
   useEffect(() => {
     if (selectedClass) dispatch(setClass(selectedClass));
     if (selectedSubject) dispatch(setSubject(selectedSubject));
@@ -125,61 +128,100 @@ const handleSubmit = async () => {
 
   let socket = null;
   let connectionId = null;
-  
-  try {
-    setIsProcessing(true);
-    
-    // Generate a unique connection ID for WebSocket
+  let keepAliveInterval = null;
+  const RECONNECT_LIMIT = 1;
+  let reconnectAttempts = 0;
+
+  const connectWebSocket = () => {
     connectionId = crypto.randomUUID();
-    
-    // Establish WebSocket connection for progress updates
+
     socket = new WebSocket(`wss://llm.edusmartai.com/api/ws/upload-progress/${connectionId}`);
-    
+
     socket.onopen = () => {
       console.log("✅ WebSocket connected", connectionId);
+
+      // Send ping every 25 seconds to keep alive
+      keepAliveInterval = setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "ping" }));
+          console.log("📨 Ping sent to keep connection alive");
+        }
+      }, 2500);
     };
-    
+
     socket.onmessage = (event) => {
       try {
-        const progressData = JSON.parse(event.data);
-        console.log("📩 Progress update:", progressData);
-        // Update progress in Redux store
+        const progressDataRes = JSON.parse(event.data);
+        console.log("📩 Progress update:", progressDataRes);
+
+
+        // You can dispatch this progress update to Redux here
         // dispatch(setUploadProgress(progressData.progress));
+
+        if (progressDataRes.status === "vector_storage_completed") {
+          console.log("✅ Vector storage completed, closing WebSocket");
+          
+        progressData.current=progressData
+
+        console.log("📩 Progress update2222222222222222:", progressData);
+          // clearInterval(keepAliveInterval);
+          socket.close();
+        }
       } catch (error) {
         console.error("Error parsing progress data:", error);
       }
     };
-    
-    socket.onclose = () => {
-      console.log("❌ WebSocket closed");
-    };
-    
+
     socket.onerror = (err) => {
       console.error("⚠️ WebSocket error:", err);
     };
 
-    // Prepare form data for the upload request
+    socket.onclose = () => {
+      console.log("❌ WebSocket closed");
+      console.log("Progress Data",progressData)
+      if(!progressData){
+        clearInterval(keepAliveInterval);
+        // Attempt reconnection if attempts left
+        if (reconnectAttempts < RECONNECT_LIMIT) {
+          reconnectAttempts++;
+          console.log(`🔄 Reconnecting... attempt ${reconnectAttempts}`);
+          setTimeout(connectWebSocket, 3000); // Retry after 3 seconds
+        } else {
+          console.error("❌ Max reconnection attempts reached");
+        }
+      };
+      }
+
+  };
+
+  try {
+    setIsProcessing(true);
+    reconnectAttempts = 0;
+    connectWebSocket();
+
+    // Wait briefly to ensure connection is open (optional but good practice)
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const username = localStorage.getItem("username") || "unknown_user";
+
     const formData = new FormData();
     formData.append("file", localFiles[0]);
     formData.append("student_class", className);
     formData.append("subject", subject);
     formData.append("curriculum", curriculum);
-    formData.append("username", "rahul");
+    formData.append("username", username);
     formData.append("connection_id", connectionId);
 
-    // Create AbortController for timeout handling
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
 
-    // Make the upload request with timeout handling
     const uploadResponse = await fetch("https://llm.edusmartai.com/api/upload/", {
       method: "POST",
       body: formData,
       signal: controller.signal,
       headers: {
-        // Optional: Add headers to indicate long-running operation
         'X-Connection-Id': connectionId,
-        'X-Timeout': '120000' // 2 minutes
+        'X-Timeout': '120000'
       }
     });
 
@@ -190,28 +232,26 @@ const handleSubmit = async () => {
     }
 
     const uploadData = await uploadResponse.json();
-    console.log("✅ Upload response:", uploadData, connectionId);
+    console.log("✅ Upload response:", uploadData);
 
-    // After successful upload, call your existing processFiles action
+    // Optionally dispatch action to update state
     await dispatch(processFiles(localFiles));
-    
+
   } catch (error) {
-    console.error("Processing error:", error);
-    
+    console.error("❌ Upload error:", error);
+
     if (error.name === 'AbortError') {
-      console.warn("⚠️ Upload timeout - keeping WebSocket open for retry");
-      // You might want to implement a retry mechanism here
-      // or notify the user that the upload is taking longer than expected
+      console.warn("⚠️ Upload timeout - connection is kept alive for possible retry");
     } else {
-      // Handle other errors
-      // dispatch(setUploadError(error.message));
+      console.error("⚠️ An error occurred:", error.message);
     }
   } finally {
     setIsProcessing(false);
-    // Don't close WebSocket immediately - let it stay open for progress updates
-    // The server should close it when the operation completes or fails
+    // Do not forcibly close socket here; let server or completion handle it
   }
 };
+
+
 
 
   const handleReset = () => {
