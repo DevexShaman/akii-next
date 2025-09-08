@@ -258,7 +258,7 @@ const handleSubmit = async () => {
       console.error("⚠️ An error occurred:", error.message);
     }
   } finally {
-    setIsProcessing(false);
+    setIsProcessing(true);
 
     // Do not forcibly close socket here; let server or completion handle it
   }
