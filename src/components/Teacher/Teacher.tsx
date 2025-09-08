@@ -151,6 +151,7 @@ const handleSubmit = async () => {
 
     socket.onmessage = (event) => {
       try {
+        setIsProcessing(true);
         const progressDataRes = JSON.parse(event.data);
         console.log("📩 Progress update:", progressDataRes);
 
