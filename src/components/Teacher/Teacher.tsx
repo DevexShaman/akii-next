@@ -266,9 +266,7 @@ const handleSubmit = async () => {
 };
 
 
-if(progressData){
-  setIsProcessing(false)
-}
+
 
 
   const handleReset = () => {
