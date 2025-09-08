@@ -109,29 +109,94 @@ const Teacher = () => {
     return !Object.values(newErrors).some((error) => error);
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      return;
-    }
-    if (!className || !subject || !curriculum) {
-      alert("Please select class, subject, and curriculum");
-      return;
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    return;
+  }
+  if (!className || !subject || !curriculum) {
+    alert("Please select class, subject, and curriculum");
+    return;
+  }
+
+  if (localFiles.length === 0) {
+    alert("Please upload a file");
+    return;
+  }
+
+  try {
+    setIsProcessing(true);
+    
+    // Generate a unique connection ID for WebSocket
+    const connectionId = crypto.randomUUID();
+    
+    // Establish WebSocket connection for progress updates
+    const socket = new WebSocket(`wss://llm.edusmartai.com/api/ws/upload-progress/${connectionId}`);
+    
+    socket.onopen = () => {
+      console.log("✅ WebSocket connected",connectionId);
+      // Dispatch an action to update WebSocket connection status if needed
+    };
+    
+    socket.onmessage = (event) => {
+      try {
+        const progressData = JSON.parse(event.data);
+        console.log("📩 Progress update:", progressData);
+        
+        // Update progress in Redux store
+        // You might need to create a new action for this
+        // dispatch(setUploadProgress(progressData.progress));
+      } catch (error) {
+        console.error("Error parsing progress data:", error);
+      }
+    };
+    
+    socket.onclose = () => {
+      console.log("❌ WebSocket closed");
+      // Dispatch an action to update WebSocket connection status if needed
+    };
+    
+    socket.onerror = (err) => {
+      console.error("⚠️ WebSocket error:", err);
+      // Dispatch an action to update WebSocket error status if needed
+    };
+
+    // Prepare form data for the upload request
+    const formData = new FormData();
+    formData.append("file", localFiles[0]);
+    formData.append("student_class", className);
+    formData.append("subject", subject);
+    formData.append("curriculum", curriculum);
+    formData.append("username", "rahul"); // You might want to get this from auth state
+    formData.append("connection_id", connectionId);
+
+    // Make the upload request
+    const uploadResponse = await fetch("https://llm.edusmartai.com/api/upload/", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Upload failed with status ${uploadResponse.status}`);
     }
 
-    if (localFiles.length === 0) {
-      alert("Please upload a file");
-      return;
-    }
+    const uploadData = await uploadResponse.json();
+    console.log("✅ Upload response:", uploadData ,connectionId );
 
-    try {
-      setIsProcessing(true);
-      await dispatch(processFiles(localFiles));
-    } catch (error) {
-      console.error("Processing error:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    // After successful upload, call your existing processFiles action
+    await dispatch(processFiles(localFiles));
+    
+    // Close WebSocket connection after completion
+    socket.close();
+    
+  } catch (error) {
+    console.error("Processing error:", error);
+    // Dispatch an error action if needed
+    // dispatch(setUploadError(error.message));
+  } finally {
+    setIsProcessing(false);
+  }
+};
+
 
   const handleReset = () => {
     setLocalFiles([]);
