@@ -161,7 +161,7 @@ const handleSubmit = async () => {
 
         if (progressDataRes.status === "vector_storage_completed") {
           console.log("✅ Vector storage completed, closing WebSocket");
-          setIsProcessing(true);
+          setIsProcessing(false);
         progressData.current=progressData
 
         console.log("📩 Progress update2222222222222222:", progressData);
@@ -179,15 +179,16 @@ const handleSubmit = async () => {
     };
 
     socket.onclose = () => {
+      setIsProcessing(false);
       console.log("❌ WebSocket closed");
       console.log("Progress Data",progressData)
       if(!progressData){
         clearInterval(keepAliveInterval);
-        setIsProcessing(true);
+        // setIsProcessing(false);
         // Attempt reconnection if attempts left
         if (reconnectAttempts < RECONNECT_LIMIT) {
           reconnectAttempts++;
-          setIsProcessing(true);
+          // setIsProcessing(true);
           console.log(`🔄 Reconnecting... attempt ${reconnectAttempts}`);
           setTimeout(connectWebSocket, 3000); // Retry after 3 seconds
         } else {
@@ -243,19 +244,21 @@ const handleSubmit = async () => {
 
     const uploadData = await uploadResponse.json();
     console.log("✅ Upload response:", uploadData);
+if (uploadData.status === "success" && !uploadSuccessful) {
+      setIsProcessing(false);
+    }
 
-    // Optionally dispatch action to update state
-    await dispatch(processFiles(localFiles));
+  
 
   } catch (error) {
-    setIsProcessing(true);
     console.error("❌ Upload error:", error);
+    setIsProcessing(true);
 
     if (error.name === 'AbortError') {
-       setIsProcessing(true);
+       
       console.warn("⚠️ Upload timeout - connection is kept alive for possible retry");
     } else {
-       setIsProcessing(true);
+       
       console.error("⚠️ An error occurred:", error.message);
     }
   } finally {
@@ -265,6 +268,7 @@ const handleSubmit = async () => {
   }
 };
 
+console.log("------------------------------",isProcessing)
 
 
 
