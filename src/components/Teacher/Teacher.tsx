@@ -49,17 +49,18 @@ const Teacher = () => {
   const selectedSubject = teacher.subject;
   const selectedCurriculum = teacher.curriculum;
   const [localFiles, setLocalFiles] = useState<File[]>([]);
-  
+
   const [isProcessing, setIsProcessing] = useState(false);
+  const [tisProcessing, setTIsProcessing] = useState(false);
   const [errors, setErrors] = useState({
     class: false,
     subject: false,
     curriculum: false,
     files: false,
   });
-// Progress update
-// const [progressData, setProgressData] = useState(null);
-const progressData = useRef(null)
+  // Progress update
+  // const [progressData, setProgressData] = useState(null);
+  const progressData = useRef(null)
   useEffect(() => {
     if (selectedClass) dispatch(setClass(selectedClass));
     if (selectedSubject) dispatch(setSubject(selectedSubject));
@@ -112,163 +113,164 @@ const progressData = useRef(null)
     return !Object.values(newErrors).some((error) => error);
   };
 
-const handleSubmit = async () => {
-  if (!validateForm()) {
-    return;
-  }
-  if (!className || !subject || !curriculum) {
-    alert("Please select class, subject, and curriculum");
-    return;
-  }
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
+    if (!className || !subject || !curriculum) {
+      alert("Please select class, subject, and curriculum");
+      return;
+    }
 
-  if (localFiles.length === 0) {
-    alert("Please upload a file");
-    return;
-  }
+    if (localFiles.length === 0) {
+      alert("Please upload a file");
+      return;
+    }
 
-  let socket = null;
-  let connectionId = null;
-  let keepAliveInterval = null;
-  const RECONNECT_LIMIT = 1;
-  let reconnectAttempts = 0;
+    let socket = null;
+    let connectionId = null;
+    let keepAliveInterval = null;
+    const RECONNECT_LIMIT = 1;
+    let reconnectAttempts = 0;
 
-  const connectWebSocket = () => {
-    connectionId = crypto.randomUUID();
+    const connectWebSocket = () => {
+      connectionId = crypto.randomUUID();
 
-    socket = new WebSocket(`wss://llm.edusmartai.com/api/ws/upload-progress/${connectionId}`);
+      socket = new WebSocket(`wss://llm.edusmartai.com/api/ws/upload-progress/${connectionId}`);
 
-    socket.onopen = () => {
-      console.log("✅ WebSocket connected", connectionId);
+      socket.onopen = () => {
+        console.log("✅ WebSocket connected", connectionId);
 
-      // Send ping every 25 seconds to keep alive
-      keepAliveInterval = setInterval(() => {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: "ping" }));
-          console.log("📨 Ping sent to keep connection alive");
-        }
-      }, 2500);
-    };
+        // Send ping every 25 seconds to keep alive
+        keepAliveInterval = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "ping" }));
+            console.log("📨 Ping sent to keep connection alive");
+          }
+        }, 2500);
+      };
 
-    socket.onmessage = (event) => {
-      try {
-        setIsProcessing(true);
-        const progressDataRes = JSON.parse(event.data);
-        console.log("📩 Progress update:", progressDataRes);
+      socket.onmessage = (event) => {
+        try {
+          setIsProcessing(true);
+          const progressDataRes = JSON.parse(event.data);
+          console.log("📩 Progress update:", progressDataRes);
 
 
-        // You can dispatch this progress update to Redux here
-        // dispatch(setUploadProgress(progressData.progress));
+          // You can dispatch this progress update to Redux here
+          // dispatch(setUploadProgress(progressData.progress));
 
-        if (progressDataRes.status === "vector_storage_completed") {
-          console.log("✅ Vector storage completed, closing WebSocket");
-          setIsProcessing(false);
-        progressData.current=progressData
+          if (progressDataRes.status === "vector_storage_completed") {
+            console.log("✅ Vector storage completed, closing WebSocket");
+            setIsProcessing(false);
+            progressData.current = progressData
 
-        console.log("📩 Progress update2222222222222222:", progressData);
-          // clearInterval(keepAliveInterval);
-          socket.close();
-        }
-      } catch (error) {
-        console.error("Error parsing progress data:", error);
-      }
-    };
-
-    socket.onerror = (err) => {
-      console.error("⚠️ WebSocket error:", err);
-      setIsProcessing(true);
-    };
-
-    socket.onclose = () => {
-      setIsProcessing(false);
-      console.log("❌ WebSocket closed");
-      console.log("Progress Data",progressData)
-      if(!progressData){
-        clearInterval(keepAliveInterval);
-        // setIsProcessing(false);
-        // Attempt reconnection if attempts left
-        if (reconnectAttempts < RECONNECT_LIMIT) {
-          reconnectAttempts++;
-          // setIsProcessing(true);
-          console.log(`🔄 Reconnecting... attempt ${reconnectAttempts}`);
-          setTimeout(connectWebSocket, 3000); // Retry after 3 seconds
-        } else {
-          console.error("❌ Max reconnection attempts reached");
+            console.log("📩 Progress update2222222222222222:", progressData);
+            // clearInterval(keepAliveInterval);
+            socket.close();
+          }
+        } catch (error) {
+          console.error("Error parsing progress data:", error);
         }
       };
+
+      socket.onerror = (err) => {
+        console.error("⚠️ WebSocket error:", err);
+        setIsProcessing(true);
+      };
+
+      socket.onclose = () => {
+        setIsProcessing(false);
+        setTIsProcessing(true);
+        console.log("❌ WebSocket closed");
+        console.log("Progress Data", progressData)
+        if (!progressData) {
+          clearInterval(keepAliveInterval);
+          // setIsProcessing(false);
+          // Attempt reconnection if attempts left
+          if (reconnectAttempts < RECONNECT_LIMIT) {
+            reconnectAttempts++;
+            // setIsProcessing(true);
+            console.log(`🔄 Reconnecting... attempt ${reconnectAttempts}`);
+            setTimeout(connectWebSocket, 3000); // Retry after 3 seconds
+          } else {
+            console.error("❌ Max reconnection attempts reached");
+          }
+        };
       }
 
+    };
+
+    try {
+      setIsProcessing(true);
+      reconnectAttempts = 0;
+      connectWebSocket();
+
+      // Wait briefly to ensure connection is open (optional but good practice)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const username = localStorage.getItem("username") || "unknown_user";
+
+      const formData = new FormData();
+      formData.append("file", localFiles[0]);
+      formData.append("student_class", className);
+      formData.append("subject", subject);
+      formData.append("curriculum", curriculum);
+      formData.append("username", username);
+      formData.append("connection_id", connectionId);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
+
+      const uploadResponse = await fetch("https://llm.edusmartai.com/api/upload/", {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+        headers: {
+          'X-Connection-Id': connectionId,
+          'X-Timeout': '120000'
+        }
+      });
+
+      clearTimeout(timeoutId);
+
+
+      setIsProcessing(true);
+
+
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed with status ${uploadResponse.status}`);
+        setIsProcessing(true);
+      }
+
+      const uploadData = await uploadResponse.json();
+      console.log("✅ Upload response:", uploadData);
+      if (uploadData.status === "success") {
+        setIsProcessing(false);
+      }
+
+
+
+    } catch (error) {
+      console.error("❌ Upload error:", error);
+      setIsProcessing(true);
+
+      if (error.name === 'AbortError') {
+
+        console.warn("⚠️ Upload timeout - connection is kept alive for possible retry");
+      } else {
+
+        console.error("⚠️ An error occurred:", error.message);
+      }
+    } finally {
+      setIsProcessing(true);
+
+      // Do not forcibly close socket here; let server or completion handle it
+    }
   };
 
-  try {
-    setIsProcessing(true);
-    reconnectAttempts = 0;
-    connectWebSocket();
-
-    // Wait briefly to ensure connection is open (optional but good practice)
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const username = localStorage.getItem("username") || "unknown_user";
-
-    const formData = new FormData();
-    formData.append("file", localFiles[0]);
-    formData.append("student_class", className);
-    formData.append("subject", subject);
-    formData.append("curriculum", curriculum);
-    formData.append("username", username);
-    formData.append("connection_id", connectionId);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
-
-    const uploadResponse = await fetch("https://llm.edusmartai.com/api/upload/", {
-      method: "POST",
-      body: formData,
-      signal: controller.signal,
-      headers: {
-        'X-Connection-Id': connectionId,
-        'X-Timeout': '120000'
-      }
-    });
-
-    clearTimeout(timeoutId);
-    
-
-    setIsProcessing(true);
-    
-
-
-    if (!uploadResponse.ok) {
-      throw new Error(`Upload failed with status ${uploadResponse.status}`);
-      setIsProcessing(true);
-    }
-
-    const uploadData = await uploadResponse.json();
-    console.log("✅ Upload response:", uploadData);
-if (uploadData.status === "success") {
-      setIsProcessing(false);
-    }
-
-  
-
-  } catch (error) {
-    console.error("❌ Upload error:", error);
-    setIsProcessing(true);
-
-    if (error.name === 'AbortError') {
-       
-      console.warn("⚠️ Upload timeout - connection is kept alive for possible retry");
-    } else {
-       
-      console.error("⚠️ An error occurred:", error.message);
-    }
-  } finally {
-    setIsProcessing(true);
-
-    // Do not forcibly close socket here; let server or completion handle it
-  }
-};
-
-console.log("------------------------------",isProcessing)
+  console.log("------------------------------", isProcessing)
 
 
 
@@ -347,7 +349,7 @@ console.log("------------------------------",isProcessing)
     !selectedSubject ||
     !selectedCurriculum ||
     localFiles.length === 0 ||
-    Object.keys(uploadResults).length === 0; // Add this condition
+    Object.keys(uploadResults).length === 0;
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
@@ -745,10 +747,17 @@ console.log("------------------------------",isProcessing)
         </Button>
 
         <div className="relative group inline-block">
-          <Button
+
+      
+
+
+          {
+  tisProcessing ? (
+   <Button
             variant="outline"
             onClick={handleChat}
-            disabled={isChatDisabled}
+            // disabled={isChatDisabled}
+
             className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
         ${isChatDisabled
                 ? "opacity-50 cursor-not-allowed"
@@ -757,6 +766,23 @@ console.log("------------------------------",isProcessing)
           >
             Chat with us
           </Button>
+  ) : (
+       <Button
+            variant="outline"
+            onClick={handleChat}
+            disabled={isChatDisabled}
+
+            className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
+        ${isChatDisabled
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-blue-400"}
+      `}
+          >
+            Chat with us
+          </Button>
+  )
+}
+
 
           {/* Tooltip only shows if disabled */}
           {isChatDisabled && (
