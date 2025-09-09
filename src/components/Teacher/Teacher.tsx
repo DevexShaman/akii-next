@@ -10,7 +10,6 @@ import {
   setClass,
   setSubject,
   setCurriculum,
-  processFiles,
   resetUpload,
   clearUploadResults,
 } from "@/store/slices/teacherSlice";
@@ -50,6 +49,7 @@ const Teacher = () => {
   const selectedSubject = teacher.subject;
   const selectedCurriculum = teacher.curriculum;
   const [localFiles, setLocalFiles] = useState<File[]>([]);
+  
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState({
     class: false,
@@ -244,7 +244,7 @@ const handleSubmit = async () => {
 
     const uploadData = await uploadResponse.json();
     console.log("✅ Upload response:", uploadData);
-if (uploadData.status === "success" && !uploadSuccessful) {
+if (uploadData.status === "success") {
       setIsProcessing(false);
     }
 
