@@ -160,7 +160,7 @@ const Teacher = () => {
           // You can dispatch this progress update to Redux here
           // dispatch(setUploadProgress(progressData.progress));
 
-          if (progressDataRes.status === "vector_storage_completed") {
+          if (progressDataRes.status === "success ") {
             console.log("✅ Vector storage completed, closing WebSocket");
             setIsProcessing(false);
             progressData.current = progressData
