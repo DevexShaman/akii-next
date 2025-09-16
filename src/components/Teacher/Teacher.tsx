@@ -31,6 +31,7 @@ import {
   XCircle, ChevronUp,Folder
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { button } from "framer-motion/client";
 
 
 const Teacher = () => {
@@ -39,11 +40,13 @@ const Teacher = () => {
 
 
   const [selectedFileFromHistory, setSelectedFileFromHistory] = useState<File | null>(null);
+  const [isFileFromHistory, setIsFileFromHistory] = useState(false);
 
 
-  const handleSelectFileFromHistory = (fileName: string) => {
-  // Create a mock file object with the selected file name
-  // In a real implementation, you might need to fetch the actual file
+const handleSelectFileFromHistory = (fileName: string) => {
+  setIsFileFromHistory(true); // Mark as from history
+  
+  // Create a mock file object
   const mockFile = new File([], fileName, {
     type: getFileTypeFromName(fileName),
     lastModified: Date.now(),
@@ -52,7 +55,6 @@ const Teacher = () => {
   setSelectedFileFromHistory(mockFile);
   setLocalFiles([mockFile]);
   
-  // Show success message
   toast.success(`"${fileName}" selected from previous files`, {
     position: "top-right",
     autoClose: 3000,
@@ -120,55 +122,42 @@ const getFileTypeFromName = (fileName: string): string => {
     { fileName: string; error: string }[]
   >([]);
 
-  // const onDrop = useCallback(
-  //   (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-  //     setLocalFiles(acceptedFiles.slice(0, 1)); // Only take the first file
-  //     const newFileErrors = fileRejections.map((rejection) => ({
-  //       fileName: rejection.file.name,
-  //       error: rejection.errors[0].message,
-  //     }));
-
-  //     setFileErrors(newFileErrors); // Replace errors
-
-  //   },
-  //   []
-  // );
-
-
-  //22
-
-  const onDrop = useCallback(
+ const onDrop = useCallback(
   (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+    setIsFileFromHistory(false); // Mark as new upload
+    
     // Check if file already exists in folders
     const fileName = acceptedFiles[0]?.name;
     const fileExists = folders.includes(fileName);
     
     if (fileExists) {
-      // Show toast notification
-      toast.error(`"${fileName}" already exists in your Previous Files`);
+      toast.error(`"${fileName}" already exists in your Previous Files`, {
+        position: "top-right",
+        autoClose: 5000,
+      });
       
-      // Clear any selected files
       setLocalFiles([]);
       setFileErrors([]);
       return;
     }
     
-    setLocalFiles(acceptedFiles.slice(0, 1)); // Only take the first file
+    setLocalFiles(acceptedFiles.slice(0, 1));
     const newFileErrors = fileRejections.map((rejection) => ({
       fileName: rejection.file.name,
       error: rejection.errors[0].message,
     }));
-
-    setFileErrors(newFileErrors); // Replace errors
+    setFileErrors(newFileErrors);
   },
-  [folders] // Add folders as dependency
+  [folders]
 );
 
 
-  const handleRemoveFile = () => {
-    setLocalFiles([]);
-    setFileErrors([]);
-  };
+const handleRemoveFile = () => {
+  setLocalFiles([]);
+  setFileErrors([]);
+  setIsFileFromHistory(false); // Reset the flag
+  setSelectedFileName(null); // Also reset selected file name if you have this state
+};
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -922,39 +911,44 @@ const getFileTypeFromName = (fileName: string): string => {
       </AnimatePresence>
 
       <div className="flex gap-4 justify-center pt-4 mob-block">
-        <Button
-          onClick={handleSubmit}
-          disabled={isProcessing || localFiles.length === 0}
-          className="cursor-pointer px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
+        {isFileFromHistory ? (
+ <button className="cursor-not-allowed opacity-70 px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all "
+  >Upload & Process</button>
+) : (
+   <Button
+    onClick={handleSubmit}
+    disabled={isProcessing || localFiles.length === 0}
+    className="cursor-pointer px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
+  >
+    {isProcessing ? (
+      <span className="flex items-center ">
+        <svg
+          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
         >
-          {isProcessing ? (
-            <span className="flex items-center ">
-              <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-              </svg>
-              Processing...
-            </span>
-          ) : (
-            "Upload & Process"
-          )}
-        </Button>
+          <circle
+            className="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+          ></circle>
+          <path
+            className="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        Processing...
+      </span>
+    ) : (
+      "Upload & Process"
+    )}
+  </Button>
+)}
 
         <Button
           variant="outline"
