@@ -673,7 +673,7 @@ const Teacher = () => {
           )}
         </button>
       </div>
-    )}
+    )} 
   </motion.div>
 </div>
 
