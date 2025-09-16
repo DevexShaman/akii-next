@@ -21,6 +21,9 @@ interface UploadState {
       existing_id?: string;
     };
   };
+  folders: string[];
+  foldersLoading: boolean;
+  foldersError: string | null;
 }
 
 const initialState: UploadState = {
@@ -32,7 +35,24 @@ const initialState: UploadState = {
   ocrResults: {},
   progress: 0,
   uploadResults: {},
+  folders: [],
+  foldersLoading: false,
+  foldersError: null,
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 export const processFiles = createAsyncThunk(
   "teacher/processFiles",
@@ -111,6 +131,94 @@ export const processFiles = createAsyncThunk(
   }
 );
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export const listFolders = createAsyncThunk(
+  "teacher/listFolders",
+  async (_, { rejectWithValue }) => {
+    try {
+      let username = localStorage.getItem("username");
+      if (typeof window !== "undefined") {
+        username = localStorage.getItem("username");
+      }
+
+      const formData = new FormData();
+      formData.append("username", username);
+
+      const response = await apiPost(`/list-folders/`, formData);
+
+      return response.folders || [];
+    } catch (error: unknown) {
+      console.error("List folders error:", error);
+      let errorMessage = "Failed to fetch folders";
+      if (error.response) {
+        errorMessage =
+          error.response.data?.detail ||
+          error.response.statusText ||
+          `Server error: ${error.response.status}`;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const teacherSlice = createSlice({
   name: "teacher",
   initialState,
@@ -131,6 +239,11 @@ const teacherSlice = createSlice({
     clearUploadResults: (state) => {
       state.uploadResults = {};
     },
+
+    setFolders: (state, action: PayloadAction<string[]>) => {
+      state.folders = action.payload;
+       console.log("payload", action.payload);
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -150,8 +263,22 @@ const teacherSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload as string;
         state.progress = 0;
-      });
-  },
+      })
+  
+      .addCase(listFolders.pending, (state) => {
+        state.foldersLoading = true;
+        state.foldersError = null;
+      })
+    .addCase(listFolders.fulfilled, (state, action) => {
+      state.foldersLoading = false;
+      state.folders = action.payload;
+      })
+    .addCase(listFolders.rejected, (state, action) => {
+      state.foldersLoading = false;
+      state.foldersError = action.payload as string;
+    });
+},
+  
 });
 
 export const {
@@ -161,6 +288,7 @@ export const {
   resetUpload,
   setProgress,
   clearUploadResults,
+  setFolders,
 } = teacherSlice.actions;
 
 export default teacherSlice.reducer;

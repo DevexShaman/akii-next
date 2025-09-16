@@ -12,9 +12,11 @@ import {
   setCurriculum,
   resetUpload,
   clearUploadResults,
+  listFolders,
 } from "@/store/slices/teacherSlice";
 import Button from "@/components/UI/Button";
 import Progress from "@/components/UI/Progress";
+import { toast } from "react-hot-toast";
 import {
   FileText,
   X,
@@ -26,9 +28,10 @@ import {
   LayoutGrid,
   CheckCircle,
   AlertCircle,
-  XCircle,
+  XCircle, ChevronUp,Folder
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
 
 const Teacher = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,7 +44,19 @@ const Teacher = () => {
     error,
     progress,
     uploadResults,
+    folders,
+    foldersLoading,
+    foldersError
   } = useSelector((state: RootState) => state.teacher);
+  const [visibleFiles, setVisibleFiles] = useState(3);
+
+  useEffect(() => {
+    dispatch(listFolders());
+  }, [dispatch]);
+
+
+
+   
 
   const teacher = useAppSelector(state => state.teacher)
 
@@ -72,18 +87,50 @@ const Teacher = () => {
     { fileName: string; error: string }[]
   >([]);
 
-  const onDrop = useCallback(
-    (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-      setLocalFiles(acceptedFiles.slice(0, 1)); // Only take the first file
-      const newFileErrors = fileRejections.map((rejection) => ({
-        fileName: rejection.file.name,
-        error: rejection.errors[0].message,
-      }));
+  // const onDrop = useCallback(
+  //   (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+  //     setLocalFiles(acceptedFiles.slice(0, 1)); // Only take the first file
+  //     const newFileErrors = fileRejections.map((rejection) => ({
+  //       fileName: rejection.file.name,
+  //       error: rejection.errors[0].message,
+  //     }));
 
-      setFileErrors(newFileErrors); // Replace errors
-    },
-    []
-  );
+  //     setFileErrors(newFileErrors); // Replace errors
+
+  //   },
+  //   []
+  // );
+
+
+  //22
+
+  const onDrop = useCallback(
+  (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+    // Check if file already exists in folders
+    const fileName = acceptedFiles[0]?.name;
+    const fileExists = folders.includes(fileName);
+    
+    if (fileExists) {
+      // Show toast notification
+      toast.error(`"${fileName}" already exists in your Previous Files`);
+      
+      // Clear any selected files
+      setLocalFiles([]);
+      setFileErrors([]);
+      return;
+    }
+    
+    setLocalFiles(acceptedFiles.slice(0, 1)); // Only take the first file
+    const newFileErrors = fileRejections.map((rejection) => ({
+      fileName: rejection.file.name,
+      error: rejection.errors[0].message,
+    }));
+
+    setFileErrors(newFileErrors); // Replace errors
+  },
+  [folders] // Add folders as dependency
+);
+
 
   const handleRemoveFile = () => {
     setLocalFiles([]);
@@ -491,6 +538,144 @@ const Teacher = () => {
           </motion.div>
         </div>
       </motion.div>
+
+
+   {/* <div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mb-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Folder className="h-6 w-6 text-indigo-600 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-800">Previous Files</h2>
+              <span className="ml-2 bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full">
+                {folders.length}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <AnimatePresence>
+              {folders.map((folder, index) => (
+
+
+               
+              
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group cursor-pointer"
+                  
+                >
+                  <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md">
+                    <div className="flex items-center justify-center mb-3">
+                      <div className="relative">
+                        <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
+                        <div className="absolute inset-0 bg-indigo-100 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <h3 className="font-medium text-gray-800 text-sm truncate  group-hover:text-indigo-800 transition-colors">
+                        {folder}
+                      </h3>
+                      
+                     
+                      
+                     
+                      
+                     
+                    </div>
+
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          
+        </motion.div>
+      </div> */}
+
+<div>
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5 }}
+    className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mb-6"
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center">
+        <Folder className="h-6 w-6 text-indigo-600 mr-2" />
+        <h2 className="text-xl font-semibold text-gray-800">Previous Files</h2>
+        <span className="ml-2 bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full">
+          {folders.length}
+        </span>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <AnimatePresence>
+        {folders.slice(0, visibleFiles).map((folder, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ delay: index * 0.1 }}
+            className="group cursor-pointer"
+            // onClick={() => handleFolderClick(folder)}
+          >
+            <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md">
+              <div className="flex items-center justify-center mb-3">
+                <div className="relative">
+                  <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
+                  <div className="absolute inset-0 bg-indigo-100 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <h3 className="font-medium text-gray-800 text-sm truncate group-hover:text-indigo-800 transition-colors">
+                  {folder}
+                </h3>
+              </div>
+
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div>
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+
+    {folders.length > 3 && (
+      <div className="mt-6 text-center">
+        <button
+          onClick={() => setVisibleFiles(visibleFiles === 3 ? folders.length : 3)}
+          className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+        >
+          {visibleFiles === 3 ? (
+            <>
+              Show More Files
+              <ChevronDown className="ml-2 h-4 w-4" />
+            </>
+          ) : (
+            <>
+              Show Less
+              <ChevronUp className="ml-2 h-4 w-4" />
+            </>
+          )}
+        </button>
+      </div>
+    )}
+  </motion.div>
+</div>
 
       {fileErrors.length > 0 && (
         <motion.div

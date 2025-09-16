@@ -24,7 +24,7 @@ interface LoginFormValues {
 }
 
 const AuthComponent = () => {
-  const [isSignUp, setIsSignUp] = useState(true);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState("");
   const [rememberMe, setRememberMe] = useState(true);
