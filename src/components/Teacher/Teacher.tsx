@@ -42,6 +42,53 @@ const Teacher = () => {
   const [selectedFileFromHistory, setSelectedFileFromHistory] = useState<File | null>(null);
   const [isFileFromHistory, setIsFileFromHistory] = useState(false);
 
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+const [deleteError, setDeleteError] = useState<string | null>(null);
+
+
+const handleDeleteFile = async (folderName: string) => {
+  setDeleteLoading(folderName);
+  setDeleteError(null);
+  
+  try {
+    const username = localStorage.getItem("username") || "unknown_user";
+    const formData = new FormData();
+    formData.append("username", username);
+    formData.append("folder_name", folderName);
+    
+    const response = await fetch("https://llm.edusmartai.com/api/delete-folder/", {
+      method: "DELETE",
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || "Failed to delete file");
+    }
+    
+    const result = await response.json();
+    
+    // Show success message
+    toast.success(`"${folderName}" deleted successfully`);
+    
+    // Refresh the folders list
+    dispatch(listFolders());
+    
+    // If the deleted file was currently selected, clear it
+    if (selectedFileName === folderName) {
+      setLocalFiles([]);
+      setIsFileFromHistory(false);
+      setSelectedFileName(null);
+    }
+    
+  } catch (error) {
+    console.error("Delete error:", error);
+    setDeleteError(error.message);
+    toast.success(`Failed to delete "${folderName}": ${error.message}`);
+  } finally {
+    setDeleteLoading(null);
+  }
+};
 
 const handleSelectFileFromHistory = (fileName: string) => {
   setIsFileFromHistory(true); // Mark as from history
@@ -55,10 +102,7 @@ const handleSelectFileFromHistory = (fileName: string) => {
   setSelectedFileFromHistory(mockFile);
   setLocalFiles([mockFile]);
   
-  toast.success(`"${fileName}" selected from previous files`, {
-    position: "top-right",
-    autoClose: 3000,
-  });
+  toast.success(`"${fileName}" selected from previous files`);
 };
 
 const getFileTypeFromName = (fileName: string): string => {
@@ -131,10 +175,7 @@ const getFileTypeFromName = (fileName: string): string => {
     const fileExists = folders.includes(fileName);
     
     if (fileExists) {
-      toast.error(`"${fileName}" already exists in your Previous Files`, {
-        position: "top-right",
-        autoClose: 5000,
-      });
+      toast.error(`"${fileName}" already exists in your Previous Files`);
       
       setLocalFiles([]);
       setFileErrors([]);
@@ -562,69 +603,7 @@ const handleRemoveFile = () => {
       </motion.div>
 
 
-   {/* <div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mb-6"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center">
-              <Folder className="h-6 w-6 text-indigo-600 mr-2" />
-              <h2 className="text-xl font-semibold text-gray-800">Previous Files</h2>
-              <span className="ml-2 bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full">
-                {folders.length}
-              </span>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <AnimatePresence>
-              {folders.map((folder, index) => (
-
-
-               
-              
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="group cursor-pointer"
-                  
-                >
-                  <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md">
-                    <div className="flex items-center justify-center mb-3">
-                      <div className="relative">
-                        <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
-                        <div className="absolute inset-0 bg-indigo-100 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <h3 className="font-medium text-gray-800 text-sm truncate  group-hover:text-indigo-800 transition-colors">
-                        {folder}
-                      </h3>
-                      
-                     
-                      
-                     
-                      
-                     
-                    </div>
-
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-
-          
-        </motion.div>
-      </div> */}
 
 <div>
   <motion.div
@@ -644,7 +623,7 @@ const handleRemoveFile = () => {
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-     <AnimatePresence>
+    <AnimatePresence>
     {folders.slice(0, visibleFiles).map((folder, index) => (
       <motion.div
         key={index}
@@ -652,10 +631,32 @@ const handleRemoveFile = () => {
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
         transition={{ delay: index * 0.1 }}
-        className="group cursor-pointer"
-        onClick={() => handleSelectFileFromHistory(folder)}
+        className="group cursor-pointer relative"
       >
-        <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md">
+        <div 
+          className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md"
+          onClick={() => handleSelectFileFromHistory(folder)}
+        >
+          {/* Delete button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent triggering the card click
+              handleDeleteFile(folder);
+            }}
+            disabled={deleteLoading === folder}
+            className="absolute top-2 right-2 p-1 bg-red-100 text-red-600 rounded-full   "
+            title="Delete file"
+          >
+            {deleteLoading === folder ? (
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <X className="h-4 w-4" />
+            )}
+          </button>
+          
           <div className="flex items-center justify-center mb-3">
             <div className="relative">
               <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
@@ -669,7 +670,7 @@ const handleRemoveFile = () => {
             </h3>
           </div>
 
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div>
+          {/* <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div> */}
         </div>
       </motion.div>
     ))}
