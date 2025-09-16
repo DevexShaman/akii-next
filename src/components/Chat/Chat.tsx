@@ -163,7 +163,7 @@ const Chat = () => {
               BACK
             </motion.button>
 
-            <motion.button
+            {/* <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsCurriculumVisible(!isCurriculumVisible)}
@@ -171,7 +171,7 @@ const Chat = () => {
             >
               <FaBook className="mr-2" />
               {isCurriculumVisible ? "Hide Details" : "Show Details"}
-            </motion.button>
+            </motion.button> */}
           </div>
         </div>
       </div>
@@ -185,7 +185,7 @@ const Chat = () => {
             exit="hidden"
             className="bg-white border-b border-gray-200"
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2  items-center">
                   <FaGraduationCap className="mr-2 text-indigo-600" />
@@ -255,7 +255,7 @@ const Chat = () => {
                   <FaBook className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 </div>
               </div>
-            </div>
+            </div> */}
           </motion.div>
         )}
       </AnimatePresence>

@@ -28,7 +28,7 @@ import {
   LayoutGrid,
   CheckCircle,
   AlertCircle,
-  XCircle, ChevronUp,Folder
+  XCircle, ChevronUp, Folder
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { button } from "framer-motion/client";
@@ -43,75 +43,69 @@ const Teacher = () => {
   const [isFileFromHistory, setIsFileFromHistory] = useState(false);
 
   const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
-const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
-const handleDeleteFile = async (folderName: string) => {
-  setDeleteLoading(folderName);
-  setDeleteError(null);
-  
-  try {
-    const username = localStorage.getItem("username") || "unknown_user";
-    const formData = new FormData();
-    formData.append("username", username);
-    formData.append("folder_name", folderName);
-    
-    const response = await fetch("https://llm.edusmartai.com/api/delete-folder/", {
-      method: "DELETE",
-      body: formData,
+  const handleDeleteFile = async (folderName: string) => {
+    setDeleteLoading(folderName);
+    setDeleteError(null);
+
+    try {
+      const username = localStorage.getItem("username") || "unknown_user";
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("folder_name", folderName);
+
+      const response = await fetch("https://llm.edusmartai.com/api/delete-folder/", {
+        method: "DELETE",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to delete file");
+      }
+
+      const result = await response.json();
+
+      // Show success message
+      toast.success(`"${folderName}" deleted successfully`);
+
+      // Refresh the folders list
+      dispatch(listFolders());
+
+
+    } catch (error) {
+      console.error("Delete error:", error);
+      setDeleteError(error.message);
+      toast.error(`Failed to delete "${folderName}": ${error.message}`);
+    } finally {
+      setDeleteLoading(null);
+    }
+  };
+
+  const handleSelectFileFromHistory = (fileName: string) => {
+    setIsFileFromHistory(true); // Mark as from history
+
+    // Create a mock file object
+    const mockFile = new File([], fileName, {
+      type: getFileTypeFromName(fileName),
+      lastModified: Date.now(),
     });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || "Failed to delete file");
-    }
-    
-    const result = await response.json();
-    
-    // Show success message
-    toast.success(`"${folderName}" deleted successfully`);
-    
-    // Refresh the folders list
-    dispatch(listFolders());
-    
-    // If the deleted file was currently selected, clear it
-    if (selectedFileName === folderName) {
-      setLocalFiles([]);
-      setIsFileFromHistory(false);
-      setSelectedFileName(null);
-    }
-    
-  } catch (error) {
-    console.error("Delete error:", error);
-    setDeleteError(error.message);
-    toast.success(`Failed to delete "${folderName}": ${error.message}`);
-  } finally {
-    setDeleteLoading(null);
-  }
-};
 
-const handleSelectFileFromHistory = (fileName: string) => {
-  setIsFileFromHistory(true); // Mark as from history
-  
-  // Create a mock file object
-  const mockFile = new File([], fileName, {
-    type: getFileTypeFromName(fileName),
-    lastModified: Date.now(),
-  });
-  
-  setSelectedFileFromHistory(mockFile);
-  setLocalFiles([mockFile]);
-  
-  toast.success(`"${fileName}" selected from previous files`);
-};
+    setSelectedFileFromHistory(mockFile);
+    setLocalFiles([mockFile]);
 
-const getFileTypeFromName = (fileName: string): string => {
-  const ext = fileName.split('.').pop()?.toLowerCase();
-  if (ext === 'pdf') return 'application/pdf';
-  if (ext === 'ppt' || ext === 'pptx') return 'application/vnd.ms-powerpoint';
-  if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'image/*';
-  return 'application/octet-stream';
-};
+    toast.success(`"${fileName}" selected from previous files`);
+  };
+
+  const getFileTypeFromName = (fileName: string): string => {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return 'application/pdf';
+    if (ext === 'ppt' || ext === 'pptx') return 'application/vnd.ms-powerpoint';
+    if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'image/*';
+    return 'application/octet-stream';
+  };
 
 
 
@@ -135,7 +129,7 @@ const getFileTypeFromName = (fileName: string): string => {
 
 
 
-   
+
 
   const teacher = useAppSelector(state => state.teacher)
 
@@ -152,6 +146,7 @@ const getFileTypeFromName = (fileName: string): string => {
     curriculum: false,
     files: false,
   });
+
   // Progress update
   // const [progressData, setProgressData] = useState(null);
   const progressData = useRef(null)
@@ -166,39 +161,39 @@ const getFileTypeFromName = (fileName: string): string => {
     { fileName: string; error: string }[]
   >([]);
 
- const onDrop = useCallback(
-  (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-    setIsFileFromHistory(false); // Mark as new upload
-    
-    // Check if file already exists in folders
-    const fileName = acceptedFiles[0]?.name;
-    const fileExists = folders.includes(fileName);
-    
-    if (fileExists) {
-      toast.error(`"${fileName}" already exists in your Previous Files`);
-      
-      setLocalFiles([]);
-      setFileErrors([]);
-      return;
-    }
-    
-    setLocalFiles(acceptedFiles.slice(0, 1));
-    const newFileErrors = fileRejections.map((rejection) => ({
-      fileName: rejection.file.name,
-      error: rejection.errors[0].message,
-    }));
-    setFileErrors(newFileErrors);
-  },
-  [folders]
-);
+  const onDrop = useCallback(
+    (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+      setIsFileFromHistory(false); // Mark as new upload
+
+      // Check if file already exists in folders
+      const fileName = acceptedFiles[0]?.name;
+      const fileExists = folders.includes(fileName);
+
+      if (fileExists) {
+        toast.error(`"${fileName}" already exists in your Previous Files`);
+
+        setLocalFiles([]);
+        setFileErrors([]);
+        return;
+      }
+
+      setLocalFiles(acceptedFiles.slice(0, 1));
+      const newFileErrors = fileRejections.map((rejection) => ({
+        fileName: rejection.file.name,
+        error: rejection.errors[0].message,
+      }));
+      setFileErrors(newFileErrors);
+    },
+    [folders]
+  );
 
 
-const handleRemoveFile = () => {
-  setLocalFiles([]);
-  setFileErrors([]);
-  setIsFileFromHistory(false); // Reset the flag
-  setSelectedFileName(null); // Also reset selected file name if you have this state
-};
+  const handleRemoveFile = () => {
+    setLocalFiles([]);
+    setFileErrors([]);
+    setIsFileFromHistory(false); // Reset the flag
+    // Also reset selected file name if you have this state
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -605,100 +600,100 @@ const handleRemoveFile = () => {
 
 
 
-<div>
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5 }}
-    className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mb-6"
-  >
-    <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center">
-        <Folder className="h-6 w-6 text-indigo-600 mr-2" />
-        <h2 className="text-xl font-semibold text-gray-800">Previous Files</h2>
-        <span className="ml-2 bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full">
-          {folders.length}
-        </span>
-      </div>
-    </div>
-
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <AnimatePresence>
-    {folders.slice(0, visibleFiles).map((folder, index) => (
-      <motion.div
-        key={index}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        transition={{ delay: index * 0.1 }}
-        className="group cursor-pointer relative"
-      >
-        <div 
-          className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md"
-          onClick={() => handleSelectFileFromHistory(folder)}
+      <div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mb-6"
         >
-          {/* Delete button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent triggering the card click
-              handleDeleteFile(folder);
-            }}
-            disabled={deleteLoading === folder}
-            className="absolute top-2 right-2 p-1 bg-red-100 text-red-600 rounded-full   "
-            title="Delete file"
-          >
-            {deleteLoading === folder ? (
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-            ) : (
-              <X className="h-4 w-4" />
-            )}
-          </button>
-          
-          <div className="flex items-center justify-center mb-3">
-            <div className="relative">
-              <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
-              <div className="absolute inset-0 bg-indigo-100 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <Folder className="h-6 w-6 text-indigo-600 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-800">Previous Files</h2>
+              <span className="ml-2 bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full">
+                {folders.length}
+              </span>
             </div>
           </div>
-          
-          <div className="text-center">
-            <h3 className="font-medium text-gray-800 text-sm truncate group-hover:text-indigo-800 transition-colors">
-              {folder}
-            </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <AnimatePresence>
+              {folders.slice(0, visibleFiles).map((folder, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group cursor-pointer relative"
+                >
+                  <div
+                    className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md"
+                    onClick={() => handleSelectFileFromHistory(folder)}
+                  >
+                    {/* Delete button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering the card click
+                        handleDeleteFile(folder);
+                      }}
+                      disabled={deleteLoading === folder}
+                      className="absolute top-2 right-2 p-1 bg-red-100 text-red-600 rounded-full   "
+                      title="Delete file"
+                    >
+                      {deleteLoading === folder ? (
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                    </button>
+
+                    <div className="flex items-center justify-center mb-3">
+                      <div className="relative">
+                        <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
+                        <div className="absolute inset-0 bg-indigo-100 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <h3 className="font-medium text-gray-800 text-sm truncate group-hover:text-indigo-800 transition-colors">
+                        {folder}
+                      </h3>
+                    </div>
+
+                    {/* <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div> */}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
-          {/* <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div> */}
-        </div>
-      </motion.div>
-    ))}
-  </AnimatePresence>
-    </div>
-
-    {folders.length > 3 && (
-      <div className="mt-6 text-center">
-        <button
-          onClick={() => setVisibleFiles(visibleFiles === 3 ? folders.length : 3)}
-          className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
-        >
-          {visibleFiles === 3 ? (
-            <>
-              Show More Files
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </>
-          ) : (
-            <>
-              Show Less
-              <ChevronUp className="ml-2 h-4 w-4" />
-            </>
+          {folders.length > 3 && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setVisibleFiles(visibleFiles === 3 ? folders.length : 3)}
+                className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+              >
+                {visibleFiles === 3 ? (
+                  <>
+                    Show More Files
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </>
+                ) : (
+                  <>
+                    Show Less
+                    <ChevronUp className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </button>
+            </div>
           )}
-        </button>
+        </motion.div>
       </div>
-    )} 
-  </motion.div>
-</div>
 
       {fileErrors.length > 0 && (
         <motion.div
@@ -913,43 +908,43 @@ const handleRemoveFile = () => {
 
       <div className="flex gap-4 justify-center pt-4 mob-block">
         {isFileFromHistory ? (
- <button className="cursor-not-allowed opacity-70 px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all "
-  >Upload & Process</button>
-) : (
-   <Button
-    onClick={handleSubmit}
-    disabled={isProcessing || localFiles.length === 0}
-    className="cursor-pointer px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
-  >
-    {isProcessing ? (
-      <span className="flex items-center ">
-        <svg
-          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          ></circle>
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          ></path>
-        </svg>
-        Processing...
-      </span>
-    ) : (
-      "Upload & Process"
-    )}
-  </Button>
-)}
+          <button className="cursor-not-allowed opacity-70 px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all "
+          >Upload & Process</button>
+        ) : (
+          <Button
+            onClick={handleSubmit}
+            disabled={isProcessing || localFiles.length === 0}
+            className="cursor-pointer px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
+          >
+            {isProcessing ? (
+              <span className="flex items-center ">
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Processing...
+              </span>
+            ) : (
+              "Upload & Process"
+            )}
+          </Button>
+        )}
 
         <Button
           variant="outline"
@@ -961,41 +956,51 @@ const handleRemoveFile = () => {
 
         <div className="relative group inline-block">
 
-      
 
 
-          {
-  tisProcessing ? (
-   <Button
+
+          {/* {
+            tisProcessing ? (
+              <Button
+                variant="outline"
+                onClick={handleChat}
+                disabled={isChatDisabled}
+
+                className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
+        ${isChatDisabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-blue-400"}
+      `}
+              >
+                Chat with uszzzz
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={handleChat}
+                disabled={isChatDisabled}
+
+                className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
+        ${isChatDisabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-blue-400"}
+      `}
+              >
+                Chat with usaaaaaa
+              </Button>
+            )
+          } */}
+
+
+          <Button
             variant="outline"
             onClick={handleChat}
             // disabled={isChatDisabled}
 
-            className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
-        ${isChatDisabled
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-blue-400"}
-      `}
+            className="px-8 py-3 text-base rounded-md text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 "
           >
             Chat with us
           </Button>
-  ) : (
-       <Button
-            variant="outline"
-            onClick={handleChat}
-            disabled={isChatDisabled}
-
-            className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
-        ${isChatDisabled
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-blue-400"}
-      `}
-          >
-            Chat with us
-          </Button>
-  )
-}
-
 
           {/* Tooltip only shows if disabled */}
           {isChatDisabled && (
