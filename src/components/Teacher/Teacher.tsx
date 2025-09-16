@@ -36,6 +36,39 @@ import { motion, AnimatePresence } from "framer-motion";
 const Teacher = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+
+
+  const [selectedFileFromHistory, setSelectedFileFromHistory] = useState<File | null>(null);
+
+
+  const handleSelectFileFromHistory = (fileName: string) => {
+  // Create a mock file object with the selected file name
+  // In a real implementation, you might need to fetch the actual file
+  const mockFile = new File([], fileName, {
+    type: getFileTypeFromName(fileName),
+    lastModified: Date.now(),
+  });
+  
+  setSelectedFileFromHistory(mockFile);
+  setLocalFiles([mockFile]);
+  
+  // Show success message
+  toast.success(`"${fileName}" selected from previous files`, {
+    position: "top-right",
+    autoClose: 3000,
+  });
+};
+
+const getFileTypeFromName = (fileName: string): string => {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') return 'application/pdf';
+  if (ext === 'ppt' || ext === 'pptx') return 'application/vnd.ms-powerpoint';
+  if (ext === 'jpg' || ext === 'jpeg' || ext === 'png') return 'image/*';
+  return 'application/octet-stream';
+};
+
+
+
   const {
     class: className,
     subject,
@@ -622,36 +655,36 @@ const Teacher = () => {
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <AnimatePresence>
-        {folders.slice(0, visibleFiles).map((folder, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ delay: index * 0.1 }}
-            className="group cursor-pointer"
-            // onClick={() => handleFolderClick(folder)}
-          >
-            <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md">
-              <div className="flex items-center justify-center mb-3">
-                <div className="relative">
-                  <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
-                  <div className="absolute inset-0 bg-indigo-100 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                </div>
-              </div>
-              
-              <div className="text-center">
-                <h3 className="font-medium text-gray-800 text-sm truncate group-hover:text-indigo-800 transition-colors">
-                  {folder}
-                </h3>
-              </div>
-
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div>
+     <AnimatePresence>
+    {folders.slice(0, visibleFiles).map((folder, index) => (
+      <motion.div
+        key={index}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ delay: index * 0.1 }}
+        className="group cursor-pointer"
+        onClick={() => handleSelectFileFromHistory(folder)}
+      >
+        <div className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md">
+          <div className="flex items-center justify-center mb-3">
+            <div className="relative">
+              <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
+              <div className="absolute inset-0 bg-indigo-100 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
             </div>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+          </div>
+          
+          <div className="text-center">
+            <h3 className="font-medium text-gray-800 text-sm truncate group-hover:text-indigo-800 transition-colors">
+              {folder}
+            </h3>
+          </div>
+
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div>
+        </div>
+      </motion.div>
+    ))}
+  </AnimatePresence>
     </div>
 
     {folders.length > 3 && (
