@@ -13,6 +13,9 @@ import {
   resetUpload,
   clearUploadResults,
   listFolders,
+  setFilePath,
+  clearFilePath,
+  getFilePath,
 } from "@/store/slices/teacherSlice";
 import Button from "@/components/UI/Button";
 import Progress from "@/components/UI/Progress";
@@ -46,8 +49,9 @@ const Teacher = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
-const [selectedFileNameFromHistory, setSelectedFileNameFromHistory] = useState<string | null>(null);
-
+  const [selectedFileNameFromHistory, setSelectedFileNameFromHistory] = useState<string | null>(null);
+  const [selectedFileInfo, setSelectedFileInfo] = useState<FilePathResponse | null>(null);
+  const [fileInfoLoading, setFileInfoLoading] = useState<string | null>(null);
 
 
 
@@ -89,23 +93,55 @@ const [selectedFileNameFromHistory, setSelectedFileNameFromHistory] = useState<s
       setDeleteLoading(null);
     }
   };
+  const handleSelectFileFromHistory = async (fileName: string) => {
+    setFileInfoLoading(fileName);
+    setSelectedFileInfo(null);
 
-const handleSelectFileFromHistory = (fileName: string) => {
-  setIsFileFromHistory(true);
-  setSelectedFileNameFromHistory(fileName);
-  
-  // Create a mock file object
-  const mockFile = new File([], fileName, {
-    type: getFileTypeFromName(fileName),
-    lastModified: Date.now(),
-  });
+    try {
+      const username = localStorage.getItem("username") || "";
 
-  setSelectedFileFromHistory(mockFile);
-  setLocalFiles([mockFile]);
+      // Dispatch the getFilePath action
+      const resultAction = await dispatch(getFilePath({ username, filename: fileName }));
 
-  toast.success(`"${fileName}" selected from previous files`);
-};
+      if (getFilePath.fulfilled.match(resultAction)) {
+        const fileInfo = resultAction.payload;
+        setSelectedFileInfo(fileInfo);
 
+        // Update Redux state with the file's class, subject, and curriculum
+        if (fileInfo.student_class) {
+          dispatch(setClass(fileInfo.student_class));
+        }
+        if (fileInfo.subject) {
+          dispatch(setSubject(fileInfo.subject));
+        }
+        if (fileInfo.curriculum) {
+          dispatch(setCurriculum(fileInfo.curriculum));
+        }
+
+        // Create a mock file object for the selected file
+        const mockFile = new File([], fileName, {
+          type: getFileTypeFromName(fileName),
+          lastModified: Date.now(),
+        });
+
+        setSelectedFileFromHistory(mockFile);
+        setLocalFiles([mockFile]);
+        setSelectedFileNameFromHistory(fileName);
+        setIsFileFromHistory(true);
+
+        toast.success(`"${fileName}" selected from previous files`);
+      } else {
+        throw new Error("Failed to get file information");
+      }
+    } catch (error) {
+      console.error("Error selecting file:", error);
+      toast.error(`Failed to load file information: ${error.message}`);
+    } finally {
+      setFileInfoLoading(null);
+    }
+  };
+
+  // Helper function to determine file type
   const getFileTypeFromName = (fileName: string): string => {
     const ext = fileName.split('.').pop()?.toLowerCase();
     if (ext === 'pdf') return 'application/pdf';
@@ -146,6 +182,7 @@ const handleSelectFileFromHistory = (fileName: string) => {
   const [localFiles, setLocalFiles] = useState<File[]>([]);
 
   const [isProcessing, setIsProcessing] = useState(false);
+   const [Isright, setIsright] = useState(false);
   const [tisProcessing, setTIsProcessing] = useState(false);
   const [errors, setErrors] = useState({
     class: false,
@@ -275,6 +312,7 @@ const handleSelectFileFromHistory = (fileName: string) => {
           if (progressDataRes.status === "success ") {
             console.log("✅ Vector storage completed, closing WebSocket");
             setIsProcessing(false);
+            
             progressData.current = progressData
 
             console.log("📩 Progress update2222222222222222:", progressData);
@@ -294,6 +332,7 @@ const handleSelectFileFromHistory = (fileName: string) => {
       socket.onclose = () => {
         setIsProcessing(false);
         setTIsProcessing(true);
+        setIsright(true);
         console.log("❌ WebSocket closed");
         console.log("Progress Data", progressData)
         if (!progressData) {
@@ -444,7 +483,7 @@ const handleSelectFileFromHistory = (fileName: string) => {
     "Grade 12",
   ];
   const subjectOptions = ["Math", "Science", "History", "English", "Art"];
-  const curriculumOptions = ["CBSE", "ICSE", "State Board", "IGCSE"];
+  const curriculumOptions = ["CBSE", "ICSE", "TNSB", "PSNB", "IGCSE"];
 
   const getFileIcon = (fileName: string) => {
     const ext = fileName.split(".").pop()?.toLowerCase();
@@ -921,7 +960,7 @@ const handleSelectFileFromHistory = (fileName: string) => {
           <Button
             onClick={handleSubmit}
             disabled={isProcessing || localFiles.length === 0}
-            className="cursor-pointer px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
+            className=" px-8 py-3 text-base rounded-sm text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 shadow-lg hover:shadow-blue-300 transition-all disabled:opacity-70"
           >
             {isProcessing ? (
               <span className="flex items-center ">
@@ -965,51 +1004,55 @@ const handleSelectFileFromHistory = (fileName: string) => {
 
 
 
+          {/* {Isright ? (<h1>true</h1>): (<h1>false</h1>)} */}
 
-          {/* {
+          {
             tisProcessing ? (
               <Button
                 variant="outline"
                 onClick={handleChat}
-                disabled={isChatDisabled}
+                // disabled={isChatDisabled}
 
-                className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
-        ${isChatDisabled
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-blue-400"}
-      `}
-              >
-                Chat with uszzzz
+                className="px-8 py-3 text-base rounded-md text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700">
+                Chat with us
               </Button>
             ) : (
-              <Button
-                variant="outline"
-                onClick={handleChat}
-                disabled={isChatDisabled}
+              <div>
 
-                className={`cursor-pointer px-8 py-3 text-base font-medium shadow-2xl border-blue-200 border-1 rounded-md
-        ${isChatDisabled
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-blue-400"}
-      `}
-              >
-                Chat with usaaaaaa
-              </Button>
+                {isFileFromHistory && selectedFileNameFromHistory ? (
+                  <Button
+                    variant="outline"
+                    onClick={handleChat}
+                    // disabled={isChatDisabled}
+
+                    className="px-8 py-3 text-base rounded-md text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 "
+                  >
+                    Chat with us
+                  </Button>
+                ) : (<Button
+                  variant="outline"
+                 
+
+                  className="px-8 cursor-not-allowed py-3 text-base rounded-md text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 "
+                >
+                  Chat with us
+                </Button>)}
+              </div>
             )
-          } */}
+          }
 
 
-{isFileFromHistory && selectedFileNameFromHistory ? (
-  <Button
-            variant="outline"
-            onClick={handleChat}
-            // disabled={isChatDisabled}
+          {/* {isFileFromHistory && selectedFileNameFromHistory ? (
+            <Button
+              variant="outline"
+              onClick={handleChat}
+              // disabled={isChatDisabled}
 
-            className="px-8 py-3 text-base rounded-md text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 "
-          >
-            Chat with usa
-          </Button>
-) : ( <Button
+              className="px-8 py-3 text-base rounded-md text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 "
+            >
+              Chat with usa
+            </Button>
+          ) : (<Button
             variant="outline"
             onClick={handleChat}
             // disabled={isChatDisabled}
@@ -1017,9 +1060,9 @@ const handleSelectFileFromHistory = (fileName: string) => {
             className="px-8 py-3 text-base rounded-md text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 "
           >
             Chat with usz
-          </Button>)}
+          </Button>)} */}
 
-         
+
 
           {/* Tooltip only shows if disabled */}
           {isChatDisabled && (
@@ -1036,7 +1079,7 @@ const handleSelectFileFromHistory = (fileName: string) => {
 
 
 
-        
+
 
 
 

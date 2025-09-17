@@ -2,6 +2,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { apiPost } from "@/components/services/api";
 
+
+
 interface UploadState {
   class: string | null;
   subject: string | null;
@@ -24,6 +26,9 @@ interface UploadState {
   folders: string[];
   foldersLoading: boolean;
   foldersError: string | null;
+  filePath: FilePathResponse | null; 
+  filePathLoading: boolean; 
+  filePathError: string | null; 
 }
 
 const initialState: UploadState = {
@@ -38,14 +43,8 @@ const initialState: UploadState = {
   folders: [],
   foldersLoading: false,
   foldersError: null,
+
 };
-
-
-
-
-
-
-
 
 
 
@@ -136,6 +135,40 @@ export const processFiles = createAsyncThunk(
 
 
 
+
+
+
+
+
+
+export const getFilePath = createAsyncThunk(
+  "teacher/getFilePath",
+  async (
+    { username, filename }: { username: string; filename: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("filename", filename);
+
+      const response = await apiPost("/get-file-path/", formData);
+      return response;
+    } catch (error: unknown) {
+      console.error("Get file path error:", error);
+      let errorMessage = "Failed to get file path";
+      if (error.response) {
+        errorMessage =
+          error.response.data?.detail ||
+          error.response.statusText ||
+          `Server error: ${error.response.status}`;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
 
 
 
@@ -276,7 +309,23 @@ const teacherSlice = createSlice({
     .addCase(listFolders.rejected, (state, action) => {
       state.foldersLoading = false;
       state.foldersError = action.payload as string;
-    });
+    })
+
+    .addCase(getFilePath.pending, (state) => {
+        state.filePathLoading = true;
+        state.filePathError = null;
+        state.filePath = null;
+      })
+      .addCase(getFilePath.fulfilled, (state, action) => {
+        state.filePathLoading = false;
+        state.filePath = action.payload;
+        console.log("-------------------",action.payload)
+      })
+      .addCase(getFilePath.rejected, (state, action) => {
+        state.filePathLoading = false;
+        state.filePathError = action.payload as string;
+        state.filePath = null;
+      });
 },
   
 });
@@ -289,6 +338,8 @@ export const {
   setProgress,
   clearUploadResults,
   setFolders,
+   setFilePath,   
+  clearFilePath,
 } = teacherSlice.actions;
 
 export default teacherSlice.reducer;
