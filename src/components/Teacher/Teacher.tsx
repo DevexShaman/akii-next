@@ -52,7 +52,35 @@ const Teacher = () => {
   const [fileInfoLoading, setFileInfoLoading] = useState<any>(null);
 
 
-
+const handleViewFile = async (fileName: string) => {
+  try {
+    const username = localStorage.getItem("username") || "";
+    
+    // First get file info to know the class, subject, and curriculum
+    const fileInfoResult = await dispatch(getFilePath({ username, filename: fileName }));
+    
+    if (getFilePath.fulfilled.match(fileInfoResult)) {
+      const fileInfo = fileInfoResult.payload;
+      
+      // Construct the URL for the open-file API
+      const params = new URLSearchParams({
+        username,
+        filename: fileName,
+        student_class: fileInfo.student_class,
+        subject: fileInfo.subject,
+        curriculum: fileInfo.curriculum
+      });
+      
+      const fileURL = `https://llm.edusmartai.com/api/open-file?${params}`;
+      
+      // Open the file in a new tab
+      window.open(fileURL, '_blank');
+    }
+  } catch (error) {
+    console.error("Error viewing file:", error);
+    toast.error("Failed to open file");
+  }
+};
 
   const handleDeleteFile = async (folderName: string) => {
     setDeleteLoading(folderName);
@@ -672,45 +700,64 @@ const Teacher = () => {
                   transition={{ delay: index * 0.1 }}
                   className="group cursor-pointer relative"
                 >
-                  <div
-                    className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md"
-                    onClick={() => handleSelectFileFromHistory(folder)}
-                  >
-                    {/* Delete button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent triggering the card click
-                        handleDeleteFile(folder);
-                      }}
-                      disabled={deleteLoading === folder}
-                      className="absolute top-2 right-2 p-1 bg-red-100 text-red-600 rounded-full   "
-                      title="Delete file"
-                    >
-                      {deleteLoading === folder ? (
-                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
-                      ) : (
-                        <X className="h-4 w-4" />
-                      )}
-                    </button>
+                 <div
+  className="relative bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-gray-200 hover:border-indigo-300 transition-all duration-200 hover:shadow-md"
+>
+  {/* Delete button */}
+  <button
+    onClick={(e) => {
+      e.stopPropagation(); // Prevent triggering the card click
+      handleDeleteFile(folder);
+    }}
+    disabled={deleteLoading === folder}
+    className="absolute top-2 right-2 p-1 bg-red-100 text-red-600 rounded-full"
+    title="Delete file"
+  >
+    {deleteLoading === folder ? (
+      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+    ) : (
+      <X className="h-4 w-4" />
+    )}
+  </button>
 
-                    <div className="flex items-center justify-center mb-3">
-                      <div className="relative">
-                        <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
-                        <div className="absolute inset-0 bg-indigo-100 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
-                      </div>
-                    </div>
+  <div className="flex items-center justify-center mb-3">
+    <div className="relative">
+      <Folder className="h-10 w-10 text-indigo-500 group-hover:text-indigo-600 transition-colors" />
+      <div className="absolute inset-0 bg-indigo-100 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity"></div>
+    </div>
+  </div>
 
-                    <div className="text-center">
-                      <h3 className="font-medium text-gray-800 text-sm truncate group-hover:text-indigo-800 transition-colors">
-                        {folder}
-                      </h3>
-                    </div>
+  <div className="text-center">
+    <h3 className="font-medium text-gray-800 text-sm truncate group-hover:text-indigo-800 transition-colors mb-3">
+      {folder}
+    </h3>
+  </div>
 
-                    {/* <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-5 rounded-lg transition-opacity"></div> */}
-                  </div>
+  {/* View File button */}
+  <div className="flex justify-center gap-2 mt-4">
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        handleSelectFileFromHistory(folder);
+      }}
+      className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition-colors"
+    >
+      Select
+    </button>
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        handleViewFile(folder);
+      }}
+      className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+    >
+      View File
+    </button>
+  </div>
+</div>
                 </motion.div>
               ))}
             </AnimatePresence>

@@ -29,6 +29,15 @@ interface UploadState {
   filePath: FilePathResponse | null; 
   filePathLoading: boolean; 
   filePathError: string | null; 
+
+  fileOpenLoading: boolean;
+  fileOpenError: string | null;
+  openedFile: {
+    fileURL: string | null;
+    filename: string | null;
+    fileExtension: string | null;
+    blob: Blob | null;
+  } | null;
 }
 
 const initialState: UploadState = {
@@ -43,6 +52,10 @@ const initialState: UploadState = {
   folders: [],
   foldersLoading: false,
   foldersError: null,
+
+   fileOpenLoading: false,
+  fileOpenError: null,
+  openedFile: null,
 
 };
 
@@ -129,6 +142,95 @@ export const processFiles = createAsyncThunk(
     }
   }
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Add to your existing teacherSlice.ts file
+
+export const openFile = createAsyncThunk(
+  "teacher/openFile",
+  async (
+    {
+      username,
+      filename,
+      student_class,
+      subject,
+      curriculum
+    }: {
+      username: string;
+      filename: string;
+      student_class: string;
+      subject: string;
+      curriculum: string;
+    },
+    { rejectWithValue }
+  ) => {
+    try {
+      const params = new URLSearchParams({
+        username,
+        filename,
+        student_class,
+        subject,
+        curriculum
+      });
+
+      const response = await fetch(`https://llm.edusmartai.com/api/open-file?${params}`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to open file: ${response.statusText}`);
+      }
+
+      // For file download, we return the blob
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const fileURL = URL.createObjectURL(blob);
+      
+      // Determine file extension for proper handling
+      const fileExtension = filename.split('.').pop()?.toLowerCase();
+      
+      return {
+        fileURL,
+        filename,
+        fileExtension,
+        blob
+      };
+    } catch (error: any) {
+      console.error("Open file error:", error);
+      let errorMessage = "Failed to open file";
+      
+      if (error.response) {
+        errorMessage =
+          error.response.data?.detail ||
+          error.response.statusText ||
+          `Server error: ${error.response.status}`;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+
+
+
+
 
 
 
@@ -325,7 +427,23 @@ const teacherSlice = createSlice({
         state.filePathLoading = false;
         state.filePathError = action.payload as string;
         state.filePath = null;
-      });
+      })
+
+
+       .addCase(openFile.pending, (state) => {
+      state.fileOpenLoading = true;
+      state.fileOpenError = null;
+      state.openedFile = null;
+    })
+    .addCase(openFile.fulfilled, (state, action) => {
+      state.fileOpenLoading = false;
+      state.openedFile = action.payload;
+    })
+    .addCase(openFile.rejected, (state, action) => {
+      state.fileOpenLoading = false;
+      state.fileOpenError = action.payload as string;
+      state.openedFile = null;
+    });
 },
   
 });
