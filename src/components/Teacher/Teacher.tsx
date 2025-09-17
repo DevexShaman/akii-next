@@ -46,6 +46,12 @@ const Teacher = () => {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
+const [selectedFileNameFromHistory, setSelectedFileNameFromHistory] = useState<string | null>(null);
+
+
+
+
+
   const handleDeleteFile = async (folderName: string) => {
     setDeleteLoading(folderName);
     setDeleteError(null);
@@ -84,20 +90,21 @@ const Teacher = () => {
     }
   };
 
-  const handleSelectFileFromHistory = (fileName: string) => {
-    setIsFileFromHistory(true); // Mark as from history
+const handleSelectFileFromHistory = (fileName: string) => {
+  setIsFileFromHistory(true);
+  setSelectedFileNameFromHistory(fileName);
+  
+  // Create a mock file object
+  const mockFile = new File([], fileName, {
+    type: getFileTypeFromName(fileName),
+    lastModified: Date.now(),
+  });
 
-    // Create a mock file object
-    const mockFile = new File([], fileName, {
-      type: getFileTypeFromName(fileName),
-      lastModified: Date.now(),
-    });
+  setSelectedFileFromHistory(mockFile);
+  setLocalFiles([mockFile]);
 
-    setSelectedFileFromHistory(mockFile);
-    setLocalFiles([mockFile]);
-
-    toast.success(`"${fileName}" selected from previous files`);
-  };
+  toast.success(`"${fileName}" selected from previous files`);
+};
 
   const getFileTypeFromName = (fileName: string): string => {
     const ext = fileName.split('.').pop()?.toLowerCase();
@@ -992,15 +999,27 @@ const Teacher = () => {
           } */}
 
 
-          <Button
+{isFileFromHistory && selectedFileNameFromHistory ? (
+  <Button
             variant="outline"
             onClick={handleChat}
             // disabled={isChatDisabled}
 
             className="px-8 py-3 text-base rounded-md text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 "
           >
-            Chat with us
+            Chat with usa
           </Button>
+) : ( <Button
+            variant="outline"
+            onClick={handleChat}
+            // disabled={isChatDisabled}
+
+            className="px-8 py-3 text-base rounded-md text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 "
+          >
+            Chat with usz
+          </Button>)}
+
+         
 
           {/* Tooltip only shows if disabled */}
           {isChatDisabled && (
@@ -1013,6 +1032,14 @@ const Teacher = () => {
             </div>
           )}
         </div>
+
+
+
+
+        
+
+
+
       </div>
     </div>
   );
