@@ -13,8 +13,6 @@ import {
   resetUpload,
   clearUploadResults,
   listFolders,
-  setFilePath,
-  clearFilePath,
   getFilePath,
 } from "@/store/slices/teacherSlice";
 import Button from "@/components/UI/Button";
@@ -42,15 +40,15 @@ const Teacher = () => {
   const router = useRouter();
 
 
-  const [selectedFileFromHistory, setSelectedFileFromHistory] = useState<File | null>(null);
+  const [selectedFileFromHistory, setSelectedFileFromHistory] = useState<any>(null);
   const [isFileFromHistory, setIsFileFromHistory] = useState(false);
 
-  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<any>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
 
-  const [selectedFileNameFromHistory, setSelectedFileNameFromHistory] = useState<string | null>(null);
-  const [selectedFileInfo, setSelectedFileInfo] = useState<FilePathResponse | null>(null);
+  const [selectedFileNameFromHistory, setSelectedFileNameFromHistory] = useState<any>(null);
+  const [selectedFileInfo, setSelectedFileInfo] = useState<any>(null);
   const [fileInfoLoading, setFileInfoLoading] = useState<string | null>(null);
 
 
