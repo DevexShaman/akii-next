@@ -44,12 +44,12 @@ const Teacher = () => {
   const [isFileFromHistory, setIsFileFromHistory] = useState(false);
 
   const [deleteLoading, setDeleteLoading] = useState<any>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<any>(null);
 
 
   const [selectedFileNameFromHistory, setSelectedFileNameFromHistory] = useState<any>(null);
   const [selectedFileInfo, setSelectedFileInfo] = useState<any>(null);
-  const [fileInfoLoading, setFileInfoLoading] = useState<string | null>(null);
+  const [fileInfoLoading, setFileInfoLoading] = useState<any>(null);
 
 
 
