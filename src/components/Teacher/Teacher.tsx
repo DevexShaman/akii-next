@@ -293,7 +293,7 @@ const handleViewFile = async (fileName: string) => {
       return;
     }
     if (!className || !subject || !curriculum) {
-      alert("Please select class, subject, and curriculum");
+      toast.error("Please select class, subject, and curriculum");
       return;
     }
 
@@ -359,6 +359,7 @@ const handleViewFile = async (fileName: string) => {
         setIsProcessing(false);
         setTIsProcessing(true);
         setIsright(true);
+        toast.success("Uploaded & Processed")
         console.log("❌ WebSocket closed");
         console.log("Progress Data", progressData)
         if (!progressData) {
@@ -682,7 +683,7 @@ const handleViewFile = async (fileName: string) => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center">
               <Folder className="h-6 w-6 text-indigo-600 mr-2" />
-              <h2 className="text-xl font-semibold text-gray-800">Previous Files</h2>
+              <h2 className="text-xl font-semibold text-gray-800">Existing Files</h2>
               <span className="ml-2 bg-indigo-100 text-indigo-800 text-xs px-2 py-0.5 rounded-full">
                 {folders.length}
               </span>
