@@ -407,7 +407,7 @@ export default function VoiceAssistant() {
         else if (typeof event.data === "string") {
           try {
             const message = JSON.parse(event.data);
-            console.log("[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[object]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",message)
+            console.log("[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[object]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]", message)
             setMessages((prev) => [...prev, event.data]);
             if (message.essay_id) {
               setEssayId(message.essay_id);
@@ -572,6 +572,81 @@ export default function VoiceAssistant() {
     playing: "Assistant is speaking...",
     error: "Connection error",
   };
+
+
+
+
+
+
+
+
+  const groupConsecutiveUserMessages = (messages) => {
+    const grouped = [];
+    let currentUserGroup = [];
+
+    messages.forEach((msg, index) => {
+      try {
+        const messageData = typeof msg === "string" ? JSON.parse(msg) : msg;
+
+        if (messageData.user_message !== undefined) {
+          // Collect consecutive user messages (including empty/whitespace ones)
+          currentUserGroup.push({
+            message: messageData.user_message,
+            raw: msg,
+            index
+          });
+        } else {
+          // If we have collected user messages, add them as a group
+          if (currentUserGroup.length > 0) {
+            grouped.push({
+              type: 'user_group',
+              userMessages: currentUserGroup
+            });
+            currentUserGroup = [];
+          }
+
+          // Add non-user message
+          grouped.push({
+            type: 'single',
+            raw: msg,
+            messageData,
+            index
+          });
+        }
+      } catch (error) {
+        // Handle parsing errors
+        if (currentUserGroup.length > 0) {
+          grouped.push({
+            type: 'user_group',
+            userMessages: currentUserGroup
+          });
+          currentUserGroup = [];
+        }
+
+        grouped.push({
+          type: 'error',
+          raw: msg,
+          index
+        });
+      }
+    });
+
+    // Don't forget to add any remaining user messages
+    if (currentUserGroup.length > 0) {
+      grouped.push({
+        type: 'user_group',
+        userMessages: currentUserGroup
+      });
+    }
+
+    return grouped;
+  };
+
+
+
+
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 flex flex-col items-center justify-center p-4">
@@ -906,315 +981,488 @@ export default function VoiceAssistant() {
             <h1 className="text-black text-xl font-bold mb-4">Conversation</h1>
 
             <div className="space-y-4">
-              {messages.map((msg, index) => {
-                let messageData;
-                let messageType;
-                let messageContent;
-
-
-                try {
-                  // Parse the message
-                  messageData = typeof msg === "string" ? JSON.parse(msg) : msg;
-                  messageType = messageData.type;
-                  // Handle different message types
-                  if (messageType === "ai_response" || messageType === "transcribed_text") {
-                    messageContent = messageData.text || messageData.message || msg;
-                  } else if (messageType === "feedback") {
-                    // Parse the data field for feedback messages
-
-                    messageContent = messageData.data ? safeParseData(messageData.data) : null;
-
-                  } else {
-                    messageContent = msg;
-                  }
-                } catch (error) {
-                  console.error("Error parsing message:", error);
+              {groupConsecutiveUserMessages(messages).map((group, groupIndex) => {
+                if (group.type === 'user_group') {
+                  // Render grouped consecutive user messages in one div
                   return (
-                    <div key={index} className="flex justify-start">
-                      <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
-                        <p className="text-red-500 text-sm">Error parsing message</p>
-                        <p className="text-black text-sm mt-1">{msg}</p>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // Render based on message type
-                if (messageType === "ai_response") {
-                  return (
-                    <div key={index} className="flex justify-start">
-                      <div className="bg-blue-100 rounded-lg p-3 max-w-xs md:max-w-md">
-                        <div className="flex items-center mb-1">
-                          <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">AI</span>
-                          <span className="text-xs text-gray-500 ml-2">Assistant</span>
-                        </div>
-                        <p className="text-black">{JSON.parse(messageContent).data}</p>
-
-                      </div>
-                    </div>
-                  );
-                }
-                else if (messageData.user_message ) {
-                  return (
-                    <div key={index} className="flex justify-end">
+                    <div key={`user-group-${groupIndex}`} className="flex justify-end">
                       <div className="bg-green-100 rounded-lg p-3 max-w-xs md:max-w-md">
                         <div className="flex items-center mb-1 justify-end">
                           <span className="text-xs text-gray-500 mr-2">You</span>
                           <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Voice</span>
                         </div>
-                        {/* <p className="text-black">{JSON.parse(messageContent).data}</p> */}
-                        <p className="text-black">{messageData.user_message}</p>
+                        <div className="text-black">
+                          {group.userMessages
+                            .map((userMsg) => userMsg.message || '') // Handle null/undefined messages
+                            .join(' ') // Join all messages with space
+                            .trim() || 'Voice detected'} {/* Fallback if all messages are empty */}
+                        </div>
                       </div>
                     </div>
                   );
-                }
-                else if (messageType === "feedback" && messageContent) {
-                  return (
-                    <div key={index} className="flex justify-center my-6">
-                      <div className="bg-white shadow-md rounded-lg p-4 w-full max-w-2xl border border-gray-200 space-y-4">
-                        <div className="text-center mb-2">
-                          <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">Feedback</span>
+                } else if (group.type === 'single') {
+                  // Handle individual non-user messages (AI responses, feedback, etc.)
+                  const messageData = group.messageData;
+                  const messageType = messageData.type;
+                  let messageContent;
+
+                  if (messageType === "ai_response" || messageType === "transcribed_text") {
+                    messageContent = messageData.text || messageData.message || group.raw;
+                  } else if (messageType === "feedback") {
+                    messageContent = messageData.data ? safeParseData(messageData.data) : null;
+                  } else {
+                    messageContent = group.raw;
+                  }
+
+                  // AI Response
+                  if (messageType === "ai_response") {
+                    return (
+                      <div key={`ai-${groupIndex}`} className="flex justify-start">
+                        <div className="bg-blue-100 rounded-lg p-3 max-w-xs md:max-w-md">
+                          <div className="flex items-center mb-1">
+                            <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">AI</span>
+                            <span className="text-xs text-gray-500 ml-2">Assistant</span>
+                          </div>
+                          <p className="text-black">{JSON.parse(messageContent).data}</p>
                         </div>
+                      </div>
+                    );
+                  }
 
-                        {/*content_understanding */}
-                        {messageContent.feedback && (
-                          <div className="bg-blue-50 p-3 rounded-lg">
-                            <h2 className="text-lg text-black font-semibold mb-2">Content Understanding</h2>
-                            <p className="text-black"><strong>Score:</strong> {messageContent.feedback.content_understanding.score}</p>
-                            <p className="text-black"><strong>Explanation:</strong> {messageContent.feedback.content_understanding.explanation}</p>
-                            <p className="text-black"><strong>Evidence:</strong> {messageContent.feedback.content_understanding.evidence}</p>
-                            <div>
-
-                              <h2 className="text-lg text-black font-semibold mb-2">Detail Retention</h2>
-                              <p className="text-black"><strong>Score:</strong> {messageContent.feedback.detail_retention.score}</p>
-                              <p className="text-black"><strong>Explanation:</strong> {messageContent.feedback.detail_retention.explanation}</p>
-                              <p className="text-black"><strong>Specifics Mentioned:</strong> {messageContent.feedback.detail_retention.specifics_mentioned}</p>
-                              <p className="text-black"><strong>Approximations:</strong> {messageContent.feedback.detail_retention.approximations}</p>
-                            </div>
-                            <p className="text-black"><strong>Key points covered:</strong> {messageContent.feedback.key_points_covered}</p>
-                            <p className="text-black"><strong>Potential Missed Opportunities:</strong> {messageContent.feedback.potential_missed_opportunities}</p>
-
-
+                  // Feedback messages (keep all your existing feedback rendering code here)
+                  if (messageType === "feedback" && messageContent) {
+                    return (
+                      <div key={`feedback-${groupIndex}`} className="flex justify-center my-6">
+                        <div className="bg-white shadow-md rounded-lg p-4 w-full max-w-2xl border border-gray-200 space-y-4">
+                          <div className="text-center mb-2">
+                            <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">Feedback</span>
                           </div>
-                        )}
 
-                        {/* fluency_assessment */}
-                        {messageContent.speaking_performance && (
-                          <div className="bg-green-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Fluency Assessment</h2>
-                            <p className="text-black"><strong>Score:</strong> {messageContent.speaking_performance.fluency_assessment.scroe}</p>
-                            <p className="text-black"><strong>Analysis:</strong> {messageContent.speaking_performance.fluency_assessment.analysis}</p>
-                            <p className="text-black"><strong>Strengths:</strong> {messageContent.speaking_performance.fluency_assessment.strengths}</p>
-                            <p className="text-black"><strong>Improvement Areas:</strong> {messageContent.speaking_performance.fluency_assessment.improvement_areas}</p>
-                          </div>
-                        )}
+                          {/*content_understanding */}
+                          {messageContent.feedback && (
+                            <div className="bg-blue-50 p-3 rounded-lg">
+                              <h2 className="text-lg text-black font-semibold mb-2">Content Understanding</h2>
+                              {messageContent.feedback.content_understanding.score && (<p className="text-black"><strong>Score:</strong> {messageContent.feedback.content_understanding.score}</p>)}
+                              {messageContent.feedback.content_understanding.explanation && (<p className="text-black"><strong>Explanation:</strong> {messageContent.feedback.content_understanding.explanation}</p>)}
+                              {messageContent.feedback.content_understanding.evidence && (<p className="text-black"><strong>Evidence:</strong> {messageContent.feedback.content_understanding.evidence}</p>)}
+                              <div>
 
-                        {/* "pronunciation_assessment": */}
-                        {messageContent.speaking_performance && (
-                          <div className="bg-green-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Pronunciation Aassessment</h2>
-                            <p className="text-black"><strong>Score:</strong> {messageContent.speaking_performance.pronunciation_assessment.scroe}</p>
-                            <p className="text-black"><strong>Analysis:</strong> {messageContent.speaking_performance.pronunciation_assessment.analysis}</p>
-                            <p className="text-black"><strong>Well Prnounced Words:</strong> {messageContent.speaking_performance.pronunciation_assessment.well_prnounced_words}</p>
-                            <p className="text-black"><strong>Needs Work Words:</strong> {messageContent.speaking_performance.pronunciation_assessment.needs_work_words}</p>
-                          </div>
-                        )}
+                                <h2 className="text-lg text-black font-semibold mb-2">Detail Retention</h2>
+                                {messageContent.feedback.detail_retention.score && (<p className="text-black"><strong>Score:</strong> {messageContent.feedback.detail_retention.score}</p>)}
+                                {messageContent.feedback.detail_retention.explanation && (<p className="text-black"><strong>Explanation:</strong> {messageContent.feedback.detail_retention.explanation}</p>)}
+                                <p className="text-black"><strong>Specifics Mentioned:</strong>{messageContent.feedback.detail_retention.specifics_mentioned && (
+                                  <div className="mt-2">
+                                    <ul className="list-disc list-inside pl-2 mt-1">
+                                      {messageContent.feedback.detail_retention.specifics_mentioned.map((item: any, index: number) => (
+                                        <li key={index} className="text-sm text-gray-600">
+                                          {item}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}</p>
+                                <p className="text-black"><strong>Approximations:</strong> {messageContent.feedback.detail_retention.approximations && (
+                                  <div className="mt-2">
+
+                                    <ul className="list-disc list-inside pl-2 mt-1">
+                                      {messageContent.feedback.detail_retention.approximations.map((item: any, index: number) => (
+                                        <li key={index} className="text-sm text-gray-600">
+                                          {item}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}</p>
+                              </div>
+                              <p className="text-black"><strong>Key points covered:</strong> {messageContent.feedback.key_points_covered && (
+                                <div className="mt-2">
+
+                                  <ul className="list-disc list-inside pl-2 mt-1">
+                                    {messageContent.feedback.key_points_covered.map((item: any, index: number) => (
+                                      <li key={index} className="text-sm text-gray-600">
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}</p>
+                              <p className="text-black"><strong>Potential Missed Opportunities:</strong> {messageContent.feedback.potential_missed_opportunities && (
+                                <div className="mt-2">
+                                  <ul className="list-disc list-inside pl-2 mt-1">
+                                    {messageContent.feedback.potential_missed_opportunities.map((item: any, index: number) => (
+                                      <li key={index} className="text-sm text-gray-600">
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}</p>
 
 
-                        {messageContent.speaking_performance && (
-                          <div className="bg-green-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Grammar Assessment</h2>
-                            <p className="text-black"><strong>Score:</strong> {messageContent.speaking_performance.grammar_assessment.score}</p>
-                            <p className="text-black"><strong>Analysis:</strong> {messageContent.speaking_performance.grammar_assessment.analysis}</p>
-                            <p className="text-black"><strong>Error Examples:</strong> {messageContent.speaking_performance.grammar_assessment.error_examples}</p>
-                            <p className="text-black"><strong>Complexity Level:</strong> {messageContent.speaking_performance.grammar_assessment.complexity_level}</p>
-                          </div>
-                        )}
-
-                        {messageContent.speaking_performance && (
-                          <div className="bg-green-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Vocabulary Usage</h2>
-                            <p className="text-black"><strong>Assessment:</strong> {messageContent.speaking_performance.vocabulary_usage.assessment}</p>
-                            <p className="text-black"><strong>Effective Vocabulary:</strong> {messageContent.speaking_performance.vocabulary_usage.effective_vocabulary}</p>
-                            <p className="text-black"><strong>Vocabulary Opportunities:</strong> {messageContent.speaking_performance.vocabulary_usage.vocabulary_opportunities}</p>
-                          </div>
-                        )}
-
-
-                        {messageContent?.technical_metrics &&
-                          (messageContent.technical_metrics.speaking_rate_analysis?.trim() ||
-                            messageContent.technical_metrics.pause_analysis?.trim() ||
-                            messageContent.technical_metrics.filler_word_usage?.trim() ||
-                            messageContent.technical_metrics.prosody_evaluation?.trim()) && (
-                            <div className="bg-yellow-50 p-3 rounded-lg">
-                              <h2 className="text-lg font-semibold mb-2 text-black">Technical Metrics</h2>
-
-                              {messageContent.technical_metrics.speaking_rate_analysis?.trim() && (
-                                <p className="text-black">
-                                  <strong>Speaking Rate Analysis:</strong>{" "}
-                                  {messageContent.technical_metrics.speaking_rate_analysis}
-                                </p>
-                              )}
-
-                              {messageContent.technical_metrics.pause_analysis?.trim() && (
-                                <p className="text-black">
-                                  <strong>Pause Analysis:</strong>{" "}
-                                  {messageContent.technical_metrics.pause_analysis}
-                                </p>
-                              )}
-
-                              {messageContent.technical_metrics.filler_word_usage?.trim() && (
-                                <p className="text-black">
-                                  <strong>Filler Words Usage:</strong>{" "}
-                                  {messageContent.technical_metrics.filler_word_usage}
-                                </p>
-                              )}
-
-                              {messageContent.technical_metrics.prosody_evaluation?.trim() && (
-                                <p className="text-black">
-                                  <strong>Prosody Evaluation:</strong>{" "}
-                                  {messageContent.technical_metrics.prosody_evaluation}
-                                </p>
-                              )}
                             </div>
                           )}
 
-                        {messageContent?.detailed_suggestions &&
-                          messageContent.detailed_suggestions.length > 0 && (
-                            <div className="">
+                          {/* fluency_assessment */}
+                          {messageContent.speaking_performance && (
+                            <div className="bg-green-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Fluency Assessment</h2>
+                              {messageContent.speaking_performance.fluency_assessment.scroe &&  (<p className="text-black"><strong>Score:</strong> {messageContent.speaking_performance.fluency_assessment.scroe}</p>)}
+                              {messageContent.speaking_performance.fluency_assessment.analysis && (<p className="text-black"><strong>Analysis:</strong> {messageContent.speaking_performance.fluency_assessment.analysis}</p>)}
+                              {messageContent.speaking_performance.fluency_assessment.strengths && (<p className="text-black"><strong>Strengths:</strong> {messageContent.speaking_performance.fluency_assessment.strengths}</p>)}
+                              {messageContent.speaking_performance.fluency_assessment.improvement_areas && (<p className="text-black"><strong>Improvement Areas:</strong> {messageContent.speaking_performance.fluency_assessment.improvement_areas}</p>)}
+                            </div>
+                          )}
+
+                          {/* "pronunciation_assessment": */}
+                          {messageContent.speaking_performance && (
+                            <div className="bg-green-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Pronunciation Aassessment</h2>\
+
+                              <p className="text-black"><strong>Score:</strong> {messageContent.speaking_performance.pronunciation_assessment.scroe}</p>
+
+                              <p className="text-black"><strong>Analysis:</strong> {messageContent.speaking_performance.pronunciation_assessment.analysis}</p>
+
+
+                              <p className="text-black"><strong>Well Prnounced Words:</strong> {messageContent.speaking_performance.pronunciation_assessment.well_prnounced_words && (
+                                <div className="mt-2">
+
+                                  <ul className="list-disc list-inside pl-2 mt-1">
+                                    {messageContent.speaking_performance.pronunciation_assessment.well_prnounced_words.map((item, index) => (
+                                      <li key={index} className="text-sm text-gray-600">
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}</p>
+
+
+
+                              <p className="text-black"><strong>Needs Work Words:</strong> {messageContent.speaking_performance.pronunciation_assessment.needs_work_words && (
+                                <div className="mt-2">
+
+                                  <ul className="list-disc list-inside pl-2 mt-1">
+                                    {messageContent.speaking_performance.pronunciation_assessment.needs_work_words.map((item, index) => (
+                                      <li key={index} className="text-sm text-gray-600">
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}</p>
+                            </div>
+                          )}
+
+
+
+                          {/* "grammar_assessment": */}
+                          {messageContent.speaking_performance && (
+                            <div className="bg-green-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Grammar Assessment</h2>
+                              {messageContent.speaking_performance.grammar_assessment.score && (<p className="text-black"><strong>Score:</strong> {messageContent.speaking_performance.grammar_assessment.score}</p>)}
+                              {messageContent.speaking_performance.grammar_assessment.analysis && (<p className="text-black"><strong>Analysis:</strong> {messageContent.speaking_performance.grammar_assessment.analysis}</p>)}
+                              <p className="text-black"><strong>Error Examples:</strong> {messageContent.speaking_performance.grammar_assessment.error_examples && (
+                                <div className="mt-2">
+                                  <ul className="list-disc list-inside pl-2 mt-1">
+                                    {messageContent.speaking_performance.grammar_assessment.error_examples.map((item: any, index: number) => (
+                                      <li key={index} className="text-sm text-gray-600">
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}</p>
+                              {messageContent.speaking_performance.grammar_assessment.complexity_level  && (<p className="text-black"><strong>Complexity Level:</strong> {messageContent.speaking_performance.grammar_assessment.complexity_level}</p>)}
+                            </div>
+                          )}
+
+
+                          {/* vocabulary_usage */}
+                          {messageContent.speaking_performance && (
+                            <div className="bg-green-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Vocabulary Usage</h2>
+                              {messageContent.speaking_performance.vocabulary_usage.assessment && (<p className="text-black"><strong>Assessment:</strong> {messageContent.speaking_performance.vocabulary_usage.assessment}</p>)}
+                              <p className="text-black"><strong>Effective Vocabulary:</strong> {messageContent.speaking_performance.vocabulary_usage.effective_vocabulary && (
+                                <div className="mt-2">
+                                  <ul className="list-disc list-inside pl-2 mt-1">
+                                    {messageContent.speaking_performance.vocabulary_usage.effective_vocabulary.map((item: any, index: number) => (
+                                      <li key={index} className="text-sm text-gray-600">
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}</p>
+                              <p className="text-black"><strong>Vocabulary Opportunities:</strong> {messageContent.speaking_performance.vocabulary_usage.vocabulary_opportunities && (
+                                <div className="mt-2">
+                                  <ul className="list-disc list-inside pl-2 mt-1">
+                                    {messageContent.speaking_performance.vocabulary_usage.vocabulary_opportunities.map((item: any, index: number) => (
+                                      <li key={index} className="text-sm text-gray-600">
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}</p>
+                            </div>
+                          )}
+
+
+                          {/* speaking_clarity */}
+                          {messageContent.speaking_performance && (
+                            <div className="bg-green-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Speaking Clarity</h2>
+                              {messageContent.speaking_performance.speaking_clarity.overall_rating && (<p className="text-black"><strong>Assessment:</strong> {messageContent.speaking_performance.speaking_clarity.overall_rating}</p>)}
+                              <p className="text-black"><strong>Effective Vocabulary:</strong> {messageContent.speaking_performance.speaking_clarity.clarity_factors && (
+                                <div className="mt-2">
+                                  <ul className="list-disc list-inside pl-2 mt-1">
+                                    {messageContent.speaking_performance.speaking_clarity.clarity_factors.map((item: any, index: number) => (
+                                      <li key={index} className="text-sm text-gray-600">
+                                        {item}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}</p>
+                            </div>
+                          )}
+
+
+
+
+                          {/* detailed_suggestions  */}
+
+                          {messageContent?.detailed_suggestions &&
+                            messageContent.detailed_suggestions.length > 0 && (
+                              <div className="">
+                                <div className="space-y-3">
+                                  {messageContent.detailed_suggestions
+                                    .filter(
+                                      (item) =>
+                                        item.suggestion?.trim() &&
+                                        item.example?.trim() &&
+                                        item.improved_version?.trim()
+                                    )
+                                    .map((item: any, idx: number) => (
+                                      <div key={idx} className="bg-yellow-50 p-3 rounded-lgborder-l-4 border-yellow-400 pl-3">
+                                        <h2 className="text-lg font-semibold mb-2 text-black">{idx + 1} Detailed Suggestions </h2>
+
+                                        {item.suggestion && (<p className="text-sm text-gray-700 mt-1">
+                                          <span className="font-semibold">Suggestion:</span> {item.suggestion}
+                                        </p>)}
+
+                                        {item.example && (<p className="text-sm text-gray-700 mt-1">
+                                          <span className="font-semibold">Evidence:</span> {item.example}
+                                        </p>)}
+                                       { item.improved_version &&( <p className="text-sm text-gray-700 mt-1">
+                                          <span className="font-semibold">Impact:</span> {item.improved_version}
+                                        </p>)}
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                            )}
+
+
+
+
+
+                          {/* strengths */}
+                          {messageContent?.strengths && messageContent.strengths.length > 0 && (
+
+                            <div className="bg-yellow-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
                               <div className="space-y-3">
-                                {messageContent.detailed_suggestions
-                                  .filter(
-                                    (item) =>
-                                      item.suggestion?.trim() &&
-                                      item.example?.trim() &&
-                                      item.improved_version?.trim()
-                                  )
-                                  .map((item, idx) => (
-                                    <div key={idx} className="bg-yellow-50 p-3 rounded-lgborder-l-4 border-yellow-400 pl-3">
-                                      <h2 className="text-lg font-semibold mb-2 text-black">{idx + 1} Detailed Suggestions </h2>
-
+                                {messageContent.strengths.map((item: any, idx: number) => (
+                                  <div key={idx} className="border-l-4 border-yellow-400 pl-3">
+                                    {item.strength && (
                                       <p className="text-sm text-gray-700 mt-1">
-                                        <span className="font-semibold">Suggestion:</span> {item.suggestion}
+                                        <span className="font-semibold">Strength:</span> {item.strength}
                                       </p>
-
+                                    )}
+                                    {item.evidence && (
                                       <p className="text-sm text-gray-700 mt-1">
-                                        <span className="font-semibold">Evidence:</span> {item.example}
+                                        <span className="font-semibold">Evidence:</span> {item.evidence}
                                       </p>
+                                    )}
+                                    {item.impact && (
                                       <p className="text-sm text-gray-700 mt-1">
-                                        <span className="font-semibold">Impact:</span> {item.improved_version}
+                                        <span className="font-semibold">Impact:</span> {item.impact}
                                       </p>
-                                    </div>
-                                  ))}
+                                    )}
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           )}
-                        {messageContent?.strengths && messageContent.strengths.length > 0 && (
 
-                          <div className="bg-yellow-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Strengths</h2>
-                            <div className="space-y-3">
-                              {messageContent.strengths.map((item, idx) => (
-                                <div key={idx} className="border-l-4 border-yellow-400 pl-3">
-                                  {item.strength && (
-                                    <p className="text-sm text-gray-700 mt-1">
-                                      <span className="font-semibold">Strength:</span> {item.strength}
-                                    </p>
-                                  )}
-                                  {item.evidence && (
-                                    <p className="text-sm text-gray-700 mt-1">
-                                      <span className="font-semibold">Evidence:</span> {item.evidence}
-                                    </p>
-                                  )}
-                                  {item.impact && (
-                                    <p className="text-sm text-gray-700 mt-1">
-                                      <span className="font-semibold">Impact:</span> {item.impact}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {messageContent?.practice_recommendations && messageContent.practice_recommendations.length > 0 && (
 
-                          <div className="bg-yellow-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Practice Recommendations</h2>
-                            <div className="space-y-3">
-                              {messageContent.practice_recommendations.map((item, idx) => (
-                                <div key={idx} className="border-l-4 border-yellow-400 pl-3">
-                                  {item.activity && (
-                                    <p className="text-sm text-gray-700 mt-1">
-                                      <span className="font-semibold">Activity:</span> {item.activity}
-                                    </p>
-                                  )}
-                                  {item.purpose && (
-                                    <p className="text-sm text-gray-700 mt-1">
-                                      <span className="font-semibold">Purpose:</span> {item.purpose}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
+                          {/* technical_metrics */}
+                          {messageContent?.technical_metrics &&
+                            (messageContent.technical_metrics.speaking_rate_analysis?.trim() ||
+                              messageContent.technical_metrics.pause_analysis?.trim() ||
+                              messageContent.technical_metrics.filler_word_usage?.trim() ||
+                              messageContent.technical_metrics.prosody_evaluation?.trim()) && (
+                              <div className="bg-yellow-50 p-3 rounded-lg">
+                                <h2 className="text-lg font-semibold mb-2 text-black">Technical Metrics</h2>
+
+                                {messageContent.technical_metrics.speaking_rate_analysis?.trim() && (
+                                  <p className="text-black">
+                                    <strong>Speaking Rate Analysis:</strong>{" "}
+                                    {messageContent.technical_metrics.speaking_rate_analysis}
+                                  </p>
+                                )}
+
+                                {messageContent.technical_metrics.pause_analysis?.trim() && (
+                                  <p className="text-black">
+                                    <strong>Pause Analysis:</strong>{" "}
+                                    {messageContent.technical_metrics.pause_analysis}
+                                  </p>
+                                )}
+
+                                {messageContent.technical_metrics.filler_word_usage?.trim() && (
+                                  <p className="text-black">
+                                    <strong>Filler Words Usage:</strong>{" "}
+                                    {messageContent.technical_metrics.filler_word_usage}
+                                  </p>
+                                )}
+
+                                {messageContent.technical_metrics.prosody_evaluation?.trim() && (
+                                  <p className="text-black">
+                                    <strong>Prosody Evaluation:</strong>{" "}
+                                    {messageContent.technical_metrics.prosody_evaluation}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+
+
+
+                          {/* Overall Scores Section */}
+                          {messageContent.overall_scores && (
+                            <div className="bg-purple-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Overall Scores</h2>
+                              <ul className="list-disc list-inside">
+                              {messageContent.overall_scores.fluency && (  <p
+                                  className="text-black"><strong>Fluency:</strong> {messageContent.overall_scores.fluency}</p>)}
+                     {messageContent.overall_scores.pronunciation && (           <p
+                                  className="text-black"><strong>Pronunciation:</strong> {messageContent.overall_scores.pronunciation}</p>)}
+                               {messageContent.overall_scores.grammar && ( <p
+                                  className="text-black"><strong>Grammar:</strong> {messageContent.overall_scores.grammar}</p>)}
+                                {messageContent.overall_scores.emotion && (<p
+                                  className="text-black"><strong>Emotion:</strong> {messageContent.overall_scores.emotion}</p>)}
+                                {messageContent.overall_scores.comprehension_quality && (<p
+                                  className="text-black"><strong>Comprehension Quality:</strong> {messageContent.overall_scores.comprehension_quality}</p>)}
+                              </ul>
                             </div>
-                          </div>
-                        )}
-                        {/* Overall Scores Section */}
-                        {messageContent.overall_scores && (
-                          <div className="bg-purple-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Overall Scores</h2>
-                            <ul className="list-disc list-inside">
-                              <p
-                                className="text-black"><strong>Fluency:</strong> {messageContent.overall_scores.fluency}</p>
-                              <p
-                                className="text-black"><strong>Pronunciation:</strong> {messageContent.overall_scores.pronunciation}</p>
-                              <p
-                                className="text-black"><strong>Grammar:</strong> {messageContent.overall_scores.grammar}</p>
-                              <p
-                                className="text-black"><strong>Emotion:</strong> {messageContent.overall_scores.emotion}</p>
-                              <p
-                                className="text-black"><strong>Comprehension Quality:</strong> {messageContent.overall_scores.comprehension_quality}</p>
-                            </ul>
-                          </div>
-                        )}
-                        {messageContent.improvement_priority && (
-                          <div className="bg-purple-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Improvement Priority</h2>
-                            <ul className="list-disc list-inside">
-                              <p className="text-black"> <strong>Area: </strong>{messageContent.improvement_priority.area}</p>
-                              <p className="text-black"><strong>Reason:</strong> {messageContent.improvement_priority.reason}</p>
-                              <p className="text-black"><strong>Immediate Action:</strong> {messageContent.improvement_priority.immediate_action}</p>
-                            </ul>
-                          </div>
-                        )}
-                        {messageContent.encouragement && (
-                          <div className="bg-purple-50 p-3 rounded-lg">
-                            <h2 className="text-lg font-semibold mb-2 text-black">Encouragement</h2>
-                            <ul className="list-disc list-inside">
-                              <p
-                                className="text-black"><strong>Progress Highlight:</strong> {messageContent.encouragement.progress_highlight}</p>
-                              <p
-                                className="text-black"><strong>Motivational Message:</strong> {messageContent.encouragement.motivational_message}</p>
-                              <p
-                                className="text-black"><strong>Growth Potential:</strong> {messageContent.encouragement.growth_potential}</p>
-                            </ul>
-                          </div>
-                        )}
+                          )}
+
+
+
+
+
+                          {/* practice_recommendations */}
+
+                          {messageContent?.practice_recommendations && messageContent.practice_recommendations.length > 0 && (
+
+                            <div className="bg-yellow-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Practice Recommendations</h2>
+                              <div className="space-y-3">
+                                {messageContent.practice_recommendations.map((item: any, idx: number) => (
+                                  <div key={idx} className="border-l-4 border-yellow-400 pl-3">
+                                    {item.activity && (
+                                      <p className="text-sm text-gray-700 mt-1">
+                                        <span className="font-semibold">Activity:</span> {item.activity}
+                                      </p>
+                                    )}
+                                    {item.purpose && (
+                                      <p className="text-sm text-gray-700 mt-1">
+                                        <span className="font-semibold">Purpose:</span> {item.purpose}
+                                      </p>
+                                    )}
+                                    {item.frequency && (
+                                      <p className="text-sm text-gray-700 mt-1">
+                                        <span className="font-semibold">Frequency:</span> {item.frequency}
+                                      </p>
+                                    )}
+
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+
+
+
+
+
+
+
+
+
+
+
+                          {/* improvement_priority */}
+
+
+
+                          {messageContent.improvement_priority && (
+                            <div className="bg-purple-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Improvement Priority</h2>
+                              <ul className="list-disc list-inside">
+                                {messageContent.improvement_priority.area && (<li className="text-black"> <strong>Area: </strong>{messageContent.improvement_priority.area}</li>)}
+                                {messageContent.improvement_priority.reason && (<li className="text-black"><strong>Reason:</strong> {messageContent.improvement_priority.reason}</li>)}
+                                {messageContent.improvement_priority.immediate_action && (<li className="text-black"><strong>Immediate Action:</strong> {messageContent.improvement_priority.immediate_action}</li>)}
+                              </ul>
+                            </div>
+                          )}
+
+
+                          {/* encouragement */}
+                          {messageContent.encouragement && (
+                            <div className="bg-purple-50 p-3 rounded-lg">
+                              <h2 className="text-lg font-semibold mb-2 text-black">Encouragement</h2>
+                              <ul className="list-disc list-inside">
+                                {messageContent.encouragement.progress_highlight && (<p
+                                  className="text-black"><strong>Progress Highlight:</strong> {messageContent.encouragement.progress_highlight}</p>)}
+                                {messageContent.encouragement.motivational_message && (<p
+                                  className="text-black"><strong>Motivational Message:</strong> {messageContent.encouragement.motivational_message}</p>)}
+                                {messageContent.encouragement.growth_potential && (<p
+                                  className="text-black"><strong>Growth Potential:</strong> {messageContent.encouragement.growth_potential}</p>)}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                }
-                else {
-                  // Fallback for unknown message types
+                    );
+                  }
+
+                  // Default fallback for other message types
                   return (
-                    <div key={index} className="flex justify-start">
+                    <div key={`other-${groupIndex}`} className="flex justify-start">
                       <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
-                        <p className="text-black"></p>
+
+                      </div>
+                    </div>
+                  );
+                } else if (group.type === 'error') {
+                  // Error messages
+                  return (
+                    <div key={`error-${groupIndex}`} className="flex justify-start">
+                      <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
+                        <p className="text-red-500 text-sm">Error parsing message</p>
+                        <p className="text-black text-sm mt-1">{group.raw}</p>
                       </div>
                     </div>
                   );
                 }
+
+                return null;
               })}
             </div>
+
           </div>
         </div>
       </div>
