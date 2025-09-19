@@ -539,45 +539,34 @@ export default function VoiceAssistant() {
   };
 
 
-const handleShowResult = async () => {
-  if (!essayId) return;
+  const handleShowResult = async () => {
+    if (!essayId) return;
 
-  try {
-    setLoadingResult(true);
-    setLoadingText("Preparing your results...");
-    
-    const messages = [
-      "Preparing your results...",
-      "Analyzing your essay...",
-      "Almost there, finalizing results..."
-    ];
+    try {
+      setLoadingResult(true);
+      setLoadingText("Preparing your results...");
+      const messages = [
+        "Preparing your results...",
+        "Analyzing your essay...",
+        "Almost there, finalizing results..."
+      ];
 
-    let index = 0;
-    const textInterval = setInterval(() => {
-      index = (index + 1) % messages.length;
-      setLoadingText(messages[index]);
-    }, 5000);
+      let index = 0;
+      const textInterval = setInterval(() => {
+        index = (index + 1) % messages.length;
+        setLoadingText(messages[index]);
+      }, 5000); // every 5 seconds, update text
 
-    // This will now poll until it gets a success response
-    const result = await dispatch(fetchOverallScoring(essayId)).unwrap();
-     router.push(`/Result/assistantresult?essay_id=${essayId}`);
-    clearInterval(textInterval);
-    
-    // Check if we got the success status
-    if (result.status === 'success') {
-      router.push(`/Result/assistantresult?essay_id=${essayId}`);
-    } else {
-      throw new Error('Scoring not completed yet');
+      await dispatch(fetchOverallScoring(essayId)).unwrap();
+
+      clearInterval(textInterval);
+      router.push(`/assistantresult?essay_id=${essayId}`);
+    } catch (error) {
+      toast.error(error);
+      console.error("Failed to fetch scoring:", error);
+      setLoadingResult(false);
     }
-  } catch (error) {
-    toast.error(error.message || 'Failed to fetch scoring');
-    console.error("Failed to fetch scoring:", error);
-    setLoadingResult(false);
-  }
-};
-
-
-
+  };
 
 
   const statusColors = {
@@ -730,16 +719,7 @@ const handleShowResult = async () => {
     return grouped;
   };
 
-  const hasContent = (data) => {
-    if (!data) return false;
-    if (Array.isArray(data)) return data.length > 0;
-    if (typeof data === 'object') return Object.keys(data).length > 0;
-    if (typeof data === 'string') return data.trim().length > 0;
-    return true;
-  };
 
-  const getSafeArray = (data) => (Array.isArray(data) ? data : []);
-  const getSafeObject = (data) => (typeof data === 'object' && data !== null ? data : {});
 
 
 
@@ -1174,6 +1154,8 @@ const handleShowResult = async () => {
 
 
 
+
+
         <div className="feedback-analysis mt-6 w-full max-w-5xl mx-auto">
           {feedbackData && (
             <div className="bg-white rounded-2xl shadow-xl p-6">
@@ -1182,12 +1164,12 @@ const handleShowResult = async () => {
                 <div className="w-20 h-1 bg-blue-500 mx-auto"></div>
               </div>
 
-              {/* Overall Scores */}
-              {hasContent(feedbackData.overall_scores) && (
+              {/* Overall Scores Card */}
+              {feedbackData.overall_scores && (
                 <div className="overall-scores-card mb-8 bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl shadow-md">
                   <h3 className="text-xl font-semibold text-purple-700 mb-4 text-center">Overall Performance</h3>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    {Object.entries(getSafeObject(feedbackData.overall_scores)).map(([key, value]) => (
+                    {Object.entries(feedbackData.overall_scores).map(([key, value]) => (
                       <div key={key} className="score-item text-center p-3 bg-white rounded-lg shadow-sm">
                         <p className="text-sm text-gray-600 mb-1 capitalize">{key.replace(/_/g, ' ')}</p>
                         <p className="text-2xl font-bold text-blue-600">
@@ -1199,90 +1181,178 @@ const handleShowResult = async () => {
                 </div>
               )}
 
-              {/* Content Understanding */}
-              {hasContent(feedbackData.feedback?.content_understanding) && (
-                <div className="feedback-card mb-6 bg-blue-50 p-5 rounded-xl shadow-sm">
-                  <div className="flex items-center mb-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-blue-700">Content Understanding</h3>
-                  </div>
+          {/* Content Understanding */}
+{feedbackData.feedback?.content_understanding && (
+  <div className="feedback-card mb-6 bg-blue-50 p-5 rounded-xl shadow-sm">
+    <div className="flex items-center mb-3">
+      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold text-blue-700">Content Understanding</h3>
+    </div>
 
-                  {feedbackData.feedback.content_understanding.score && (
-                    <div className="score-badge inline-block bg-white px-3 py-1 rounded-full text-sm font-medium text-blue-600 mb-3">
-                      Score: {feedbackData.feedback.content_understanding.score}
-                    </div>
-                  )}
+    {/* Check if content_understanding is an array or object */}
+    {Array.isArray(feedbackData.feedback.content_understanding) ? (
+      // Render array format
+      feedbackData.feedback.content_understanding.map((item, index) => (
+        <div key={index} className="content-item mb-4 last:mb-0">
+          {item.score && (
+            <div className="score-badge inline-block bg-white px-3 py-1 rounded-full text-sm font-medium text-blue-600 mb-3">
+              Score: {item.score}
+            </div>
+          )}
 
-                  {feedbackData.feedback.content_understanding.explanation && (
-                    <div className="explanation-box bg-white p-3 rounded-lg mb-3">
-                      <p className="text-gray-700">{feedbackData.feedback.content_understanding.explanation}</p>
-                    </div>
-                  )}
+          {item.explanation && (
+            <div className="explanation-box bg-white p-3 rounded-lg mb-3">
+              <p className="text-gray-700">{item.explanation}</p>
+            </div>
+          )}
 
-                  {feedbackData.feedback.content_understanding.evidence && (
-                    <div className="evidence-box bg-white p-3 rounded-lg">
-                      <p className="text-sm text-gray-600"><span className="font-medium">Evidence:</span> {feedbackData.feedback.content_understanding.evidence}</p>
-                    </div>
-                  )}
-                </div>
-              )}
+          {item.evidence && (
+            <div className="evidence-box bg-white p-3 rounded-lg">
+              <p className="text-sm text-gray-600"><span className="font-medium">Evidence:</span> {item.evidence}</p>
+            </div>
+          )}
+          
+          {/* Add separator if multiple items */}
+          {index < feedbackData.feedback.content_understanding.length - 1 && (
+            <div className="border-t border-gray-200 my-4"></div>
+          )}
+        </div>
+      ))
+    ) : (
+      // Render object format
+      <>
+        {feedbackData.feedback.content_understanding.score && (
+          <div className="score-badge inline-block bg-white px-3 py-1 rounded-full text-sm font-medium text-blue-600 mb-3">
+            Score: {feedbackData.feedback.content_understanding.score}
+          </div>
+        )}
+
+        {feedbackData.feedback.content_understanding.explanation && (
+          <div className="explanation-box bg-white p-3 rounded-lg mb-3">
+            <p className="text-gray-700">{feedbackData.feedback.content_understanding.explanation}</p>
+          </div>
+        )}
+
+        {feedbackData.feedback.content_understanding.evidence && (
+          <div className="evidence-box bg-white p-3 rounded-lg">
+            <p className="text-sm text-gray-600"><span className="font-medium">Evidence:</span> {feedbackData.feedback.content_understanding.evidence}</p>
+          </div>
+        )}
+      </>
+    )}
+  </div>
+)}
 
               {/* Detail Retention */}
-              {hasContent(feedbackData.feedback?.detail_retention) && (
-                <div className="feedback-card mb-6 bg-blue-50 p-5 rounded-xl shadow-sm">
-                  <div className="flex items-center mb-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                      <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-blue-700">Detail Retention</h3>
-                  </div>
+{feedbackData.feedback?.detail_retention && (
+  <div className="feedback-card mb-6 bg-blue-50 p-5 rounded-xl shadow-sm">
+    <div className="flex items-center mb-3">
+      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold text-blue-700">Detail Retention</h3>
+    </div>
 
-                  {feedbackData.feedback.detail_retention.score && (
-                    <div className="score-badge inline-block bg-white px-3 py-1 rounded-full text-sm font-medium text-blue-600 mb-3">
-                      Score: {feedbackData.feedback.detail_retention.score}
-                    </div>
-                  )}
+    {/* Check if detail_retention is an array or object */}
+    {Array.isArray(feedbackData.feedback.detail_retention) ? (
+      // Render array format
+      feedbackData.feedback.detail_retention.map((item, index) => (
+        <div key={index} className="detail-retention-item mb-6 last:mb-0">
+          {item.score && (
+            <div className="score-badge inline-block bg-white px-3 py-1 rounded-full text-sm font-medium text-blue-600 mb-3">
+              Score: {item.score}/10
+            </div>
+          )}
 
-                  {feedbackData.feedback.detail_retention.explanation && (
-                    <div className="explanation-box bg-white p-3 rounded-lg mb-3">
-                      <p className="text-gray-700">{feedbackData.feedback.detail_retention.explanation}</p>
-                    </div>
-                  )}
+          {item.explanation && (
+            <div className="explanation-box bg-white p-3 rounded-lg mb-3">
+              <p className="text-gray-700">{item.explanation}</p>
+            </div>
+          )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {hasContent(feedbackData.feedback.detail_retention.specifics_mentioned) && (
-                      <div className="specifics-box bg-white p-3 rounded-lg">
-                        <p className="font-medium text-gray-700 mb-2 text-sm">Specifics Mentioned</p>
-                        <ul className="list-disc list-inside pl-2">
-                          {getSafeArray(feedbackData.feedback.detail_retention.specifics_mentioned).map((item, index) => (
-                            <li key={index} className="text-sm text-gray-600 mb-1">{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {item.specifics_mentioned && item.specifics_mentioned.length > 0 && (
+              <div className="specifics-box bg-white p-3 rounded-lg">
+                <p className="font-medium text-gray-700 mb-2 text-sm">Specifics Mentioned</p>
+                <ul className="list-disc list-inside pl-2">
+                  {item.specifics_mentioned.map((specific, specIndex) => (
+                    <li key={specIndex} className="text-sm text-gray-600 mb-1">{specific}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-                    {hasContent(feedbackData.feedback.detail_retention.approximations) && (
-                      <div className="approximations-box bg-white p-3 rounded-lg">
-                        <p className="font-medium text-gray-700 mb-2 text-sm">Approximations</p>
-                        <ul className="list-disc list-inside pl-2">
-                          {getSafeArray(feedbackData.feedback.detail_retention.approximations).map((item, index) => (
-                            <li key={index} className="text-sm text-gray-600 mb-1">{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+            {item.approximations && item.approximations.length > 0 && (
+              <div className="approximations-box bg-white p-3 rounded-lg">
+                <p className="font-medium text-gray-700 mb-2 text-sm">Approximations</p>
+                <ul className="list-disc list-inside pl-2">
+                  {item.approximations.map((approximation, approxIndex) => (
+                    <li key={approxIndex} className="text-sm text-gray-600 mb-1">{approximation}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+          
+          {/* Add separator if multiple items */}
+          {index < feedbackData.feedback.detail_retention.length - 1 && (
+            <div className="border-t border-gray-200 my-4"></div>
+          )}
+        </div>
+      ))
+    ) : (
+      // Render object format
+      <>
+        {feedbackData.feedback.detail_retention.score && (
+          <div className="score-badge inline-block bg-white px-3 py-1 rounded-full text-sm font-medium text-blue-600 mb-3">
+            Score: {feedbackData.feedback.detail_retention.score}/10
+          </div>
+        )}
+
+        {feedbackData.feedback.detail_retention.explanation && (
+          <div className="explanation-box bg-white p-3 rounded-lg mb-3">
+            <p className="text-gray-700">{feedbackData.feedback.detail_retention.explanation}</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {feedbackData.feedback.detail_retention.specifics_mentioned &&
+            feedbackData.feedback.detail_retention.specifics_mentioned.length > 0 && (
+              <div className="specifics-box bg-white p-3 rounded-lg">
+                <p className="font-medium text-gray-700 mb-2 text-sm">Specifics Mentioned</p>
+                <ul className="list-disc list-inside pl-2">
+                  {feedbackData.feedback.detail_retention.specifics_mentioned.map((item, index) => (
+                    <li key={index} className="text-sm text-gray-600 mb-1">{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+          {feedbackData.feedback.detail_retention.approximations &&
+            feedbackData.feedback.detail_retention.approximations.length > 0 && (
+              <div className="approximations-box bg-white p-3 rounded-lg">
+                <p className="font-medium text-gray-700 mb-2 text-sm">Approximations</p>
+                <ul className="list-disc list-inside pl-2">
+                  {feedbackData.feedback.detail_retention.approximations.map((item, index) => (
+                    <li key={index} className="text-sm text-gray-600 mb-1">{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+        </div>
+      </>
+    )}
+  </div>
+)}
 
               {/* Key Points Covered */}
-              {hasContent(feedbackData.feedback?.key_points_covered) && (
+              {feedbackData.feedback?.key_points_covered && feedbackData.feedback.key_points_covered.length > 0 && (
                 <div className="feedback-card mb-6 bg-green-50 p-5 rounded-xl shadow-sm">
                   <div className="flex items-center mb-3">
                     <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-2">
@@ -1294,7 +1364,7 @@ const handleShowResult = async () => {
                   </div>
 
                   <ul className="list-disc list-inside pl-2 bg-white p-4 rounded-lg">
-                    {getSafeArray(feedbackData.feedback.key_points_covered).map((item, index) => (
+                    {feedbackData.feedback.key_points_covered.map((item, index) => (
                       <li key={index} className="text-sm text-gray-700 mb-2">{item}</li>
                     ))}
                   </ul>
@@ -1302,7 +1372,7 @@ const handleShowResult = async () => {
               )}
 
               {/* Missed Opportunities */}
-              {hasContent(feedbackData.feedback?.potential_missed_opportunities) && (
+              {feedbackData.feedback?.potential_missed_opportunities && feedbackData.feedback.potential_missed_opportunities.length > 0 && (
                 <div className="feedback-card mb-6 bg-yellow-50 p-5 rounded-xl shadow-sm">
                   <div className="flex items-center mb-3">
                     <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
@@ -1314,7 +1384,7 @@ const handleShowResult = async () => {
                   </div>
 
                   <ul className="list-disc list-inside pl-2 bg-white p-4 rounded-lg">
-                    {getSafeArray(feedbackData.feedback.potential_missed_opportunities).map((item, index) => (
+                    {feedbackData.feedback.potential_missed_opportunities.map((item, index) => (
                       <li key={index} className="text-sm text-gray-700 mb-2">{item}</li>
                     ))}
                   </ul>
@@ -1322,7 +1392,7 @@ const handleShowResult = async () => {
               )}
 
               {/* Fluency Assessment */}
-              {hasContent(feedbackData.fluency_assessment) && (
+              {feedbackData.fluency_assessment?.fluency_assessment && (
                 <div className="feedback-card mb-6 bg-purple-50 p-5 rounded-xl shadow-sm">
                   <div className="flex items-center mb-3">
                     <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-2">
@@ -1333,30 +1403,30 @@ const handleShowResult = async () => {
                     <h3 className="text-lg font-semibold text-purple-700">Fluency Assessment</h3>
                   </div>
 
-                  {feedbackData.fluency_assessment.score && (
+                  {feedbackData.fluency_assessment.fluency_assessment.score && (
                     <div className="score-badge inline-block bg-white px-3 py-1 rounded-full text-sm font-medium text-purple-600 mb-3">
-                      Score: {feedbackData.fluency_assessment.score}
+                      Score: {feedbackData.fluency_assessment.fluency_assessment.score}
                     </div>
                   )}
 
-                  {feedbackData.fluency_assessment.analysis && (
+                  {feedbackData.fluency_assessment.fluency_assessment.analysis && (
                     <div className="analysis-box bg-white p-3 rounded-lg mb-3">
-                      <p className="text-gray-700 text-sm">{feedbackData.fluency_assessment.analysis}</p>
+                      <p className="text-gray-700 text-sm">{feedbackData.fluency_assessment.fluency_assessment.analysis}</p>
                     </div>
                   )}
 
                   <div className="grid grid-cols-1 gap-3">
-                    {hasContent(feedbackData.fluency_assessment.strengths) && (
+                    {feedbackData.fluency_assessment.fluency_assessment.strengths && (
                       <div className="strengths-box bg-white p-3 rounded-lg">
                         <p className="font-medium text-green-600 text-sm mb-1">Strengths</p>
-                        <p className="text-gray-700 text-sm">{feedbackData.fluency_assessment.strengths}</p>
+                        <p className="text-gray-700 text-sm">{feedbackData.fluency_assessment.fluency_assessment.strengths}</p>
                       </div>
                     )}
 
-                    {hasContent(feedbackData.fluency_assessment.improvement_areas) && (
+                    {feedbackData.fluency_assessment.fluency_assessment.improvement_areas && (
                       <div className="improvement-box bg-white p-3 rounded-lg">
                         <p className="font-medium text-yellow-600 text-sm mb-1">Areas for Improvement</p>
-                        <p className="text-gray-700 text-sm">{feedbackData.fluency_assessment.improvement_areas}</p>
+                        <p className="text-gray-700 text-sm">{feedbackData.fluency_assessment.fluency_assessment.improvement_areas}</p>
                       </div>
                     )}
                   </div>
@@ -1364,7 +1434,7 @@ const handleShowResult = async () => {
               )}
 
               {/* Grammar Assessment */}
-              {hasContent(feedbackData.speaking_performance?.grammar_assessment) && (
+              {feedbackData.speaking_performance?.grammar_assessment && (
                 <div className="feedback-card mb-6 bg-red-50 p-5 rounded-xl shadow-sm">
                   <div className="flex items-center mb-3">
                     <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-2">
@@ -1387,16 +1457,17 @@ const handleShowResult = async () => {
                     </div>
                   )}
 
-                  {hasContent(feedbackData.speaking_performance.grammar_assessment.error_examples) && (
-                    <div className="errors-box bg-white p-3 rounded-lg mb-3">
-                      <p className="font-medium text-red-600 text-sm mb-2">Error Examples</p>
-                      <ul className="list-disc list-inside pl-2">
-                        {getSafeArray(feedbackData.speaking_performance.grammar_assessment.error_examples).map((item, index) => (
-                          <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  {feedbackData.speaking_performance.grammar_assessment.error_examples &&
+                    feedbackData.speaking_performance.grammar_assessment.error_examples.length > 0 && (
+                      <div className="errors-box bg-white p-3 rounded-lg mb-3">
+                        <p className="font-medium text-red-600 text-sm mb-2">Error Examples</p>
+                        <ul className="list-disc list-inside pl-2">
+                          {feedbackData.speaking_performance.grammar_assessment.error_examples.map((item, index) => (
+                            <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                   {feedbackData.speaking_performance.grammar_assessment.complexity_level && (
                     <div className="complexity-box bg-white p-3 rounded-lg">
@@ -1408,7 +1479,7 @@ const handleShowResult = async () => {
               )}
 
               {/* Pronunciation Assessment */}
-              {hasContent(feedbackData.speaking_performance?.pronunciation_assessment) && (
+              {feedbackData.speaking_performance?.pronunciation_assessment && (
                 <div className="feedback-card mb-6 bg-teal-50 p-5 rounded-xl shadow-sm">
                   <div className="flex items-center mb-3">
                     <div className="w-8 h-8 bg-teal-100 rounded-full flex items-center justify-center mr-2">
@@ -1419,9 +1490,9 @@ const handleShowResult = async () => {
                     <h3 className="text-lg font-semibold text-teal-700">Pronunciation Assessment</h3>
                   </div>
 
-                  {feedbackData.speaking_performance.pronunciation_assessment.score && (
+                  {feedbackData.speaking_performance.pronunciation_assessment.scroe && (
                     <div className="score-badge inline-block bg-white px-3 py-1 rounded-full text-sm font-medium text-teal-600 mb-3">
-                      Score: {feedbackData.speaking_performance.pronunciation_assessment.score}
+                      Score: {feedbackData.speaking_performance.pronunciation_assessment.scroe}
                     </div>
                   )}
 
@@ -1432,33 +1503,35 @@ const handleShowResult = async () => {
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {hasContent(feedbackData.speaking_performance.pronunciation_assessment.well_prnounced_words) && (
-                      <div className="well-pronounced-box bg-white p-3 rounded-lg">
-                        <p className="font-medium text-green-600 text-sm mb-2">Well-Pronounced Words</p>
-                        <ul className="list-disc list-inside pl-2">
-                          {getSafeArray(feedbackData.speaking_performance.pronunciation_assessment.well_prnounced_words).map((item, index) => (
-                            <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {feedbackData.speaking_performance.pronunciation_assessment.well_prnounced_words &&
+                      feedbackData.speaking_performance.pronunciation_assessment.well_prnounced_words.length > 0 && (
+                        <div className="well-pronounced-box bg-white p-3 rounded-lg">
+                          <p className="font-medium text-green-600 text-sm mb-2">Well-Pronounced Words</p>
+                          <ul className="list-disc list-inside pl-2">
+                            {feedbackData.speaking_performance.pronunciation_assessment.well_prnounced_words.map((item, index) => (
+                              <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
-                    {hasContent(feedbackData.speaking_performance.pronunciation_assessment.needs_work_words) && (
-                      <div className="needs-work-box bg-white p-3 rounded-lg">
-                        <p className="font-medium text-yellow-600 text-sm mb-2">Words Needing Work</p>
-                        <ul className="list-disc list-inside pl-2">
-                          {getSafeArray(feedbackData.speaking_performance.pronunciation_assessment.needs_work_words).map((item, index) => (
-                            <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {feedbackData.speaking_performance.pronunciation_assessment.needs_work_words &&
+                      feedbackData.speaking_performance.pronunciation_assessment.needs_work_words.length > 0 && (
+                        <div className="needs-work-box bg-white p-3 rounded-lg">
+                          <p className="font-medium text-yellow-600 text-sm mb-2">Words Needing Work</p>
+                          <ul className="list-disc list-inside pl-2">
+                            {feedbackData.speaking_performance.pronunciation_assessment.needs_work_words.map((item, index) => (
+                              <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                   </div>
                 </div>
               )}
 
               {/* Vocabulary Usage */}
-              {hasContent(feedbackData.speaking_performance?.vocabulary_usage) && (
+              {feedbackData.speaking_performance?.vocabulary_usage && (
                 <div className="feedback-card mb-6 bg-indigo-50 p-5 rounded-xl shadow-sm">
                   <div className="flex items-center mb-3">
                     <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center mr-2">
@@ -1476,33 +1549,35 @@ const handleShowResult = async () => {
                   )}
 
                   <div className="grid grid-cols-1 gap-3">
-                    {hasContent(feedbackData.speaking_performance.vocabulary_usage.effective_vocabulary) && (
-                      <div className="effective-vocab-box bg-white p-3 rounded-lg">
-                        <p className="font-medium text-green-600 text-sm mb-2">Effective Vocabulary</p>
-                        <ul className="list-disc list-inside pl-2">
-                          {getSafeArray(feedbackData.speaking_performance.vocabulary_usage.effective_vocabulary).map((item, index) => (
-                            <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {feedbackData.speaking_performance.vocabulary_usage.effective_vocabulary &&
+                      feedbackData.speaking_performance.vocabulary_usage.effective_vocabulary.length > 0 && (
+                        <div className="effective-vocab-box bg-white p-3 rounded-lg">
+                          <p className="font-medium text-green-600 text-sm mb-2">Effective Vocabulary</p>
+                          <ul className="list-disc list-inside pl-2">
+                            {feedbackData.speaking_performance.vocabulary_usage.effective_vocabulary.map((item, index) => (
+                              <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
-                    {hasContent(feedbackData.speaking_performance.vocabulary_usage.vocabulary_opportunities) && (
-                      <div className="opportunities-box bg-white p-3 rounded-lg">
-                        <p className="font-medium text-yellow-600 text-sm mb-2">Vocabulary Opportunities</p>
-                        <ul className="list-disc list-inside pl-2">
-                          {getSafeArray(feedbackData.speaking_performance.vocabulary_usage.vocabulary_opportunities).map((item, index) => (
-                            <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                    {feedbackData.speaking_performance.vocabulary_usage.vocabulary_opportunities &&
+                      feedbackData.speaking_performance.vocabulary_usage.vocabulary_opportunities.length > 0 && (
+                        <div className="opportunities-box bg-white p-3 rounded-lg">
+                          <p className="font-medium text-yellow-600 text-sm mb-2">Vocabulary Opportunities</p>
+                          <ul className="list-disc list-inside pl-2">
+                            {feedbackData.speaking_performance.vocabulary_usage.vocabulary_opportunities.map((item, index) => (
+                              <li key={index} className="text-sm text-gray-700 mb-1">{item}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                   </div>
                 </div>
               )}
 
               {/* Detailed Suggestions */}
-              {hasContent(feedbackData.detailed_suggestions) && (
+              {feedbackData?.detailed_suggestions && feedbackData.detailed_suggestions.length > 0 && (
                 <div className="suggestions-section mt-8">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                     <svg className="w-5 h-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -1512,40 +1587,42 @@ const handleShowResult = async () => {
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {getSafeArray(feedbackData.detailed_suggestions).map((item, idx) => (
-                      <div key={idx} className="suggestion-card bg-yellow-50 p-4 rounded-xl border-l-4 border-yellow-400 shadow-sm">
-                        <div className="suggestion-header flex items-start mb-3">
-                          <span className="suggestion-number bg-yellow-100 text-yellow-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-2">
-                            {idx + 1}
-                          </span>
-                          <h4 className="text-md font-medium text-yellow-800">Suggestion</h4>
+                    {feedbackData.detailed_suggestions
+                      .filter(item => item.suggestion?.trim() && item.example?.trim() && item.improved_version?.trim())
+                      .map((item, idx) => (
+                        <div key={idx} className="suggestion-card bg-yellow-50 p-4 rounded-xl border-l-4 border-yellow-400 shadow-sm">
+                          <div className="suggestion-header flex items-start mb-3">
+                            <span className="suggestion-number bg-yellow-100 text-yellow-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mr-2">
+                              {idx + 1}
+                            </span>
+                            <h4 className="text-md font-medium text-yellow-800">Suggestion</h4>
+                          </div>
+
+                          {item.suggestion && (
+                            <p className="text-sm text-gray-700 mb-2 bg-white p-2 rounded-lg">
+                              <span className="font-medium text-yellow-700">Suggestion:</span> {item.suggestion}
+                            </p>
+                          )}
+
+                          {item.example && (
+                            <p className="text-sm text-gray-700 mb-2 bg-white p-2 rounded-lg">
+                              <span className="font-medium text-yellow-700">Example:</span> {item.example}
+                            </p>
+                          )}
+
+                          {item.improved_version && (
+                            <p className="text-sm text-gray-700 bg-white p-2 rounded-lg">
+                              <span className="font-medium text-yellow-700">Improved Version:</span> {item.improved_version}
+                            </p>
+                          )}
                         </div>
-
-                        {item.suggestion && (
-                          <p className="text-sm text-gray-700 mb-2 bg-white p-2 rounded-lg">
-                            <span className="font-medium text-yellow-700">Suggestion:</span> {item.suggestion}
-                          </p>
-                        )}
-
-                        {item.example && (
-                          <p className="text-sm text-gray-700 mb-2 bg-white p-2 rounded-lg">
-                            <span className="font-medium text-yellow-700">Example:</span> {item.example}
-                          </p>
-                        )}
-
-                        {item.improved_version && (
-                          <p className="text-sm text-gray-700 bg-white p-2 rounded-lg">
-                            <span className="font-medium text-yellow-700">Improved Version:</span> {item.improved_version}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               )}
 
               {/* Practice Recommendations */}
-              {hasContent(feedbackData.practice_recommendations) && (
+              {feedbackData?.practice_recommendations && feedbackData.practice_recommendations.length > 0 && (
                 <div className="recommendations-section mt-8">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                     <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1555,7 +1632,7 @@ const handleShowResult = async () => {
                   </h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {getSafeArray(feedbackData.practice_recommendations).map((item, idx) => (
+                    {feedbackData.practice_recommendations.map((item, idx) => (
                       <div key={idx} className="recommendation-card bg-blue-50 p-4 rounded-xl shadow-sm">
                         <div className="recommendation-number bg-blue-100 text-blue-800 rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold mb-3">
                           {idx + 1}
@@ -1585,7 +1662,7 @@ const handleShowResult = async () => {
               )}
 
               {/* Encouragement */}
-              {hasContent(feedbackData.encouragement) && (
+              {/* {feedbackData.encouragement && (
                 <div className="encouragement-section mt-8 bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl shadow-md">
                   <h3 className="text-xl font-semibold text-purple-700 mb-4 text-center flex items-center justify-center">
                     <svg className="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1594,14 +1671,80 @@ const handleShowResult = async () => {
                     Encouragement
                   </h3>
 
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {feedbackData.encouragement.progress_highlight && (
+                      <div className="encouragement-card bg-white p-4 rounded-lg text-center">
+                        <svg className="w-8 h-8 text-green-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        <p className="text-sm font-medium text-gray-700 mb-1">Progress Highlight</p>
+                        <p className="text-xs text-gray-600">{feedbackData.encouragement.progress_highlight}</p>
+                      </div>
+                    )}
+
+                    {feedbackData.encouragement.motivational_message && (
+                      <div className="encouragement-card bg-white p-4 rounded-lg text-center">
+                        <svg className="w-8 h-8 text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p className="text-sm font-medium text-gray-700 mb-1">Motivational Message</p>
+                        <p className="text-xs text-gray-600">{feedbackData.encouragement.motivational_message}</p>
+                      </div>
+                    )}
+
+                    {feedbackData.encouragement.growth_potential ?? (<p className="text-xs text-gray-600">{feedbackData.encouragement}</p>):({feedbackData.encouragement.growth_potential && (
+                      <div className="encouragement-card bg-white p-4 rounded-lg text-center">
+                        <svg className="w-8 h-8 text-yellow-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 14v6m-3-3h6M6 10h2a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2zm10-4a2 2 0 11-4 0 2 2 0 014 0zM6 20h12"></path>
+                        </svg>
+                        <p className="text-sm font-medium text-gray-700 mb-1">Growth Potential</p>
+                        <p className="text-xs text-gray-600">{feedbackData.encouragement.growth_potential}</p>
+                      </div>
+                    )})}
+                  </div>
+                </div>
+              )} */}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+              {feedbackData.encouragement && (
+                <div className="encouragement-section mt-8 bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl shadow-md">
+                  <h3 className="text-xl font-semibold text-purple-700 mb-4 text-center flex items-center justify-center">
+                    <svg className="w-5 h-5 text-purple-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Encouragement
+                  </h3>
+
+                  {/* Check if encouragement is a string or an object */}
                   {typeof feedbackData.encouragement === 'string' ? (
                     <div className="encouragement-card bg-white p-4 rounded-lg text-center">
-                      <p className="text-gray-700">{feedbackData.encouragement}</p>
+                      <svg className="w-8 h-8 text-purple-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <p className="text-sm font-medium text-gray-700 mb-1">General Feedback</p>
+                      <p className="text-xs text-gray-600">{feedbackData.encouragement}</p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {feedbackData.encouragement.progress_highlight && (
                         <div className="encouragement-card bg-white p-4 rounded-lg text-center">
+                          <svg className="w-8 h-8 text-green-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                          </svg>
                           <p className="text-sm font-medium text-gray-700 mb-1">Progress Highlight</p>
                           <p className="text-xs text-gray-600">{feedbackData.encouragement.progress_highlight}</p>
                         </div>
@@ -1609,21 +1752,55 @@ const handleShowResult = async () => {
 
                       {feedbackData.encouragement.motivational_message && (
                         <div className="encouragement-card bg-white p-4 rounded-lg text-center">
+                          <svg className="w-8 h-8 text-blue-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                          </svg>
                           <p className="text-sm font-medium text-gray-700 mb-1">Motivational Message</p>
                           <p className="text-xs text-gray-600">{feedbackData.encouragement.motivational_message}</p>
                         </div>
                       )}
 
-                      {feedbackData.encouragement.growth_potential && (
+                      {feedbackData.encouragement.growth_potential ? (
                         <div className="encouragement-card bg-white p-4 rounded-lg text-center">
+                          <svg className="w-8 h-8 text-yellow-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 14v6m-3-3h6M6 10h2a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2zm10-4a2 2 0 11-4 0 2 2 0 014 0zM6 20h12"></path>
+                          </svg>
                           <p className="text-sm font-medium text-gray-700 mb-1">Growth Potential</p>
                           <p className="text-xs text-gray-600">{feedbackData.encouragement.growth_potential}</p>
                         </div>
+                      ) : (
+                        feedbackData.encouragement.growth_potential !== null && (
+                          <div className="encouragement-card bg-white p-4 rounded-lg text-center">
+                            <svg className="w-8 h-8 text-yellow-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 14v6m-3-3h6M6 10h2a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2zm10-4a2 2 0 11-4 0 2 2 0 014 0zM6 20h12"></path>
+                            </svg>
+                            <p className="text-sm font-medium text-gray-700 mb-1">Growth Potential</p>
+                            <p className="text-xs text-gray-600">Keep practicing to unlock your full potential!</p>
+                          </div>
+                        )
                       )}
                     </div>
                   )}
                 </div>
               )}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             </div>
           )}
         </div>
