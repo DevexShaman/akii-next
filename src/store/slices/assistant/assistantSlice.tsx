@@ -239,6 +239,88 @@ const initialState: ScoringState = {
 // );
 
 
+// export const fetchOverallScoring = createAsyncThunk(
+//   "assistant/fetchOverallScoring",
+//   async (essay_id: string, { rejectWithValue }) => {
+//     try {
+//       const pollApi = async (): Promise<any> => {
+//         const maxAttempts = 30;
+//         const pollInterval = 5000;
+
+//         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+//           try {
+
+//             const response = await axios.get(
+//               `https://llm.edusmartai.com/api/overall-scoring-by-id-speech-module?essay_id=${essay_id}`
+//             );
+
+           
+//             if (response.data.data.status_code === 200) {
+
+//               const bodyDataString = response.data.data.body;
+//               let parsedBody;
+
+//               try {
+//                 parsedBody = JSON.parse(bodyDataString);
+//               } catch (parseError) {
+//                 console.error("Failed to parse body data:", parseError);
+//                 throw new Error("Invalid JSON response from server");
+//               }
+
+//               const rawText = parsedBody?.overall_scoring?.raw_feedback;
+//               if (rawText) {
+//                 const match = rawText.match(/\{[\s\S]*\}/);
+//                 if (match) {
+//                   try {
+//                     const parsedJson = JSON.parse(match[0]);
+//                     parsedBody.overall_scoring.raw_feedback = parsedJson;
+//                   } catch (error) {
+//                     console.error("❌ Failed to parse raw_feedback JSON:", error);
+//                   }
+//                 }
+//               }
+
+//               // ✅ Return parsed body and stop polling
+//               return parsedBody;
+//             }
+
+//             // If status_code is not 200, wait and retry
+//             if (attempt < maxAttempts) {
+//               console.log(
+//                 `Status code not 200 (got ${response.data.data.status_code}). Waiting ${
+//                   pollInterval / 1000
+//                 }s before next attempt...`
+//               );
+//               await new Promise((resolve) => setTimeout(resolve, pollInterval));
+//             }
+//           } catch (error: any) {
+//             console.error(`Error in polling attempt ${attempt}:`, error);
+
+//             if (attempt < maxAttempts) {
+//               await new Promise((resolve) => setTimeout(resolve, pollInterval));
+//               continue;
+//             }
+
+//             throw error;
+//           }
+//         }
+
+//         throw new Error(
+//           "Max polling attempts reached without receiving status_code: 200"
+//         );
+//       };
+
+//       return await pollApi();
+//     } catch (error: any) {
+//       return rejectWithValue(error.response?.data?.error || error.message);
+//     }
+//   }
+// );
+
+
+//33
+
+
 export const fetchOverallScoring = createAsyncThunk(
   "assistant/fetchOverallScoring",
   async (essay_id: string, { rejectWithValue }) => {
@@ -249,47 +331,39 @@ export const fetchOverallScoring = createAsyncThunk(
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
           try {
-
             const response = await axios.get(
               `https://llm.edusmartai.com/api/overall-scoring-by-id-speech-module?essay_id=${essay_id}`
             );
 
-           
-            if (response.data.data.status_code === 200) {
-
-              const bodyDataString = response.data.data.body;
-              let parsedBody;
-
-              try {
-                parsedBody = JSON.parse(bodyDataString);
-              } catch (parseError) {
-                console.error("Failed to parse body data:", parseError);
-                throw new Error("Invalid JSON response from server");
-              }
-
-              const rawText = parsedBody?.overall_scoring?.raw_feedback;
-              if (rawText) {
-                const match = rawText.match(/\{[\s\S]*\}/);
-                if (match) {
-                  try {
+            // Check if we have a successful response with status: "success"
+            if (response.data.status === "success") {
+              const bodyData = response.data.data;
+              
+              // Parse nested JSON in raw_feedback if it exists
+              const rawText = bodyData?.overall_scoring?.raw_feedback;
+              if (rawText && typeof rawText === 'string') {
+                try {
+                  const match = rawText.match(/\{[\s\S]*\}/);
+                  if (match) {
                     const parsedJson = JSON.parse(match[0]);
-                    parsedBody.overall_scoring.raw_feedback = parsedJson;
-                  } catch (error) {
-                    console.error("❌ Failed to parse raw_feedback JSON:", error);
+                    bodyData.overall_scoring.raw_feedback = parsedJson;
                   }
+                } catch (error) {
+                  console.error("❌ Failed to parse raw_feedback JSON:", error);
+                  // Continue even if raw_feedback parsing fails
                 }
               }
 
-              // ✅ Return parsed body and stop polling
-              return parsedBody;
+              // ✅ Return the successful response and stop polling
+              return response.data;
             }
 
-            // If status_code is not 200, wait and retry
+            // If status is not "success", wait and retry
             if (attempt < maxAttempts) {
               console.log(
-                `Status code not 200 (got ${response.data.data.status_code}). Waiting ${
+                `Status not "success" (got "${response.data.status}"). Waiting ${
                   pollInterval / 1000
-                }s before next attempt...`
+                }s before next attempt... (Attempt ${attempt}/${maxAttempts})`
               );
               await new Promise((resolve) => setTimeout(resolve, pollInterval));
             }
@@ -306,7 +380,7 @@ export const fetchOverallScoring = createAsyncThunk(
         }
 
         throw new Error(
-          "Max polling attempts reached without receiving status_code: 200"
+          "Max polling attempts reached without receiving status: success"
         );
       };
 
