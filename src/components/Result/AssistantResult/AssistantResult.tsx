@@ -324,7 +324,7 @@ console.log("[[[[[[[[[[[[[[[[[[[[[[object]]]]]]]]]]]]]]]]]]]]]]",apiData)
           <div className="text-center">
             <div className="inline-flex items-center px-4 py-2 bg-gray-100 rounded-full">
               {getEmotionIcon(data.overall_scores.emotion)}
-              <span className="ml-2 font-medium">Current Emotion: {data.overall_scores.emotion}</span>
+              <span className="ml-2 font-medium text-black">Current Emotion: {data.overall_scores.emotion}</span>
             </div>
           </div>
         </div>
@@ -391,7 +391,7 @@ console.log("[[[[[[[[[[[[[[[[[[[[[[object]]]]]]]]]]]]]]]]]]]]]]",apiData)
                 <p className="text-sm text-gray-700 mb-2">{data.speaking_performance.grammar_assessment.analysis}</p>
                 {data.speaking_performance.grammar_assessment.error_patterns.length > 0 && (
                   <div>
-                    <strong className="text-sm">Error Patterns:</strong>
+                    <strong className="text-sm text-black">Error Patterns:</strong>
                     <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
                       {data.speaking_performance.grammar_assessment.error_patterns.map((pattern, index) => (
                         <li key={index}>{pattern}</li>
@@ -409,7 +409,7 @@ console.log("[[[[[[[[[[[[[[[[[[[[[[object]]]]]]]]]]]]]]]]]]]]]]",apiData)
                 <p className="text-sm text-gray-700">{data.speaking_performance.pronunciation_assessment.analysis}</p>
                 {data.speaking_performance.pronunciation_assessment.systematic_errors.length > 0 && (
                   <div className="mt-2">
-                    <strong className="text-sm">Systematic Errors:</strong>
+                    <strong className="text-sm text-black">Systematic Errors:</strong>
                     <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
                       {data.speaking_performance.pronunciation_assessment.systematic_errors.map((error, index) => (
                         <li key={index}>{error}</li>
@@ -444,7 +444,7 @@ console.log("[[[[[[[[[[[[[[[[[[[[[[object]]]]]]]]]]]]]]]]]]]]]]",apiData)
                 <p className="text-sm text-gray-700">{data.feedback.detail_retention.explanation}</p>
                 {data.feedback.detail_retention.missed_points.length > 0 && (
                   <div className="mt-2">
-                    <strong className="text-sm">Missed Points:</strong>
+                    <strong className="text-sm text-black">Missed Points:</strong>
                     <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
                       {data.feedback.detail_retention.missed_points.map((point, index) => (
                         <li key={index}>{point}</li>
