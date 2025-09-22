@@ -4,192 +4,117 @@ import { useEffect, useState } from "react";
 import { CheckCircle, AlertCircle, Smile, Frown, Meh } from "react-feather";
 import { Info } from "react-feather";
 
-import { useAppDispatch, useAppSelector } from "@/store";
-import { fetchOverallScoring } from "@/store/slices/assistant/assistantSlice";
-import axios from "axios";
-
-// Emotion icon component
-const EmotionIcon = ({ emotion }: { emotion: string }) => {
-  const size = 20;
-  switch (emotion.toLowerCase()) {
-    case "happy":
-      return <Smile className="text-green-500" size={size} />;
-    case "sad":
-      return <Frown className="text-blue-500" size={size} />;
-    case "angry":
-      return <Frown className="text-red-500" size={size} />;
-    default:
-      return <Meh className="text-gray-500" size={size} />;
-  }
-};
-
-// Score Meter component
-const ScoreMeter = ({ value, max = 10 }: { value: number; max?: number }) => {
-  const percentage = (value / max) * 100;
-  let colorClass = "";
-
-  if (percentage >= 80) colorClass = "bg-green-500";
-  else if (percentage >= 60) colorClass = "bg-yellow-500";
-  else colorClass = "bg-red-500";
-
-  return (
-    <div className="flex items-center space-x-2">
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
-        <div
-          className={`h-2.5 rounded-full ${colorClass}`}
-          style={{ width: `${percentage}%` }}
-        ></div>
-      </div>
-      <span className="text-sm font-medium text-gray-700">
-        {value.toFixed(1)}
-      </span>
-    </div>
-  );
-};
-
-function extractPureJSON(input) {
-  try {
-    // Match everything between the first `{` and last `}`
-    const jsonMatch = input.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON object found");
-
-    // Parse JSON
-    const jsonData = JSON.parse(jsonMatch[0]);
-    return jsonData;
-  } catch (error) {
-    console.error("Error extracting JSON:", error.message);
-    return null;
-  }
-}
-
-// API polling function
-// const pollOverallScoring = async (essay_id: string) => {
-//   const maxAttempts = 30;
-//   const pollInterval = 5000;
+// const pollOverallScoring = async (essay_id) => {
+//   const maxAttempts = 1; // Max retry attempts
+//   const pollInterval = 5000; // 5 seconds delay
 
 //   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 //     try {
-//       console.log(`Polling attempt ${attempt}...`);
-
-//       const response = await axios.get(
+//       console.log(`🔄 Polling attempt ${attempt}/${maxAttempts} for essay_id: ${essay_id}`);
+      
+//       const response = await fetch(
 //         `https://llm.edusmartai.com/api/overall-scoring-by-id-speech-module?essay_id=${essay_id}`
 //       );
-
-//       console.log("API Response:", response.data);
-
-//       // Check if we got a successful status code
-//       if (response.data.data.status_code === 200) {
-//         console.log("Received status_code: 200 - Processing data...");
-
-//         // Store the complete API response in a variable
-//         const completeApiResponse = response.data;
-
-//         // Extract the body data (first level parsing)
-//         const bodyDataString = response.data.data.body;
-
-//         // Parse the main body
-//         let parsedBody;
-//         try {
-//           parsedBody = JSON.parse(bodyDataString);
-//         } catch (parseError) {
-//           console.error("Failed to parse body data:", parseError);
-//           throw new Error("Invalid JSON response from server");
-//         }
-
-//         console.log("Parsed body",parsedBody)
-
-//         // parsing raw_feedback
-
-//           // ✅ Step 1: Extract JSON substring from raw_feedback
-//           const rawText =parsedBody&& parsedBody.overall_scoring&& parsedBody.overall_scoring.raw_feedback;
-
-//           // console.log("Raw text:", rawText.substring(0,200))
-//          const match = rawText.match(/\{[\s\S]*\}/); // Get everything from first { to last }
-
-//           // console.log("[match]:",match)
-//           if (match) {
-//               const jsonString = match[0];
-
-//               console.log("jsonString", jsonString)
-//               try {
-//                   const parsedJson = JSON.parse(jsonString);
-//                   console.log("✅ Pure JSON object:", parsedJson);
-
-//                   parsedBody.overall_scoring.raw_feedback = parsedJson
-//               } catch (error) {
-//                   console.error("❌ Failed to parse JSON:", error);
-//               }
-//           } else {
-//               console.error("❌ No JSON found in raw_feedback");
-//           }
-
-//           return parsedBody
-
-
+      
+//       if (!response.ok) {
+//         throw new Error(`HTTP error! status: ${response.status}`);
 //       }
+      
+//       const responseData = await response.json();
 
-//       // If status_code is not 200, wait and try again
+      
+//       console.log(`📊 Received response:`, responseData?.status);
+      
+//       // ✅ SUCCESS: Stop polling and return data when status is "success"
+//       if (responseData?.status === "success") {
+//         console.log("✅ Success! Status 'success' received - stopping polling");
+        
+
+      
+       
+//       }
+      
+//       // ⏳ Still processing - continue polling
+//       console.log(`⏳ Still processing (status: ${status}), retrying in ${pollInterval/1000} seconds...`);
+      
+//       // Only wait if we're not on the last attempt
 //       if (attempt < maxAttempts) {
-//         console.log(`Status code not 200 (got ${response.data.data.status_code}). Waiting ${pollInterval/1000}s before next attempt...`);
-//         await new Promise(resolve => setTimeout(resolve, pollInterval));
+//         await new Promise((resolve) => setTimeout(resolve, pollInterval));
 //       }
-
-//     } catch (error: any) {
-//       console.error(`Error in polling attempt ${attempt}:`, error);
-
+      
+//     } catch (error) {
+//       console.error(`❌ Error on attempt ${attempt}:`, error);
+      
+//       // Only retry if we haven't reached max attempts
 //       if (attempt < maxAttempts) {
-//         await new Promise(resolve => setTimeout(resolve, pollInterval));
-//         continue;
+//         console.log(`🔄 Retrying in ${pollInterval/1000} seconds...`);
+//         await new Promise((resolve) => setTimeout(resolve, pollInterval));
+//       } else {
+//         throw new Error("Polling failed after max attempts");
 //       }
-
-//       throw error;
 //     }
 //   }
 
-//   throw new Error("Max polling attempts reached without receiving status_code: 200");
+//   throw new Error("Max attempts reached without receiving status: 'success'");
 // };
 
 
-const pollOverallScoring = async (essay_id: string) => {
-  const maxAttempts = 30; // Max retry attempts
+
+
+export default function AssistantResult() {
+  const searchParams = useSearchParams();
+  const [apiData, setApiData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null); // Changed from boolean to store error message
+  const [apiStatus, setApiStatus] = useState(null); // New state to store API status
+
+
+
+
+  const pollOverallScoring = async (essay_id) => {
+  const maxAttempts = 10; // Increased attempts for better polling
   const pollInterval = 5000; // 5 seconds delay
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      const response = await axios.get(
+      console.log(`🔄 Polling attempt ${attempt}/${maxAttempts} for essay_id: ${essay_id}`);
+      
+      const response = await fetch(
         `https://llm.edusmartai.com/api/overall-scoring-by-id-speech-module?essay_id=${essay_id}`
       );
-
-      const { status_code, body } = response.data.data;
-      if (status_code === 200) {
-        let parsedBody;
-        try {
-          parsedBody = JSON.parse(body);
-        } catch (error) {
-          throw new Error("Failed to parse body JSON");
-        }
-
-        // ✅ Parse raw_feedback if it contains embedded JSON
-        const rawText = parsedBody?.overall_scoring?.raw_feedback;
-        if (rawText) {
-          const match = rawText.match(/\{[\s\S]*\}/); // Extract JSON from text
-          if (match) {
-            try {
-              const parsedJson = JSON.parse(match[0]);
-              parsedBody.overall_scoring.raw_feedback = parsedJson;
-            } catch (error) {
-              console.error("❌ Failed to parse raw_feedback JSON:", error);
-            }
-          }
-        }
-
-        // ✅ Return final parsed data and exit
-        return parsedBody;
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      await new Promise((resolve) => setTimeout(resolve, pollInterval));
-    } catch (error) {
-      console.error(`Error on attempt ${attempt}:`, error);
+      
+      const responseData = await response.json();
+      
+     
+      
+
+      setApiData(responseData?.data?.overall_scoring)
+      // ✅ SUCCESS: Stop polling and return data when status is "success"
+      if (responseData?.status === "success") {
+        console.log("✅ Success! Status 'success' received - stopping polling");
+        
+        // Return the complete response data
+        return responseData;
+      }
+      
+      // ⏳ Still processing - continue polling
+      console.log(`⏳ Still processing (status: ${responseData?.status}), retrying in ${pollInterval/1000} seconds...`);
+      
+      // Only wait if we're not on the last attempt
       if (attempt < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error on attempt ${attempt}:`, error);
+      
+      // Only retry if we haven't reached max attempts
+      if (attempt < maxAttempts) {
+        console.log(`🔄 Retrying in ${pollInterval/1000} seconds...`);
         await new Promise((resolve) => setTimeout(resolve, pollInterval));
       } else {
         throw new Error("Polling failed after max attempts");
@@ -197,52 +122,78 @@ const pollOverallScoring = async (essay_id: string) => {
     }
   }
 
-  throw new Error("Max attempts reached without receiving status_code: 200");
+  throw new Error("Max attempts reached without receiving status: 'success'");
 };
 
+console.log("[[[[[[[[[[[[[[[[[[[[[[object]]]]]]]]]]]]]]]]]]]]]]",apiData)
 
-
-
-
-
-
-export default function ResultsPage() {
-
-
-  const searchParams = useSearchParams();
-  const essayId = searchParams.get("essay_id");
-
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!essayId) return;
-      setLoading(true);
-      setError(null);
-
+    const loadData = async () => {
       try {
-        const result = await pollOverallScoring(essayId);
-        setData(result);
-
-      } catch (err) {
-        console.error("API Error:", err);
-        setError(err.message || "An error occurred while fetching results");
+        setIsLoading(true);
+        setError(null);
+        setApiStatus("loading"); // Set initial status
+        
+        // Get essay_id from URL params or use a default value for testing
+        const essay_id = searchParams.get('essay_id') || 'test-essay-id';
+        
+        // Start polling for the overall scoring data
+        const data = await pollOverallScoring(essay_id);
+        
+        // Store the successful response
+        setApiData(data);
+        setApiStatus("success"); // Set status to success
+        
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError(error.message || 'Failed to load assessment data');
+        setApiStatus("error"); // Set status to error
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, [essayId]);
+    loadData();
+  }, [searchParams]);
 
-  if (loading) {
+  const getEmotionIcon = (emotion) => {
+    switch (emotion?.toLowerCase()) {
+      case 'happy':
+      case 'excited':
+        return <Smile className="h-5 w-5 text-green-500" />;
+      case 'surprised':
+        return <Meh className="h-5 w-5 text-yellow-500" />;
+      case 'sad':
+      case 'frustrated':
+        return <Frown className="h-5 w-5 text-red-500" />;
+      default:
+        return <Meh className="h-5 w-5 text-gray-500" />;
+    }
+  };
+
+  const getScoreColor = (score) => {
+    if (score >= 8) return 'text-green-600';
+    if (score >= 6) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getScoreBgColor = (score) => {
+    if (score >= 8) return 'bg-green-100';
+    if (score >= 6) return 'bg-yellow-100';
+    return 'bg-red-100';
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="mt-4 text-gray-600">Analyzing your results...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading assessment results...</p>
+          <p className="text-sm text-gray-500 mt-2">This may take up to 2-3 minutes</p>
+          {apiStatus && (
+            <p className="text-sm text-blue-500 mt-1">Status: {apiStatus}</p>
+          )}
         </div>
       </div>
     );
@@ -250,183 +201,297 @@ export default function ResultsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-white">
-        <div className="text-center max-w-md p-6 bg-white rounded-xl shadow-lg">
-          <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
-          <h2 className="mt-4 text-xl font-bold text-gray-900">Error</h2>
-          <p className="mt-2 text-gray-600">{error}</p>
-
-          {/* <p>ihbvghkhkvbhkv{scoringState.data.feedbackData.speaking_performance.fluency_assessment.analysis}</p> */}
-
-
-
-          <button
-            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </button>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+          <div className="flex items-center text-red-600 mb-4">
+            <AlertCircle className="h-6 w-6 mr-2" />
+            <h2 className="text-lg font-semibold">Error Loading Results</h2>
+          </div>
+          <p className="text-gray-600">{error}</p>
+          <div className="mt-4">
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  const rawFeedback = data ? data.overall_scoring : null
 
-  if (!rawFeedback) {
-    return <div className="text-gray-500 text-center py-6">No feedback available.</div>;
+    const data = apiData?.data?.overall_scoring;
+
+  if (!apiData?.data?.overall_scoring) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+          <div className="text-center">
+            <Info className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600">No assessment data available</p>
+            <p className="text-sm text-gray-500 mt-2">API Status: {apiStatus}</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
+
+
   return (
-    <div className="space-y-8">
-      {/* ✅ Overall Scores Section */}
-      <section>
-        <h2 className="text-2xl text-black font-bold mb-4">Overall Scores</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-black">
-          {["pronunciation", "grammar", "fluency"].map((key) => (
-            <div key={key} className="border rounded-lg p-4 shadow-sm">
-              <h3 className="font-semibold capitalize">{key}</h3>
-              <p className="text-xl font-bold text-indigo-600">
-                {rawFeedback.overall_scores?.[key] ?? "N/A"}
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 p-4 bg-indigo-50 rounded-lg">
-          <p className=" text-black font-medium">
-            Detected Emotion:{" "}
-            <span className="text-indigo-700 font-semibold">
-              {rawFeedback.overall_scores?.emotion || "Not detected"}
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Assessment Results</h1>
+          <p className="text-gray-600">Comprehensive analysis of your language learning performance</p>
+          {/* Show API status indicator */}
+          <div className="mt-2">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+              apiStatus === 'success' ? 'bg-green-100 text-green-800' :
+              apiStatus === 'error' ? 'bg-red-100 text-red-800' :
+              'bg-yellow-100 text-yellow-800'
+            }`}>
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Status: {apiStatus}
             </span>
-          </p>
+          </div>
         </div>
-      </section>
 
-      {/* ✅ Content Understanding & Detail Retention */}
-      <section className="grid text-black grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Content Understanding */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">Content Understanding</h2>
-          {/* <p>{rawFeedback.raw_feedback.detailed_suggestions[0]}</p> */}
-          <p><strong>Comprehension consistency :</strong>{rawFeedback.raw_feedback.feedback.comprehension_consistency}</p>
+        {/* Overall Scores Card */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center mb-6">
+            <CheckCircle className="h-6 w-6 text-blue-600 mr-2" />
+            <h2 className="text-2xl font-bold text-gray-900">Overall Performance Scores</h2>
+          </div>
           
-          <p><strong>Explanation : </strong>{rawFeedback.raw_feedback.feedback.content_understanding.explanation}</p>
-          <p><strong>Pattern analysis : </strong>{rawFeedback.raw_feedback.feedback.content_understanding.pattern_analysis}</p>
-          <p><strong>Score : </strong>{rawFeedback.raw_feedback.feedback.content_understanding.score}</p>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div className={`text-center p-4 rounded-lg ${getScoreBgColor(data.overall_scores.pronunciation)}`}>
+              <div className={`text-3xl font-bold mb-2 ${getScoreColor(data.overall_scores.pronunciation)}`}>
+                {data.overall_scores.pronunciation}
+              </div>
+              <div className="text-sm font-medium text-gray-700">Pronunciation</div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full" 
+                  style={{ width: `${data.overall_scores.pronunciation * 10}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className={`text-center p-4 rounded-lg ${getScoreBgColor(data.overall_scores.grammar)}`}>
+              <div className={`text-3xl font-bold mb-2 ${getScoreColor(data.overall_scores.grammar)}`}>
+                {data.overall_scores.grammar.toFixed(1)}
+              </div>
+              <div className="text-sm font-medium text-gray-700">Grammar</div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full" 
+                  style={{ width: `${data.overall_scores.grammar * 10}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className={`text-center p-4 rounded-lg ${getScoreBgColor(data.overall_scores.fluency)}`}>
+              <div className={`text-3xl font-bold mb-2 ${getScoreColor(data.overall_scores.fluency)}`}>
+                {data.overall_scores.fluency}
+              </div>
+              <div className="text-sm font-medium text-gray-700">Fluency</div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full" 
+                  style={{ width: `${data.overall_scores.fluency * 10}%` }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="text-center p-4 rounded-lg bg-blue-100">
+              <div className="text-3xl font-bold mb-2 text-blue-600">
+                {data.overall_scores.consistency_score}
+              </div>
+              <div className="text-sm font-medium text-gray-700">Consistency</div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full" 
+                  style={{ width: `${parseFloat(data.overall_scores.consistency_score) * 10}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <div className="inline-flex items-center px-4 py-2 bg-gray-100 rounded-full">
+              {getEmotionIcon(data.overall_scores.emotion)}
+              <span className="ml-2 font-medium">Current Emotion: {data.overall_scores.emotion}</span>
+            </div>
+          </div>
         </div>
 
-
-
-
-
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">Speaking performance</h2>
+        {/* Priority Improvement */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center mb-4">
+            <AlertCircle className="h-6 w-6 text-red-600 mr-2" />
+            <h2 className="text-2xl font-bold text-gray-900">Priority Improvement Area</h2>
+          </div>
           
-          <p><strong>Score : </strong>{rawFeedback.raw_feedback.speaking_performance.fluency_assessment.score}</p>
-          <p><strong>Analysis :</strong>{rawFeedback.raw_feedback.speaking_performance.fluency_assessment.analysis}</p>
-          <p><strong>Consistency : </strong>{rawFeedback.raw_feedback.speaking_performance.fluency_assessment.consistency}</p>
-
-
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+            <h3 className="font-bold text-red-800 mb-2">{data.improvement_priority.area}</h3>
+            <div className="space-y-2 text-red-700">
+              <p><strong>Urgency:</strong> {data.improvement_priority.urgency}</p>
+              <p><strong>Reason:</strong> {data.improvement_priority.reason}</p>
+              <p><strong>First Steps:</strong> {data.improvement_priority.first_steps}</p>
+            </div>
+          </div>
         </div>
 
-
-
-        {/* Detail Retention */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">Pronunciation assessment</h2>
-          {/* <p>{rawFeedback.raw_feedback.detailed_suggestions[0]}</p> */}
-          <p><strong>Score ; </strong>{rawFeedback.raw_feedback.speaking_performance.pronunciation_assessment.score}</p>
-          <p><strong>Analysis : </strong>{rawFeedback.raw_feedback.speaking_performance.pronunciation_assessment.analysis}</p>
-          {/* <p><strong>consistency</strong>{rawFeedback.raw_feedback.speaking_performance.pronunciation_assessment.consistent_strengths}</p>
-           <p><strong>systematic_errors</strong>{rawFeedback.raw_feedback.speaking_performance.pronunciation_assessment.systematic_errors}</p> */}
-
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">Speaking clarity</h2>
-          {/* <p>{rawFeedback.raw_feedback.detailed_suggestions[0]}</p> */}
-          <p><strong>Score : </strong>{rawFeedback.raw_feedback.speaking_performance.speaking_clarity.clarity_trend}</p>
-          <p><strong>Analysis : </strong>{rawFeedback.raw_feedback.speaking_performance.speaking_clarity.overall_rating}</p>
-
-
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">Vocabulary usage</h2>
-          {/* <p>{rawFeedback.raw_feedback.detailed_suggestions[0]}</p> */}
-          <p><strong>Score : </strong>{rawFeedback.raw_feedback.speaking_performance.vocabulary_usage.assessment}</p>
-          <p><strong>Analysis : </strong>{rawFeedback.raw_feedback.speaking_performance.vocabulary_usage.consistency}</p>
-
-        </div>
-
-
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <h2 className="text-xl font-bold mb-4">technical_metrics</h2>
-
-          <p><strong>Filler word patterns : </strong>{rawFeedback.raw_feedback.technical_metrics.filler_word_patterns}</p>
-          <p><strong>Pause patterns : </strong>{rawFeedback.raw_feedback.technical_metrics.pause_patterns}</p>
-          <p><strong>Prosody consistency : </strong>{rawFeedback.raw_feedback.technical_metrics.prosody_consistency}</p>
-          <p><strong>Speaking rate consistency : </strong>{rawFeedback.raw_feedback.technical_metrics.speaking_rate_consistency}</p>
-
-        </div>
-
-
-
-
-      </section>
-
-
-      <section className="grid text-black grid-cols-1  gap-8">
-        <div>
-          <h2 className="text-lg font-semibold mb-2">Detailed Suggestions</h2>
-          {Array.isArray(rawFeedback.raw_feedback.detailed_suggestions) &&
-            rawFeedback.raw_feedback.detailed_suggestions.map((item, index) => (
-              <div key={index} className="bg-gray-100 p-3 rounded-lg mb-4 shadow-sm">
-                <p><strong>Based On : </strong> {item.based_on}</p>
-                <p><strong>Expected Impact : </strong> {item.expected_impact}</p>
-                <p><strong>Implementation : </strong> {item.implementation}</p>
-                <p><strong>Suggestion : </strong> {item.suggestion}</p>
+        {/* Strengths */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center mb-4">
+            <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
+            <h2 className="text-2xl font-bold text-gray-900">Your Strengths</h2>
+          </div>
+          
+          <div className="space-y-4">
+            {data.strengths.map((strength, index) => (
+              <div key={index} className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+                <h3 className="font-bold text-green-800 mb-2">{strength.strength}</h3>
+                <div className="space-y-1 text-green-700">
+                  <p><strong>Impact:</strong> {strength.impact}</p>
+                  <p><strong>Frequency:</strong> {strength.frequency}</p>
+                </div>
               </div>
             ))}
-        </div>
-
-
-
-
-       
-        
-
-
-          <div>
-            <h2 className="text-lg font-semibold mb-2">Practice recommendations</h2>
-            {Array.isArray(rawFeedback.raw_feedback.practice_recommendations) &&
-              rawFeedback.raw_feedback.practice_recommendations.map((item, index) => (
-                <div key={index} className="bg-gray-100 p-3 rounded-lg mb-4 shadow-sm">
-                  <p><strong>Activity : </strong> {item.activity}</p>
-                  <p><strong>Expected outcome : </strong> {item.expected_outcome}</p>
-                  <p><strong>Frequency : </strong> {item.frequency}</p>
-                  <p><strong>Priority : </strong> {item.priority}</p>
-                </div>
-              ))}
           </div>
-    
-
-
-  <div>
-            <h2 className="text-lg font-semibold mb-2">Strengths</h2>
-            {Array.isArray(rawFeedback.raw_feedback.strengths) &&
-              rawFeedback.raw_feedback.strengths.map((item, index) => (
-                <div key={index} className="bg-gray-100 p-3 rounded-lg mb-4 shadow-sm">
-                  <p><strong>Evidence : </strong> {item.evidence}</p>
-                  <p><strong>Frequency : </strong> {item.frequency}</p>
-                  <p><strong>Impact : </strong> {item.impact}</p>
-                  <p><strong>Strength : </strong> {item.strength}</p>
-                </div>
-              ))}
         </div>
-      </section>
-    
-     
+
+        {/* Speaking Performance Details */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center mb-4">
+              <Info className="h-6 w-6 text-blue-600 mr-2" />
+              <h2 className="text-xl font-bold text-gray-900">Speaking Performance</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Fluency Assessment</h4>
+                <p className="text-sm text-gray-600 mb-1">
+                  Score: {data.speaking_performance.fluency_assessment.score}/10
+                </p>
+                <p className="text-sm text-gray-700">{data.speaking_performance.fluency_assessment.analysis}</p>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Grammar Assessment</h4>
+                <p className="text-sm text-gray-600 mb-1">
+                  Score: {data.speaking_performance.grammar_assessment.score.toFixed(1)}/10
+                </p>
+                <p className="text-sm text-gray-700 mb-2">{data.speaking_performance.grammar_assessment.analysis}</p>
+                {data.speaking_performance.grammar_assessment.error_patterns.length > 0 && (
+                  <div>
+                    <strong className="text-sm">Error Patterns:</strong>
+                    <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
+                      {data.speaking_performance.grammar_assessment.error_patterns.map((pattern, index) => (
+                        <li key={index}>{pattern}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Pronunciation Assessment</h4>
+                <p className="text-sm text-gray-600 mb-1">
+                  Score: {data.speaking_performance.pronunciation_assessment.score}/10
+                </p>
+                <p className="text-sm text-gray-700">{data.speaking_performance.pronunciation_assessment.analysis}</p>
+                {data.speaking_performance.pronunciation_assessment.systematic_errors.length > 0 && (
+                  <div className="mt-2">
+                    <strong className="text-sm">Systematic Errors:</strong>
+                    <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
+                      {data.speaking_performance.pronunciation_assessment.systematic_errors.map((error, index) => (
+                        <li key={index}>{error}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center mb-4">
+              <Info className="h-6 w-6 text-blue-600 mr-2" />
+              <h2 className="text-xl font-bold text-gray-900">Content Understanding</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Content Understanding</h4>
+                <p className="text-sm text-gray-600 mb-1">
+                  Score: {data.feedback.content_understanding.score}
+                </p>
+                <p className="text-sm text-gray-700">{data.feedback.content_understanding.explanation}</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-gray-800 mb-2">Detail Retention</h4>
+                <p className="text-sm text-gray-600 mb-1">
+                  Score: {data.feedback.detail_retention.score}
+                </p>
+                <p className="text-sm text-gray-700">{data.feedback.detail_retention.explanation}</p>
+                {data.feedback.detail_retention.missed_points.length > 0 && (
+                  <div className="mt-2">
+                    <strong className="text-sm">Missed Points:</strong>
+                    <ul className="list-disc list-inside text-sm text-gray-700 mt-1">
+                      {data.feedback.detail_retention.missed_points.map((point, index) => (
+                        <li key={index}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Practice Recommendations */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center mb-4">
+            <CheckCircle className="h-6 w-6 text-blue-600 mr-2" />
+            <h2 className="text-2xl font-bold text-gray-900">Practice Recommendations</h2>
+          </div>
+          
+          <div className="space-y-4">
+            {data.practice_recommendations.map((rec, index) => (
+              <div key={index} className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <h3 className="font-bold text-blue-800 mb-2">{rec.activity}</h3>
+                <div className="space-y-1 text-blue-700">
+                  <p><strong>Frequency:</strong> {rec.frequency}</p>
+                  <p><strong>Priority:</strong> {rec.priority}</p>
+                  <p><strong>Expected Outcome:</strong> {rec.expected_outcome}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Encouragement */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center mb-4">
+            <Smile className="h-6 w-6 text-green-600 mr-2" />
+            <h2 className="text-2xl font-bold text-gray-900">Keep Going!</h2>
+          </div>
+          
+          <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+            <h3 className="font-bold text-green-800 mb-2">Progress Highlight</h3>
+            <p className="text-green-700 mb-2">{data.encouragement.progress_highlight}</p>
+            <p className="text-green-700 font-medium">{data.encouragement.motivational_message}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

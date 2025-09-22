@@ -559,18 +559,17 @@ const handleShowResult = async () => {
     }, 5000);
 
     // This will now poll until it gets a success response
-    const result = await dispatch(fetchOverallScoring(essayId)).unwrap();
-     router.push(`/Result/assistantresult?essay_id=${essayId}`);
+  
+     router.push(`/assistantresult?essay_id=${essayId}`);
     clearInterval(textInterval);
     
     // Check if we got the success status
     if (result.status === 'success') {
-      router.push(`/Result/assistantresult?essay_id=${essayId}`);
+      router.push(`/assistantresult?essay_id=${essayId}`);
     } else {
       throw new Error('Scoring not completed yet');
     }
   } catch (error) {
-    toast.error(error.message || 'Failed to fetch scoring');
     console.error("Failed to fetch scoring:", error);
     setLoadingResult(false);
   }
