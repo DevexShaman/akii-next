@@ -564,11 +564,7 @@ const handleShowResult = async () => {
     clearInterval(textInterval);
     
     // Check if we got the success status
-    if (result.status === 'success') {
-      router.push(`/assistantresult?essay_id=${essayId}`);
-    } else {
-      throw new Error('Scoring not completed yet');
-    }
+  
   } catch (error) {
     console.error("Failed to fetch scoring:", error);
     setLoadingResult(false);
