@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAppDispatch, useAppSelector } from "@/store";
-import { fetchOverallScoring } from "@/store/slices/assistant/assistantSlice";
+import {  useAppSelector } from "@/store";
+
 import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+
 
 
 const getUsername = () => {
@@ -85,7 +85,7 @@ function safeParseData(data) {
 }
 
 export default function VoiceAssistant() {
-  const dispatch = useAppDispatch();
+
   const router = useRouter();
   const [status, setStatus] = useState("idle");
   const [audioLevel, setAudioLevel] = useState(0);
@@ -539,37 +539,37 @@ export default function VoiceAssistant() {
   };
 
 
-const handleShowResult = async () => {
-  if (!essayId) return;
+  const handleShowResult = async () => {
+    if (!essayId) return;
 
-  try {
-    setLoadingResult(true);
-    setLoadingText("Preparing your results...");
-    
-    const messages = [
-      "Preparing your results...",
-      "Analyzing your essay...",
-      "Almost there, finalizing results..."
-    ];
+    try {
+      setLoadingResult(true);
+      setLoadingText("Preparing your results...");
 
-    let index = 0;
-    const textInterval = setInterval(() => {
-      index = (index + 1) % messages.length;
-      setLoadingText(messages[index]);
-    }, 5000);
+      const messages = [
+        "Preparing your results...",
+        "Analyzing your essay...",
+        "Almost there, finalizing results..."
+      ];
 
-    // This will now poll until it gets a success response
-  
-     router.push(`/assistantresult?essay_id=${essayId}`);
-    clearInterval(textInterval);
-    
-    // Check if we got the success status
-  
-  } catch (error) {
-    console.error("Failed to fetch scoring:", error);
-    setLoadingResult(false);
-  }
-};
+      let index = 0;
+      const textInterval = setInterval(() => {
+        index = (index + 1) % messages.length;
+        setLoadingText(messages[index]);
+      }, 5000);
+
+      // This will now poll until it gets a success response
+
+      router.push(`/assistantresult?essay_id=${essayId}`);
+      clearInterval(textInterval);
+
+      // Check if we got the success status
+
+    } catch (error) {
+      console.error("Failed to fetch scoring:", error);
+      setLoadingResult(false);
+    }
+  };
 
 
 
@@ -594,7 +594,7 @@ const handleShowResult = async () => {
 
 
   // Helper function to render different data types appropriately
-  const renderDataValue = (value, key) => {
+  const renderDataValue = (value: unknown, key?: string) => {
     // Handle string values
     if (typeof value === 'string') {
       return (
@@ -1186,8 +1186,13 @@ const handleShowResult = async () => {
                       <div key={key} className="score-item text-center p-3 bg-white rounded-lg shadow-sm">
                         <p className="text-sm text-gray-600 mb-1 capitalize">{key.replace(/_/g, ' ')}</p>
                         <p className="text-2xl font-bold text-blue-600">
-                          {typeof value === 'number' ? `${value}/10` : value}
+                          {typeof value === 'number'
+                            ? `${value}/10`
+                            : typeof value === 'string'
+                              ? value
+                              : JSON.stringify(value)}
                         </p>
+
                       </div>
                     ))}
                   </div>
