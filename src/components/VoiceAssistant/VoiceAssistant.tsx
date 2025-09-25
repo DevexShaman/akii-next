@@ -1077,9 +1077,9 @@ export default function VoiceAssistant() {
                 if (group.type === 'user_group') {
                   // Render grouped consecutive user messages in one div
                   return (
-                    <div key={`user-group-${groupIndex}`} className="flex justify-end">
+                    <div key={`user-group-${groupIndex}`} className="flex justify-center">
                       <div className="bg-green-100 rounded-lg p-3">
-                        <div className="flex items-center mb-1 justify-end">
+                        <div className="flex items-center mb-1 justify-center">
                           <span className="text-xs text-gray-500 mr-2">You</span>
                           <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Voice</span>
                         </div>
@@ -1109,7 +1109,7 @@ export default function VoiceAssistant() {
                   // AI Response
                   if (messageType === "ai_response") {
                     return (
-                      <div key={`ai-${groupIndex}`} className="flex justify-start">
+                      <div key={`ai-${groupIndex}`} className="flex justify-center">
                         <div className="bg-blue-100 rounded-lg p-3 ">
                           <div className="flex items-center mb-1">
                             <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">AI</span>
