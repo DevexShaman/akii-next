@@ -439,7 +439,7 @@ export default function VoiceAssistant() {
       };
 
       ws.onerror = (error) => {
-        console.error("WebSocket error:", error);
+        console.log("WebSocket error:", error);
         setStatus("error");
       };
 
@@ -1073,12 +1073,12 @@ export default function VoiceAssistant() {
             <h1 className="text-black text-xl font-bold mb-4">Conversation</h1>
 
             <div className="space-y-4">
-              {groupConsecutiveUserMessages(messages).map((group, groupIndex) => {
+              {groupConsecutiveUserMessages(messages).slice(-1).map((group, groupIndex) => {
                 if (group.type === 'user_group') {
                   // Render grouped consecutive user messages in one div
                   return (
                     <div key={`user-group-${groupIndex}`} className="flex justify-end">
-                      <div className="bg-green-100 rounded-lg p-3 max-w-xs md:max-w-md">
+                      <div className="bg-green-100 rounded-lg p-3">
                         <div className="flex items-center mb-1 justify-end">
                           <span className="text-xs text-gray-500 mr-2">You</span>
                           <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Voice</span>
@@ -1110,7 +1110,7 @@ export default function VoiceAssistant() {
                   if (messageType === "ai_response") {
                     return (
                       <div key={`ai-${groupIndex}`} className="flex justify-start">
-                        <div className="bg-blue-100 rounded-lg p-3 max-w-xs md:max-w-md">
+                        <div className="bg-blue-100 rounded-lg p-3 ">
                           <div className="flex items-center mb-1">
                             <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">AI</span>
                             <span className="text-xs text-gray-500 ml-2">Assistant</span>
@@ -1131,7 +1131,7 @@ export default function VoiceAssistant() {
                   // Default fallback for other message types
                   return (
                     <div key={`other-${groupIndex}`} className="flex justify-start">
-                      <div className="bg-gray-100 rounded-lg p-3 max-w-xs md:max-w-md">
+                      <div className="bg-gray-100 rounded-lg p-3 ">
 
                       </div>
                     </div>
